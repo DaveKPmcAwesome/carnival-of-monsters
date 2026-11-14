@@ -926,6 +926,15 @@ function removeBotFromRoom(room, name) {
   return null;
 }
 
+// 🐛 Wiederverbindung: den Sitzplatz über das TOKEN suchen – NIEMALS über einen
+// gespeicherten Index! Beim Entfernen eines Bots rücken alle späteren Plätze um 1 auf
+// (splice); ein alter Index würde dann auf den FALSCHEN Spieler zeigen (Name und
+// Karten vertauscht – der Spieler „wäre“ plötzlich der Bot).
+function resumePlayerIdx(room, token) {
+  const t = String(token || "");
+  return room.players.findIndex((p) => p.token && p.token === t);
+}
+
 // Grobe, faire Heuristik: wie viel ist diese Karte dem Spieler gerade wert?
 function botScoreCard(g, i, card) {
   const p = g.players[i];
@@ -1283,11 +1292,13 @@ wss.on("connection", (ws) => {
           const info = tokenMap.get(String(msg.token || ""));
           if (!info || !rooms.has(info.code)) return reply({ t: "error", msg: "Partie nicht mehr gefunden." });
           const r = rooms.get(info.code);
-          if (r.players[info.playerIdx]) {
-            r.players[info.playerIdx].ws = ws;
-            r.players[info.playerIdx].connected = true;
-          }
-          joined = { room: r, idx: info.playerIdx };
+          // 🐛 Sitzplatz über das Token suchen – der alte Index in tokenMap kann
+          // veraltet sein (z. B. nach dem Entfernen eines Bots in der Lobby).
+          const k = resumePlayerIdx(r, msg.token);
+          if (k < 0 || r.players[k].isBot) return reply({ t: "error", msg: "Dein Sitzplatz wurde nicht gefunden – tritt dem Raum bitte neu bei." });
+          r.players[k].ws = ws;
+          r.players[k].connected = true;
+          joined = { room: r, idx: k };
           reply({ t: "token", token: msg.token });
           broadcast(r);
           break;
