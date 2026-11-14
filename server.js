@@ -360,7 +360,7 @@ function mkGame(playerNames, totalSeasons, mode) {
     stack: [], openDiscards: [], awaitDiscard: null, awaitFresh: null,
     hands: [], seasonCard: null, bonusGiven: [],
     turn: 0, roundIdx: 0, roundNo: 0, seTurn: 0,
-    season: -1, phase: "draft", dice: null, reveal: null,
+    season: -1, phase: "draft", dice: null, reveal: null, show: null,
     log: [],
   };
   dealSeason(g, 0);
@@ -389,6 +389,7 @@ function dealSeason(g, season) {
   g.openDiscards = [];
   g.awaitDiscard = null;
   g.awaitFresh = null;
+  g.show = null; // 🐢 Langsam: Aufdeck-Runde (wer ist gerade dran)
   g.sim = mkSimState(g); // ⚡ Schnell: verdeckte Wahlen der laufenden Runde
   g.incoming = g.players.map(() => []); // 🚀 Turbo: wartende Stapel der Nachbarn
   g.turboDiscard = g.players.map(() => false); // 🚀 Turbo: 2er-Ablage-Schritt je Spieler
@@ -443,18 +444,26 @@ function handleDiscard(g, pIdx, msg) {
   if (g.phase !== "draft" || g.awaitDiscard !== pIdx) return { err: "Du bist gerade nicht am offenen Ablegen." };
   const res = applyDuoDiscard(g, pIdx, msg.cardId);
   if (res && res.err) return res;
-  g.passed[pIdx] = true; // Stapel ist abgegeben – der Besitzer sieht ihn nicht mehr
   g.awaitDiscard = null;
+  // 🐢 Langsam: Die offene Ablage gehört zum eigenen Aufdecken – danach ist der Nächste dran.
+  if (g.show) {
+    if ((g.players[pIdx].freshDraw || []).some((c) => c.type !== "Ziel")) return { ok: true };
+    showStep(g);
+    return { ok: true };
+  }
+  g.passed[pIdx] = true; // Stapel ist abgegeben – der Besitzer sieht ihn nicht mehr
   advanceDuo(g);
   return { ok: true };
 }
 
-// ⚡ Schnell-Modus: verdeckte Wahl eines Spielers für die laufende Simultan-Runde.
-// Bei 2 Spielern gehört die Karte für die OFFENE Ablage mit in denselben Durchgang.
+// ⚡ Schnell-Modus & 🐢 Langsam-Modus: verdeckte Wahl eines Spielers für die laufende Runde.
+// Schnell: alles wird gleichzeitig ausgeführt. Langsam (2er): die Karte für die OFFENE
+// Ablage kommt erst NACH dem eigenen Aufdecken (siehe handleReveal/handleDiscard).
 function handleSimPick(g, pIdx, msg) {
-  if (g.mode !== "schnell" || g.phase !== "draft") return { err: "Gerade nicht möglich." };
+  if ((g.mode !== "schnell" && g.mode !== "langsam") || g.phase !== "draft") return { err: "Gerade nicht möglich." };
+  if (g.show) return { err: "Gerade wird aufgedeckt – gleich dürft ihr wieder neu wählen!" };
   const p = g.players[pIdx];
-  // Fairness: das neue Blatt bleibt verdeckt, bis die Zieh-Karten entschieden sind
+  // Erst die Zieh-Karten entscheiden, dann neu wählen
   if ((p.freshDraw || []).some((c) => c.type !== "Ziel")) return { err: "Entscheide erst über deine gezogenen Karten – danach siehst du dein neues Blatt!" };
   const card = g.hands[pIdx].find((c) => c.id === msg.cardId);
   if (!card) return { err: "Karte nicht gefunden." };
@@ -468,7 +477,8 @@ function handleSimPick(g, pIdx, msg) {
     if (card.type === "Mitarbeiter" && card.kind === "land" && !pick.realm)
       return { err: "Bitte ein Reich wählen." };
   }
-  if (g.players.length === 2 && g.hands[pIdx].length > 1) {
+  // ⚡ Schnell (2er): Abwurfkarte gleich mitwählen. 🐢 Langsam (2er): erst beim eigenen Aufdecken.
+  if (g.mode === "schnell" && g.players.length === 2 && g.hands[pIdx].length > 1) {
     const d = g.hands[pIdx].find((c) => c.id === msg.discardId);
     if (!d || d.id === card.id) return { err: "Wähle auch 1 Karte für die offene Ablage." };
     pick.discardId = d.id;
@@ -481,7 +491,7 @@ function handleSimPick(g, pIdx, msg) {
   // Erst wenn ALLE bestätigt haben (leere Hand zählt automatisch als fertig),
   // wird gleichzeitig aufgedeckt und ausgeführt
   const allDone = g.players.every((_, i) => g.sim.ready[i] || g.hands[i].length === 0);
-  if (allDone) executeSimRound(g);
+  if (allDone) { if (g.mode === "schnell") executeSimRound(g); else startShow(g); }
   return { ok: true };
 }
 
@@ -513,6 +523,64 @@ function executeSimRound(g) {
     g.phase = "seasonEnd";
   }
   g.log = g.log.slice(0, 40);
+}
+
+// 🐢 Langsam wie am Tisch: alle haben VERDECKT gewählt – jetzt deckt jeder
+// NACHEINANDER seine Karte selbst auf („Jetzt aufdecken!"). Reihenfolge = Sitzfolge,
+// Start wechselt fair je Runde. Der Spielverlauf oben moderiert mit.
+function startShow(g) {
+  const n = g.players.length;
+  g.show = { cur: g.roundNo % n, done: 0 };
+  g.log.unshift("🔍 Alle haben verdeckt gewählt – jetzt wird nacheinander aufgedeckt!");
+  showStep(g);
+  g.log = g.log.slice(0, 40);
+}
+
+// Kette weitergeben: Spieler ohne Wahl (leere Hand) werden übersprungen.
+function showStep(g) {
+  const n = g.players.length;
+  while (g.show && !g.sim.picks[g.show.cur]) {
+    g.show.done += 1;
+    if (g.show.done >= n) return endShowRound(g);
+    g.show.cur = (g.show.cur + 1) % n;
+  }
+}
+
+function endShowRound(g) {
+  rotateHands(g);
+  g.sim = mkSimState(g);
+  g.show = null;
+  g.roundNo += 1;
+  if (g.hands.every((h) => h.length === 0)) {
+    g.log.unshift("📐 Alle Karten gewählt – jetzt darf noch Eingelagertes ausgespielt werden, dann wird gewürfelt!");
+    g.seTurn = 0;
+    g.phase = "seasonEnd";
+  } else g.log.unshift("🔄 Neue Wahlrunde – alle wählen wieder verdeckt!");
+  g.log = g.log.slice(0, 40);
+}
+
+// 🐢 „Jetzt aufdecken!": die verdeckte Wahl wird ausgeführt und für alle sichtbar.
+// Gezogene Karten („zieht X") entscheidet der Aufdeckende sofort – erst dann ist der
+// Nächste dran. Bei 2 Spielern folgt danach noch die offene Ablage (außer letzte Karte).
+function handleReveal(g, pIdx) {
+  if (g.mode !== "langsam" || g.phase !== "draft" || !g.show || g.show.cur !== pIdx) return { err: "Du bist gerade nicht am Aufdecken." };
+  const p = g.players[pIdx];
+  if ((p.freshDraw || []).some((c) => c.type !== "Ziel")) return { err: "Entscheide erst über deine gezogenen Karten – dann geht es weiter!" };
+  const pick = g.sim.picks[pIdx];
+  if (!pick) { showStep(g); return { ok: true }; }
+  g.log.unshift(`🔍 ${p.name} deckt auf!`);
+  const res = applyHandPick(g, pIdx, pick);
+  if (res && res.err) g.log.unshift(`⚠️ ${p.name}: ${res.err}`);
+  g.sim.picks[pIdx] = null;
+  g.log = g.log.slice(0, 40);
+  // 🃏 Zieh-Karten: erst entscheiden (wie bisherige Reihenfolge), dann Ablage/Weiter
+  if ((p.freshDraw || []).some((c) => c.type !== "Ziel")) return { ok: true };
+  if (g.players.length === 2 && g.hands[pIdx].length > 0) {
+    g.awaitDiscard = pIdx; // offene Ablage – der Aufdeckende klickt seine Abwurfkarte an
+    return { ok: true };
+  }
+  showStep(g);
+  return { ok: true };
 }
 
 // 🚀 Turbo: Reststapel an den Nachbarn weitergeben (Richtung wie im langsamen
@@ -603,14 +671,14 @@ function handlePick(g, pIdx, msg) {
   if (!card) return { err: "Karte nicht gefunden." };
 
   if (phase === "draft") {
-    if (g.mode === "langsam") {
-      if (g.turn !== pIdx) return { err: "Du bist gerade nicht am Zug." };
-    } else if (inHand) {
-      if (g.mode === "schnell") return { err: "Bestätige deine Wahl oben mit „Fertig“." };
+    if (inHand) {
+      // ⚡/🐢: Handkarten werden oben VERDECKT gewählt – ausgeführt wird bei ⚡ automatisch,
+      // bei 🐢 über den „Jetzt aufdecken!“-Button des Spielers.
+      if (g.mode === "langsam" || g.mode === "schnell") return { err: "Wähle deine Handkarte oben verdeckt und bestätige mit „Fertig“." };
       if (g.turboDiscard[pIdx]) return { err: "Lege erst deine Karte offen ab!" };
       if (g.hands[pIdx].length === 0) return { err: "Du hast gerade keine Karten." };
     }
-    // Eingelagertes darf in Schnell/Turbo jederzeit gespielt werden (auch vor dem Bestätigen)
+    // Eingelagertes darf jederzeit gespielt werden – in allen Tempos
   } else if (phase === "seasonEnd") {
     if (g.seTurn !== pIdx) return { err: "Du bist gerade nicht dran." };
   } else return { err: "Gerade nicht möglich." };
@@ -700,9 +768,13 @@ function handleFreshDecide(g, pIdx, msg) {
   } else return { err: "Ungültige Entscheidung." };
   g.log = g.log.slice(0, 40);
   // Zug erst weitergeben, wenn die Schlange leer ist (verkettete Züge: neue Karten kommen hinten dran)
-  if (!(p.freshDraw || []).some((c) => c.type !== "Ziel") && g.awaitFresh === pIdx) {
-    g.awaitFresh = null;
-    finishPick(g, pIdx);
+  if (!(p.freshDraw || []).some((c) => c.type !== "Ziel")) {
+    if (g.awaitFresh === pIdx) { g.awaitFresh = null; finishPick(g, pIdx); }
+    // 🐢 Langsam: Zieh-Karten beim eigenen Aufdecken entschieden → 2er-Ablage oder Nächster
+    else if (g.show && g.show.cur === pIdx) {
+      if (g.players.length === 2 && g.hands[pIdx].length > 0) g.awaitDiscard = pIdx;
+      else showStep(g);
+    }
   }
   return { ok: true };
 }
@@ -869,9 +941,11 @@ function viewFor(room, idx) {
     awaitDiscard: g.awaitDiscard === null || g.awaitDiscard === undefined ? -1 : g.awaitDiscard,
     stackCount: (g.stack || []).length,
     openDiscards: g.openDiscards || [],
-    // ⚡ Schnell: wer hat schon bestätigt? (nur ja/nein, keine Kartendetails)
-    simReady: g.mode === "schnell" ? g.sim.ready.slice() : null,
-    mySimPick: g.mode === "schnell" ? g.sim.picks[idx] : null,
+    // ⚡ Schnell & 🐢 Langsam: wer hat schon bestätigt? (nur ja/nein, keine Kartendetails)
+    simReady: (g.mode === "schnell" || g.mode === "langsam") ? g.sim.ready.slice() : null,
+    mySimPick: (g.mode === "schnell" || g.mode === "langsam") ? g.sim.picks[idx] : null,
+    // 🐢 Langsam: wer deckt gerade auf? (-1 = es wird noch verdeckt gewählt)
+    showTurn: (g.mode === "langsam" && g.show) ? g.show.cur : -1,
     // 🚀 Turbo: persönlicher Ablage-Schritt + wartende Stapel
     turboDiscard: g.mode === "turbo" ? !!g.turboDiscard[idx] : false,
     incomingCount: g.mode === "turbo" ? (g.incoming[idx] || []).length : 0,
@@ -1015,6 +1089,14 @@ wss.on("connection", (ws) => {
         case "simPick": {
           if (!room || !room.game || !joined) return;
           const res = handleSimPick(room.game, joined.idx, msg);
+          if (res && res.err) reply({ t: "error", msg: res.err });
+          else broadcast(room);
+          break;
+        }
+        // 🐢 Langsam: die eigene verdeckte Wahl selbst aufdecken (nacheinander, wie am Tisch)
+        case "reveal": {
+          if (!room || !room.game || !joined) return;
+          const res = handleReveal(room.game, joined.idx);
           if (res && res.err) reply({ t: "error", msg: res.err });
           else broadcast(room);
           break;
