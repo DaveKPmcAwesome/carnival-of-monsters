@@ -1164,6 +1164,10 @@ function viewFor(room, idx) {
     openDiscards: g.openDiscards || [],
     // ⚡ Schnell & 🐢 Langsam: wer hat schon bestätigt? (nur ja/nein, keine Kartendetails)
     simReady: (g.mode === "schnell" || g.mode === "langsam") ? g.sim.ready.slice() : null,
+    // ⚡/🐢: wer muss noch wählen? (für „Alle warten auf …“, sobald nur noch EINER überlegt)
+    simWaiting: ((g.mode === "schnell" || g.mode === "langsam") && g.phase === "draft" && !g.show)
+      ? g.players.map((_, i) => i).filter((i) => (g.hands[i] || []).length > 0 && !g.sim.ready[i])
+      : [],
     mySimPick: (g.mode === "schnell" || g.mode === "langsam") ? g.sim.picks[idx] : null,
     // 🐢 Langsam: wer deckt gerade auf? (-1 = es wird noch verdeckt gewählt)
     showTurn: (g.mode === "langsam" && g.show) ? g.show.cur : -1,
