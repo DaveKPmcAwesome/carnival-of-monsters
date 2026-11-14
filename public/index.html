@@ -529,7 +529,13 @@ function renderActionBar() {
   if (selected.type === "Land" && !canPlayLand(selected, me2)) note += " – entfernte Länder brauchen Vorbedingung";
   if (selected.type === "Mitarbeiter" && me2.coins < selected.cost) note += " · 🏦 Kredit nötig (+3 👑, −5 SP)";
   if (selected.type === "Ziel") note += " · Ziele nur annehmen, nicht ausspielen";
-  if (staged) inner = `<div class="note" style="margin-bottom:6px">✅ Diese Karte ist schon gewählt – tippe unten auf „✅ Fertig!“. Mit „✏️ Ändern“ oder einer anderen Handkarte kannst du noch neu wählen.</div>` + inner;
+  if (staged) {
+    inner = `<div class="note" style="margin-bottom:6px">✅ Diese Karte ist schon gewählt – tippe unten auf „✅ Fertig!“. Mit „✏️ Ändern“ oder einer anderen Handkarte kannst du noch neu wählen.</div>` + inner;
+    // ✅ Fertig! zusätzlich UNTEN in der Aktionsleiste (Nutzer-Wunsch: genau da, wo „Ausspielen“ steht).
+    // Gleiche Logik wie im Wahl-Panel: bei ⚡ 2er erst klickbar, wenn die Abwurfkarte gewählt ist.
+    const twoP = state.mode === "schnell" && state.players.length === 2 && state.hand.length > 1;
+    inner += `<div style="margin-top:8px"><button class="btn-green" style="width:100%" ${!twoP || simDiscard ? "" : "disabled"} onclick="simConfirm()">✅ Fertig!</button></div>`;
+  }
   if (seTurnActive) inner += `<div style="margin-top:8px">${seasonEndButtons(state)}</div>`;
   actionInner.innerHTML = inner + `<div class="note">${note}</div>`;
   actionBar.style.display = "block";
