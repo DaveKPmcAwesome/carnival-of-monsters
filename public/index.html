@@ -583,7 +583,7 @@ function renderLobby(s) {
       <div class="card-panel" style="max-width:420px;width:100%">
         <div class="label">Spieler in der Lobby (${s.names.length}/5)</div>
         ${s.names.map((p) => `<div style="padding:4px 0;display:flex;align-items:center;justify-content:space-between;gap:8px">
-          <span>${p.isBot ? "🤖" : p.connected ? "👤" : "📴"} ${esc(p.name)}${p.isBot ? ` <span class="muted" style="font-size:0.75rem">(Bot)</span>` : ""}</span>
+          <span>${p.isBot ? esc(p.name) : `${p.connected ? "👤" : "📴"} ${esc(p.name)}`}${p.isBot ? ` <span class="muted" style="font-size:0.75rem">(Bot)</span>` : ""}</span>
           ${s.isHost && p.isBot ? `<button class="btn-ghost" style="font-size:0.7rem;padding:2px 10px" title="Bot entfernen" onclick="removeBot('${esc(p.name)}')">✖</button>` : ""}
         </div>`).join("")}
         ${s.isHost && s.names.length < 5 ? `<button class="btn-ghost" style="width:100%;margin-top:8px;font-size:0.85rem" onclick="addBot()">🤖 Bot hinzufügen</button>
