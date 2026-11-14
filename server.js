@@ -280,11 +280,13 @@ function playIntoPlayer(g, pIdx, card, chosenRealm) {
       const pl = traumPlacement(card.cost, p.lands, p.seasonMonsters, chosenRealm);
       if (!pl) return null;
       p.seasonMonsters.push({ ...card, ...pl });
+      bigFanfare(g, pIdx, card);
       const extra = onMonsterPlayed(g, pIdx, card);
       return { ok: true, msg: [`✅ „${card.name}": ${pl.paidTraum} 🌙${pl.helperRealm ? ` + ${pl.helperCount} ${realmInfo(pl.helperRealm).emoji} (Hilfsreich)` : ""}.`, ...extra].join(" ") };
     }
     if (!canPlayMonster(card, p)) return null;
     p.seasonMonsters.push(card);
+    bigFanfare(g, pIdx, card);
     const extra = onMonsterPlayed(g, pIdx, card);
     return { ok: true, msg: [`✅ „${card.name}" ausgespielt (belegt ${card.cost} ${realmInfo(card.realm).emoji}).`, ...extra].join(" ") };
   }
@@ -344,6 +346,18 @@ function mkPlayerState(name, startLands) {
   };
 }
 
+// 🚨 TAMTAM (Nutzer-Wunsch): Ein FETTES Monster – Level 4 aus den Standard-Reichen
+// oder das Level-10-Monster aus den Traumlanden – löst bei ALLEN eine große
+// Fanfare aus: Vollbild-Banner mit Name + Spieler + Dreifach-Gong im Client.
+let gameIdCounter = 0;
+const isBigMonster = (c) => c.type === "Monster" && (c.realm === "traum" ? c.cost === 10 : c.cost === 4);
+function bigFanfare(g, pIdx, card) {
+  if (!isBigMonster(card)) return;
+  g.fanfareId = (g.fanfareId || 0) + 1;
+  g.fanfare = { id: g.fanfareId, name: card.name, realm: card.realm, points: card.points || 0, danger: card.danger || 0, player: g.players[pIdx].name };
+  g.log.unshift(`🚨 TAMTAM: ${g.players[pIdx].name} spielt „${card.name}" – ein FETTES Monster!`);
+}
+
 function mkGame(playerNames, totalSeasons, mode) {
   cardId = 0;
   totalSeasons = totalSeasons === 5 ? 5 : 4; // Original 4, Hausregel 5
@@ -361,6 +375,7 @@ function mkGame(playerNames, totalSeasons, mode) {
     hands: [], seasonCard: null, bonusGiven: [],
     turn: 0, roundIdx: 0, roundNo: 0, seTurn: 0,
     season: -1, phase: "draft", dice: null, reveal: null, show: null,
+    gameId: ++gameIdCounter, fanfareId: 0, fanfare: null,
     log: [],
   };
   dealSeason(g, 0);
@@ -879,6 +894,210 @@ function computeReveal(g) {
   return { players: result, ranked };
 }
 
+// ------------------------------ 🤖 Bots --------------------------------------
+// Bots sind echte Mitspieler im Raum (connected: true, ohne WebSocket). Der Host
+// fügt sie in der Lobby hinzu/entfernt sie – so könnt ihr zu zweit (oder sogar
+// allein) trotzdem eine 3er-, 4er- oder 5er-Runde spielen. botApply() macht genau
+// EINEN Bot-Zug; der Server plant ihn mit kleiner Pause, damit es lebendig wirkt.
+
+const BOT_NAMES = ["🤖 Robbi", "🤖 Berta", "🤖 Ziko", "🤖 Mona", "🤖 Karl", "🤖 Fritzi"];
+
+function nextBotName(room) {
+  const used = new Set(room.players.map((p) => p.name));
+  return BOT_NAMES.find((n) => !used.has(n)) || `🤖 Bot ${room.players.length}`;
+}
+
+function addBotToRoom(room) {
+  if (!room.game || room.game.phase !== "lobby") return "Bots lassen sich nur in der Lobby hinzufügen.";
+  if (room.players.length >= 5) return "Mehr als 5 Spieler passen nicht an den Tisch.";
+  room.players.push({ name: nextBotName(room), ws: null, token: null, connected: true, isBot: true });
+  return null;
+}
+
+function removeBotFromRoom(room, name) {
+  if (!room.game || room.game.phase !== "lobby") return "Bots lassen sich nur in der Lobby entfernen.";
+  const k = room.players.findIndex((p) => p.isBot && p.name === String(name || ""));
+  if (k < 0) return "Dieser Bot ist nicht im Raum.";
+  room.players.splice(k, 1);
+  return null;
+}
+
+// Grobe, faire Heuristik: wie viel ist diese Karte dem Spieler gerade wert?
+function botScoreCard(g, i, card) {
+  const p = g.players[i];
+  if (card.type === "Ziel") return 30; // Ziele bringen am Ende oft viele Punkte
+  if (card.type === "Monster") {
+    const base = 18 + 2 * (card.points || 0) + (card.realm === g.seasonCard ? 12 : 0)
+      + (card.draw > 0 ? 3 : 0) - 2 * (card.danger || 0) + (isBigMonster(card) ? 4 : 0);
+    if (cardPlayable(card, p)) return base;
+    return 8 + 0.8 * (card.points || 0); // unspielbar: für später einlagern kann sich lohnen
+  }
+  if (card.type === "Land") {
+    if (!cardPlayable(card, p)) return 1 + (card.level || 1);
+    let s = 6 + 3 * (card.level || 1) + (card.realm === g.seasonCard ? 5 : 0) + (card.realm === "traum" ? 4 : 0);
+    if (card.realm !== "traum" && (p.lands[card.realm] || 0) < 2) s += 4; // schaltet größere Monster frei
+    return s;
+  }
+  if (card.type === "Mitarbeiter") {
+    if ((p.coins || 0) < card.cost) return 4;
+    if (card.kind === "realm" || card.kind === "cage") return 13;
+    if (card.kind === "dangerCoin" || card.kind === "eventCoin") return 12;
+    return 10;
+  }
+  if (card.type === "Event") {
+    if (card.kind === "coins2" || card.kind === "summer" || card.kind === "show") return 11;
+    if (card.kind === "tour") return 8 + 2 * (p.lands[card.realm] || 0);
+    return 9;
+  }
+  return 5;
+}
+
+// Landpunkt-Mitarbeiter: Reich mit den meisten freien Punkten (ermöglicht neue Monster)
+function botLandRealm(g, p) {
+  const free = freeLandsOf(p.lands, p.seasonMonsters);
+  let best = "wald", bestV = -1;
+  REALMS.forEach((r) => { const v = free[r.id] || 0; if (v > bestV) { bestV = v; best = r.id; } });
+  return best;
+}
+
+// Wahl aus einem Kartenstapel: beste spielbare Karte ausspielen, sonst Sinnvolles einlagern.
+// needDiscard (⚡ 2er): gleich die Karte für die offene Ablage mitwählen.
+function botPickFrom(g, i, cards, needDiscard) {
+  const p = g.players[i];
+  const sc = (c) => botScoreCard(g, i, c);
+  let bestPlay = null, bestCard = null;
+  cards.forEach((c) => {
+    if (!bestCard || sc(c) > sc(bestCard)) bestCard = c;
+    const playable = c.type !== "Ziel" && cardPlayable(c, p);
+    if (playable && (!bestPlay || sc(c) > sc(bestPlay))) bestPlay = c;
+  });
+  const ziel = cards.find((c) => c.type === "Ziel") || null;
+  let pick = null;
+  if (ziel && (!bestPlay || sc(bestPlay) < 14)) pick = { card: ziel, action: "keep" };      // Ziel annehmen
+  else if (bestPlay && sc(bestPlay) >= 10) pick = { card: bestPlay, action: "play" };        // gern ausspielen
+  else if (bestCard && sc(bestCard) >= 18 && cards.length > 1) pick = { card: bestCard, action: "keep" }; // Fettes für später einlagern
+  else if (bestPlay) pick = { card: bestPlay, action: "play" };
+  else pick = { card: bestCard, action: "keep" };                                           // muss ja eine Karte nehmen
+  const realm = pick.card.type === "Mitarbeiter" && pick.card.kind === "land" ? botLandRealm(g, p) : null;
+  const msg = { cardId: pick.card.id, action: pick.action, realm, discardId: null };
+  if (needDiscard) {
+    const rest = cards.filter((c) => c.id !== pick.card.id);
+    let worst = rest[0] || null;
+    rest.forEach((c) => { if (sc(c) < sc(worst)) worst = c; });
+    msg.discardId = worst ? worst.id : null;
+  }
+  return msg;
+}
+
+// Beste Karte aus der Aufbewahrung, falls sich das Ausspielen gerade lohnt
+function botBestStoredPlay(g, i, minScore) {
+  const p = g.players[i];
+  let best = null, bestSc = minScore - 1;
+  p.stored.forEach((c) => {
+    if (c.type === "Ziel") return;
+    if (!cardPlayable(c, p)) return;
+    const s = botScoreCard(g, i, c);
+    if (s > bestSc) { bestSc = s; best = c; }
+  });
+  if (!best) return null;
+  return { card: best, realm: best.type === "Mitarbeiter" && best.kind === "land" ? botLandRealm(g, p) : null };
+}
+
+// Schlechteste Karte (für die offene Ablage)
+function botWorstCardId(g, i, cards) {
+  let worst = cards[0] || null;
+  cards.forEach((c) => { if (botScoreCard(g, i, c) < botScoreCard(g, i, worst)) worst = c; });
+  return worst ? worst.id : null;
+}
+
+const isBotIdx = (room, i) => !!(room.players[i] && room.players[i].isBot);
+
+// Welcher Bot muss gerade handeln? (Genau EIN Zug pro Aufruf – die Kette treibt sich
+// über broadcast() → scheduleBots() von selbst weiter, mit natürlichen Pausen.)
+function botPendingAction(room) {
+  const g = room.game;
+  if (!g || !g.phase || g.phase === "lobby" || room.botStuck) return null;
+  for (let i = 0; i < g.players.length; i++) {
+    if (!isBotIdx(room, i)) continue;
+    const p = g.players[i];
+    // 1) Zieh-Schlange zuerst: gezogene Karten entscheiden, sonst geht nichts weiter
+    if ((p.freshDraw || []).some((c) => c.type !== "Ziel") && (g.phase === "draft" || g.phase === "seasonEnd")) return { i, kind: "fresh" };
+    // 2) Saisonende: erst Aufbewahrung ausspielen, dann „Fertig“
+    if (g.phase === "seasonEnd" && g.seTurn === i) return { i, kind: "seasonEnd" };
+    if (g.phase !== "draft") continue;
+    // 3) Draft je nach Modus
+    if (g.mode === "turbo") {
+      if (g.turboDiscard && g.turboDiscard[i]) return { i, kind: "discard" };
+      if ((g.hands[i] || []).length > 0) return { i, kind: "turboPick" };
+      const st = botBestStoredPlay(g, i, 16);
+      if (st) return { i, kind: "storedPlay" };
+    } else {
+      if (g.awaitDiscard === i) return { i, kind: "discard" };
+      if (g.show && g.show.cur === i) return { i, kind: "reveal" };
+      if (g.show) continue; // gerade deckt jemand anderes auf – abwarten
+      if ((g.hands[i] || []).length > 0 && !g.sim.ready[i]) return { i, kind: "simPick" };
+      const st = botBestStoredPlay(g, i, 16);
+      if (st) return { i, kind: "storedPlay" };
+    }
+  }
+  return null;
+}
+
+// EINEN Bot-Zug ausführen. Liefert true, wenn gehandelt wurde.
+function botApply(room) {
+  const act = botPendingAction(room);
+  if (!act) return false;
+  const g = room.game;
+  const i = act.i;
+  let res = null;
+  try {
+    if (act.kind === "fresh") {
+      const p = g.players[i];
+      const card = (p.freshDraw || []).find((c) => c.type !== "Ziel");
+      const realm = card.type === "Mitarbeiter" && card.kind === "land" ? botLandRealm(g, p) : null;
+      const wantPlay = cardPlayable(card, p) && botScoreCard(g, i, card) >= 12;
+      res = wantPlay
+        ? handleFreshDecide(g, i, { cardId: card.id, action: "play", realm })
+        : handleFreshDecide(g, i, { cardId: card.id, action: "keep" });
+    } else if (act.kind === "simPick") {
+      res = handleSimPick(g, i, botPickFrom(g, i, g.hands[i], g.mode === "schnell" && g.players.length === 2));
+    } else if (act.kind === "reveal") {
+      res = handleReveal(g, i);
+    } else if (act.kind === "discard") {
+      res = handleDiscard(g, i, { cardId: botWorstCardId(g, i, g.hands[i]) });
+    } else if (act.kind === "turboPick") {
+      res = handlePick(g, i, botPickFrom(g, i, g.hands[i], false));
+    } else if (act.kind === "storedPlay") {
+      const st = botBestStoredPlay(g, i, 16);
+      res = st ? handlePick(g, i, { cardId: st.card.id, action: "play", realm: st.realm }) : { ok: true };
+    } else if (act.kind === "seasonEnd") {
+      const st = botBestStoredPlay(g, i, 10);
+      res = st ? handlePick(g, i, { cardId: st.card.id, action: "play", realm: st.realm }) : handleSeasonDone(g, i);
+    }
+  } catch (e) {
+    res = { err: String((e && e.message) || e) };
+  }
+  if (res && res.err) {
+    room.botErr = (room.botErr || 0) + 1;
+    if (room.botErr > 30) {
+      room.botStuck = true;
+      addLog(g, ["⚠️ Ein Bot ist durcheinander geraten – ihr könnt ohne ihn weiterspielen (bitte kurz melden)."]);
+    }
+  } else room.botErr = 0;
+  return true;
+}
+
+// Bot-Zug mit kleiner Pause einplanen (fühlt sich an wie ein echter Mitspieler)
+function scheduleBots(room) {
+  if (room.botTimer || room.botStuck) return;
+  if (!botPendingAction(room)) return;
+  room.botTimer = setTimeout(() => {
+    room.botTimer = null;
+    botApply(room);
+    broadcast(room);
+  }, 700 + Math.floor(Math.random() * 900));
+}
+
 // ------------------------------- Räume -------------------------------------
 
 const rooms = new Map();   // code → room
@@ -924,7 +1143,9 @@ function viewFor(room, idx) {
     you: idx,
     isHost: idx === 0,
     phase: g ? g.phase : "lobby",
-    names: room.players.map((p) => ({ name: p.name, connected: p.connected })),
+    gameId: (g && g.gameId) || 0,
+    fanfare: (g && g.fanfare) || null,
+    names: room.players.map((p) => ({ name: p.name, connected: p.connected, isBot: !!p.isBot })),
     seasons: room.seasons || (g && g.totalSeasons) || 4,
     mode: room.mode || "langsam",
   };
@@ -976,6 +1197,7 @@ function sendTo(ws, obj) {
 
 function broadcast(room) {
   room.players.forEach((p, i) => sendTo(p.ws, viewFor(room, i)));
+  scheduleBots(room); // 🤖 Bots handeln kurz danach von selbst
 }
 
 // ------------------------------ HTTP-Server ---------------------------------
@@ -1085,6 +1307,21 @@ wss.on("connection", (ws) => {
           broadcast(room);
           break;
         }
+        // 🤖 Bot hinzufügen / entfernen (nur Host, nur in der Lobby)
+        case "addBot": {
+          if (!room || !joined || joined.idx !== 0) return;
+          const err = addBotToRoom(room);
+          if (err) reply({ t: "error", msg: err });
+          else broadcast(room);
+          break;
+        }
+        case "removeBot": {
+          if (!room || !joined || joined.idx !== 0) return;
+          const err = removeBotFromRoom(room, msg.name);
+          if (err) reply({ t: "error", msg: err });
+          else broadcast(room);
+          break;
+        }
         // ⚡ Schnell: verdeckte Wahl abgeben – Ausführung erst, wenn alle bestätigt haben
         case "simPick": {
           if (!room || !room.game || !joined) return;
@@ -1145,6 +1382,14 @@ wss.on("connection", (ws) => {
           else broadcast(room);
           break;
         }
+        // 🔄 Host: laufende Partie abbrechen und zurück in die Lobby (ohne sie zu Ende zu spielen)
+        case "newGame": {
+          if (!room || !joined || joined.idx !== 0 || !room.game) return;
+          if (room.game.phase === "lobby") return;
+          room.game = { phase: "lobby", log: [] };
+          broadcast(room);
+          break;
+        }
         case "rematch": {
           if (!room || !joined || joined.idx !== 0) return;
           if (!room.game || (room.game.phase !== "reveal" && room.game.phase !== "lobby")) return;
@@ -1191,6 +1436,7 @@ setInterval(() => {
   const now = Date.now();
   for (const [code, room] of rooms) {
     if (now - room.lastActivity > 2 * 60 * 60 * 1000) {
+      if (room.botTimer) clearTimeout(room.botTimer);
       room.players.forEach((p) => p.token && tokenMap.delete(p.token));
       rooms.delete(code);
     }
