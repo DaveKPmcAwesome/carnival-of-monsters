@@ -900,11 +900,15 @@ function computeReveal(g) {
 // allein) trotzdem eine 3er-, 4er- oder 5er-Runde spielen. botApply() macht genau
 // EINEN Bot-Zug; der Server plant ihn mit kleiner Pause, damit es lebendig wirkt.
 
-const BOT_NAMES = ["🤖 Robbi", "🤖 Berta", "🤖 Ziko", "🤖 Mona", "🤖 Karl", "🤖 Fritzi"];
+// 🤖 Bot-Namen (Nutzer-Wunsch): zufällige Wahl aus den FREIEN Namen – ist einer davon
+// schon als echter Spieler im Raum (Groß-/Kleinschreibung egal), bleibt er tabu.
+const BOT_NAMES = ["Robbie", "Dave", "Caro", "Jojo", "Momo", "Nina", "Friedrich", "Leo", "Marie", "Jan"];
 
 function nextBotName(room) {
-  const used = new Set(room.players.map((p) => p.name));
-  return BOT_NAMES.find((n) => !used.has(n)) || `🤖 Bot ${room.players.length}`;
+  const taken = new Set(room.players.map((p) => p.name.replace(/^🤖\s*/, "").trim().toLowerCase()));
+  const free = BOT_NAMES.filter((n) => !taken.has(n.toLowerCase()));
+  if (!free.length) return `🤖 Bot ${room.players.length}`; // Fallback, falls alle 10 Namen belegt sind
+  return `🤖 ${free[Math.floor(Math.random() * free.length)]}`; // 🤖 bleibt dran: im Spielverlauf & in Bannern sofort als Bot erkennbar
 }
 
 function addBotToRoom(room) {
