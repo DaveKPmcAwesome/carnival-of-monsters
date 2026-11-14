@@ -454,7 +454,7 @@ window.selectCard = (id, from) => {
 // 📐 Saisonende: der „Fertig“-Knopf sitzt UNTEN in der Aktionsleiste (Nutzer-Wunsch) –
 // immer am unteren Rand, wie sonst „✅ Ausspielen“.
 function seasonEndButtons(s) {
-  return `<button class="${s.seTurn + 1 < s.players.length ? "btn-amber" : "btn-red"}" style="width:100%" onclick="seasonDone()">
+  return `<button class="${s.seTurn + 1 < s.players.length ? "btn-amber" : "btn-red"}" onclick="seasonDone()">
     ${s.seTurn + 1 < s.players.length ? `✅ Fertig – weiter an ${esc(s.players[s.seTurn + 1].name)}` : "🎲 Jetzt einmal für alle würfeln!"}</button>`;
 }
 
@@ -498,13 +498,12 @@ function renderActionBar() {
   const isEntdecker = selected.type === "Mitarbeiter" && selected.kind === "land";
   if (staged) {
     // ✅ Wahl steht: „Fertig“ ersetzt „Ausspielen“, „Ändern“ ersetzt „Einlagern“ (Nutzer-Wunsch).
+    // Gleiche Button-Klassen & kein Extra-Wrapper → exakt dasselbe Format wie Ausspielen/Einlagern.
     // Bei ⚡ 2er ist „Fertig“ erst klickbar, wenn die Abwurfkarte gewählt ist.
     const twoP = state.mode === "schnell" && state.players.length === 2 && state.hand.length > 1;
     inner = `<div class="note" style="margin-bottom:6px">✅ Diese Karte ist schon gewählt – „✅ Fertig!“ bestätigt die Wahl, mit „✏️ Ändern“ (oder einer anderen Handkarte) kannst du noch neu wählen.</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
-        <button class="btn-green" style="flex:1" ${!twoP || simDiscard ? "" : "disabled"} onclick="simConfirm()">✅ Fertig!</button>
-        <button class="btn-ghost" style="flex:1" onclick="simEdit()">✏️ Ändern</button>
-      </div>`;
+      <button class="btn-green" ${!twoP || simDiscard ? "" : "disabled"} onclick="simConfirm()">✅ Fertig!</button>
+      <button class="btn-indigo" onclick="simEdit()">✏️ Ändern</button>`;
   } else if (isEntdecker) {
     inner = `<div class="note" style="margin-bottom:6px">„${esc(selected.name)}" – Typ des Landes festlegen: <b>dauerhaft!</b> (−${selected.cost} 👑)</div>`;
     inner += ALL_REALMS.map((r) => `<button class="btn-indigo" onclick="chooseRealm('${r.id}')" ${staged ? "disabled" : ""}>${r.emoji} ${r.short}${window._realm === r.id ? " ✓" : ""}</button>`).join("");
@@ -538,7 +537,7 @@ function renderActionBar() {
   if (selected.type === "Land" && !canPlayLand(selected, me2)) note += " – entfernte Länder brauchen Vorbedingung";
   if (selected.type === "Mitarbeiter" && me2.coins < selected.cost) note += " · 🏦 Kredit nötig (+3 👑, −5 SP)";
   if (selected.type === "Ziel") note += " · Ziele nur annehmen, nicht ausspielen";
-  if (seTurnActive) inner += `<div style="margin-top:8px">${seasonEndButtons(state)}</div>`;
+  if (seTurnActive) inner += seasonEndButtons(state);
   actionInner.innerHTML = inner + `<div class="note">${note}</div>`;
   actionBar.style.display = "block";
 }
