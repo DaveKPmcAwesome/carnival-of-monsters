@@ -307,7 +307,12 @@ function turnBanner(s) {
     }
     // ⚡ Schnell & 🐢 Langsam: alle wählen gleichzeitig verdeckt
     if (s.mode === "schnell" || s.mode === "langsam") {
-      const chips = `<div class="chips" style="margin-top:6px;justify-content:center">${s.players.map((p, i) => `<span class="chip">${s.simReady && s.simReady[i] ? "✅" : "⏳"} ${esc(p.name)}</span>`).join("")}</div>`;
+      // Sobald nur noch EINER wählt: „Alle warten auf …“ (Nutzer-Wunsch)
+      const waiting = s.simWaiting || [];
+      const waitMsg = waiting.length === 1
+        ? `<div class="center" style="margin-top:6px;font-weight:800;color:#fcd34d">⏳ Alle warten auf ${waiting[0] === s.you ? "DICH" : esc(s.players[waiting[0]].name)}…</div>`
+        : "";
+      const chips = `${waitMsg}<div class="chips" style="margin-top:6px;justify-content:center">${s.players.map((p, i) => `<span class="chip">${s.simReady && s.simReady[i] ? "✅" : "⏳"} ${esc(p.name)}</span>`).join("")}</div>`;
       // 🐢 Aufdeck-Phase: reihum deckt jeder seine Karte selbst auf
       if (s.showTurn >= 0) {
         if (s.awaitDiscard === s.you) return `<div class="banner your">🗑️ Lege jetzt 1 Karte OFFEN aus dem Spiel ab!</div>`;
@@ -446,8 +451,16 @@ window.selectCard = (id, from) => {
   render();
 };
 
+// 📐 Saisonende: der „Fertig“-Knopf sitzt UNTEN in der Aktionsleiste (Nutzer-Wunsch) –
+// immer am unteren Rand, wie sonst „✅ Ausspielen“.
+function seasonEndButtons(s) {
+  return `<button class="${s.seTurn + 1 < s.players.length ? "btn-amber" : "btn-red"}" style="width:100%" onclick="seasonDone()">
+    ${s.seTurn + 1 < s.players.length ? `✅ Fertig – weiter an ${esc(s.players[s.seTurn + 1].name)}` : "🎲 Jetzt einmal für alle würfeln!"}</button>`;
+}
+
 function renderActionBar() {
-  if (!selected || !(state.phase === "draft" || state.phase === "seasonEnd")) { actionBar.style.display = "none"; return; }
+  const seTurnActive = state.phase === "seasonEnd" && state.isYourSeasonTurn;
+  if ((!selected || !(state.phase === "draft" || state.phase === "seasonEnd")) && !seTurnActive) { actionBar.style.display = "none"; return; }
   // ⚡/🐢 schon bestätigt und nicht im Ändern-Modus: nichts mehr zu tun
   if ((state.mode === "schnell" || state.mode === "langsam") && state.phase === "draft" && state.mySimPick && !window._simEditing) { actionBar.style.display = "none"; return; }
   // offene Ablage: 2er-Wartezustand (Langsam) oder persönlicher Turbo-Schritt
@@ -459,6 +472,12 @@ function renderActionBar() {
     return;
   }
   const me = state.players[state.you];
+  // 📐 Saisonende, keine Karte gewählt: nur der „Fertig“-Knopf unten
+  if (seTurnActive && !selected) {
+    actionInner.innerHTML = seasonEndButtons(state) + `<div class="note">Du darfst vorher noch Eingelagertes ausspielen – einfach antippen.</div>`;
+    actionBar.style.display = "block";
+    return;
+  }
   let canUse;
   if (state.phase === "seasonEnd") canUse = state.isYourSeasonTurn;
   else if (state.mode === "langsam") canUse = state.isYourTurn;
@@ -511,6 +530,7 @@ function renderActionBar() {
   if (selected.type === "Mitarbeiter" && me2.coins < selected.cost) note += " · 🏦 Kredit nötig (+3 👑, −5 SP)";
   if (selected.type === "Ziel") note += " · Ziele nur annehmen, nicht ausspielen";
   if (staged) inner = `<div class="note" style="margin-bottom:6px">✅ Diese Karte ist schon gewählt – tippe unten auf „✅ Fertig!“. Mit „✏️ Ändern“ oder einer anderen Handkarte kannst du noch neu wählen.</div>` + inner;
+  if (seTurnActive) inner += `<div style="margin-top:8px">${seasonEndButtons(state)}</div>`;
   actionInner.innerHTML = inner + `<div class="note">${note}</div>`;
   actionBar.style.display = "block";
 }
@@ -626,6 +646,7 @@ function renderReveal(s) {
       ${p.goalResults.length === 0 ? '<span class="muted">keine Ziele</span>' : ""}
       ${p.goalResults.map((gr) => `<div class="revrow" style="background:${gr.pts > 0 ? "rgba(124,58,237,0.25)" : "rgba(255,255,255,0.05)"};opacity:${gr.pts > 0 ? 1 : 0.65}">
         <span><b>${esc(gr.name)}</b> <span class="goal">(${esc(gr.text)})</span></span><span class="pts">+${gr.pts}</span></div>`).join("")}
+      ${p.goalResults.length ? `<div class="revrow" style="background:rgba(245,158,11,0.2)"><span><b>🎯 Ziele gesamt</b></span><span class="pts"><b>+${p.goalResults.reduce((sum, gr) => sum + gr.pts, 0)}</b></span></div>` : ""}
       </div>`).join("");
   if (revealStep === 3) body = `<p class="center muted" style="margin-bottom:8px">Kronen, Jäger &amp; Kredite (1 👑 = 1 SP · 1 🏹 = 1 SP · Kredit = −5 SP)</p>` +
     rv.players.map((p, i) => `<div class="revrow ${i === s.you ? "me" : ""}">
@@ -761,10 +782,8 @@ function render() {
   if (s.phase === "seasonEnd") {
     html += `<div class="card-panel"><div class="banner your" style="margin:0 0 8px">📐 Alle Karten gewählt!</div>
       <p class="muted center">${s.isYourSeasonTurn
-        ? "Spiele noch Eingelagertes aus – danach „Fertig“. Am Ende wird <b>einmal für alle</b> gewürfelt."
+        ? "Spiele noch Eingelagertes aus – danach tippe unten auf „✅ Fertig“. Am Ende wird <b>einmal für alle</b> gewürfelt."
         : "Warte kurz, bis alle fertig sind…"}</p>
-      ${s.isYourSeasonTurn ? `<button class="${s.seTurn + 1 < s.players.length ? "btn-amber" : "btn-red"}" style="width:100%;margin-top:8px" onclick="seasonDone()">
-        ${s.seTurn + 1 < s.players.length ? `✅ Fertig – weiter an ${esc(s.players[s.seTurn + 1].name)}` : "🎲 Jetzt einmal für alle würfeln!"}</button>` : ""}
     </div>`;
   }
   if (s.phase === "danger") html += renderDanger(s);
