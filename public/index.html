@@ -160,6 +160,13 @@ function connect() {
       render();
     }
     else if (msg.t === "token") localStorage.setItem("com-token", msg.token);
+    else if (msg.t === "closed") {
+      // 🚪 Raum wurde geschlossen (Host) – zurück zum Startbildschirm
+      localStorage.removeItem("com-token");
+      state = null; simSel = null; simDiscard = null; selected = null; selectedFrom = null; window._simEditing = false;
+      renderConnect();
+      toast(msg.msg || "Der Raum wurde geschlossen.");
+    }
     else if (msg.t === "error") { toast(msg.msg); if (!state) renderConnect(); }
   };
   ws.onclose = () => {
@@ -289,6 +296,7 @@ function header(s) {
     </span>
     ${s.isHost && (s.phase === "draft" || s.phase === "seasonEnd" || s.phase === "danger")
       ? `<button class="btn-ghost" style="font-size:0.75rem;padding:4px 10px" title="Partie abbrechen und zurück in die Lobby (nur Host)" onclick="newGame()">🔄 Neue Partie</button>` : ""}
+    <button class="btn-ghost" style="font-size:0.75rem;padding:4px 10px" title="Raum verlassen bzw. schließen – zurück zum Startbildschirm" onclick="leaveRoom()">🚪</button>
   </div>`;
 }
 function seasonBox(s) {
@@ -615,6 +623,7 @@ function renderLobby(s) {
       ${s.isHost
         ? `<button class="btn-amber" style="max-width:420px;width:100%" ${s.names.filter((p) => p.connected).length >= 2 ? "" : "disabled"} onclick="startGame()">🚀 Partie starten (ab 2 Spielern)</button>`
         : `<div class="banner wait" style="width:100%;max-width:420px">Warte, bis der Host startet…</div>`}
+      <button class="btn-ghost" style="max-width:420px;width:100%;font-size:0.85rem" onclick="leaveRoom()">${s.isHost ? "🚪 Raum schließen – alle landen wieder am Start" : "🚪 Raum verlassen"}</button>
       <p class="muted center" style="max-width:340px">Ihr seid 2–5 Spieler. Jeder sieht nur seine eigenen Karten – der Server wacht darüber.</p>
     </div>`;
 }
@@ -622,6 +631,23 @@ window.startGame = () => send({ t: "start" });
 // 🤖 Bots (nur Host, nur Lobby)
 window.addBot = () => send({ t: "addBot" });
 window.removeBot = (name) => { if (confirm(`${name} entfernen?`)) send({ t: "removeBot", name }); };
+// 🚪 Raum verlassen (Gast) bzw. für alle schließen (Host) – zurück zum Startbildschirm.
+// Das Token wird gelöscht: Beim nächsten Öffnen landet man NICHT mehr im alten Raum.
+window.leaveRoom = () => {
+  if (!state) return;
+  const host = state.you === 0;
+  const midGame = state.phase !== "lobby";
+  const q = host
+    ? `Raum für ALLE schließen?\nAlle Spieler (${state.names.length}) landen wieder am Start.` + (midGame ? `\nDie laufende Partie wird beendet.` : ``)
+    : midGame
+      ? `Partie verlassen?\nDu kannst danach NICHT zu dieser Partie zurückkehren.`
+      : `Raum verlassen?`;
+  if (!confirm(q)) return;
+  send({ t: "leave" });
+  localStorage.removeItem("com-token");
+  state = null; simSel = null; simDiscard = null; selected = null; selectedFrom = null; window._simEditing = false;
+  renderConnect();
+};
 
 function renderDanger(s) {
   const d = s.dice;
