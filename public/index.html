@@ -463,7 +463,7 @@ function renderActionBar() {
   const seTurnActive = state.phase === "seasonEnd" && state.isYourSeasonTurn;
   // ⚡/🐢 schon bestätigt und nicht im Ändern-Modus: unten großer „Ändern“-Knopf –
   // die Wahl bleibt änderbar, solange nicht alle Spieler fertig sind
-  if ((state.mode === "schnell" || state.mode === "langsam") && state.phase === "draft" && state.mySimPick && !window._simEditing) {
+  if ((state.mode === "schnell" || state.mode === "langsam") && state.phase === "draft" && state.showTurn < 0 && state.mySimPick && !window._simEditing) {
     actionInner.innerHTML = `<button class="btn-indigo" onclick="simEdit()">✏️ Ändern</button>
       <div class="note">Deine Wahl steht fest – du kannst sie noch ändern, solange nicht alle fertig sind.</div>`;
     actionBar.style.display = "block";
@@ -487,7 +487,7 @@ function renderActionBar() {
   }
   let canUse;
   if (state.phase === "seasonEnd") canUse = state.isYourSeasonTurn;
-  else if (state.mode === "langsam") canUse = state.isYourTurn;
+  else if (state.mode === "langsam") canUse = state.isYourTurn || state.phase === "draft"; // 🐢 verdeckte Wahl ist gleichzeitig (v1.7) – jeder darf die Leiste nutzen
   else canUse = true; // ⚡/🚀: Eingelagertes jederzeit, Hand sobald du Karten hast
   if (!canUse) { actionBar.style.display = "none"; return; }
   // ⚡/🐢 Schnell & Langsam: Hand-Karten werden nur verdeckt GEWÄHLT –
