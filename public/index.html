@@ -153,7 +153,7 @@ function connect() {
       if (simSel && !((state.hand || []).some((c) => c.id === simSel.cardId))) { simSel = null; simDiscard = null; }
       if (!state.mySimPick) {
         if (!simSel) window._simEditing = false;
-      } else if (!simSel && (state.hand || []).some((c) => c.id === state.mySimPick.cardId)) {
+      } else if (!window._simEditing && !simSel && (state.hand || []).some((c) => c.id === state.mySimPick.cardId)) {
         simSel = { cardId: state.mySimPick.cardId, action: state.mySimPick.action, realm: state.mySimPick.realm };
         simDiscard = state.mySimPick.discardId || null;
       }
@@ -325,8 +325,9 @@ function turnBanner(s) {
         return `<div class="banner wait">⏳ ${esc(s.players[s.showTurn].name)} deckt gerade auf…</div>`;
       }
       if (s.mySimPick && !window._simEditing)
-        return `<div class="banner your">✅ Deine Wahl steht fest – warte auf die anderen…</div>${chips}
-          <div class="center" style="margin-top:6px"><button class="btn-ghost" style="font-size:0.8rem;padding:6px 12px" onclick="simEdit()">✏️ Ändern</button></div>`;
+        return `<div class="banner your">✅ Deine Wahl steht fest – du kannst unten noch ✏️ ändern, solange nicht alle fertig sind…</div>${chips}`;
+      if (s.mySimPick && window._simEditing)
+        return `<div class="banner your">✏️ Wähle neu und tippe danach unten auf „✅ Fertig!“ – bis dahin bleibt deine bisherige Wahl bestehen.</div>${chips}`;
       if (simSel) {
         if (s.players.length === 2 && s.mode === "schnell" && s.hand.length > 1 && !simDiscard)
           return `<div class="banner your">🗑️ Karte gewählt – jetzt die ABWURFKARTE antippen: Sie wird OFFEN abgelegt und alle sehen sie!</div>${chips}`;
@@ -460,9 +461,15 @@ function seasonEndButtons(s) {
 
 function renderActionBar() {
   const seTurnActive = state.phase === "seasonEnd" && state.isYourSeasonTurn;
+  // ⚡/🐢 schon bestätigt und nicht im Ändern-Modus: unten großer „Ändern“-Knopf –
+  // die Wahl bleibt änderbar, solange nicht alle Spieler fertig sind
+  if ((state.mode === "schnell" || state.mode === "langsam") && state.phase === "draft" && state.mySimPick && !window._simEditing) {
+    actionInner.innerHTML = `<button class="btn-indigo" onclick="simEdit()">✏️ Ändern</button>
+      <div class="note">Deine Wahl steht fest – du kannst sie noch ändern, solange nicht alle fertig sind.</div>`;
+    actionBar.style.display = "block";
+    return;
+  }
   if ((!selected || !(state.phase === "draft" || state.phase === "seasonEnd")) && !seTurnActive) { actionBar.style.display = "none"; return; }
-  // ⚡/🐢 schon bestätigt und nicht im Ändern-Modus: nichts mehr zu tun
-  if ((state.mode === "schnell" || state.mode === "langsam") && state.phase === "draft" && state.mySimPick && !window._simEditing) { actionBar.style.display = "none"; return; }
   // offene Ablage: 2er-Wartezustand (Langsam) oder persönlicher Turbo-Schritt
   if (state.phase === "draft" && (state.awaitDiscard === state.you || (state.mode === "turbo" && state.turboDiscard))) {
     if (state.mode === "turbo" && selectedFrom !== "hand") { actionBar.style.display = "none"; return; }
@@ -747,7 +754,7 @@ function render() {
     const pickDiscard = s.mode === "schnell" && !!simSel && s.players.length === 2 && s.hand.length > 1;
     const canPickHand = s.awaitDiscard === s.you || s.turboDiscard
       || (s.mode === "turbo" && !s.turboDiscard)
-      || ((s.mode === "schnell" || s.mode === "langsam") && !s.mySimPick && !freshBusy && s.showTurn < 0);
+      || ((s.mode === "schnell" || s.mode === "langsam") && (!s.mySimPick || window._simEditing) && !freshBusy && s.showTurn < 0);
     const handLabel = s.awaitDiscard === s.you || s.turboDiscard
       ? "🗑️ Wähle 1 Karte, die OFFEN aus dem Spiel abgelegt wird – alle sehen sie!"
       : pickDiscard
@@ -765,25 +772,6 @@ function render() {
         selected: (selected && selected.id === c.id) || (simSel && c.id === simSel.cardId) || (!!simDiscard && c.id === simDiscard),
       })).join("")}</div>
       ${pickDiscard ? `<p class="muted center" style="margin-top:6px">Auf eine andere Karte tippen = offene Ablage. Auf deine Wahl (gelber Rahmen) tippen = ändern.</p>` : ""}
-    </div>`;
-  }
-  // ⚡/🐢 Zusammenfassung der verdeckten Wahl + Fertig-Button
-  if ((s.mode === "schnell" || s.mode === "langsam") && s.phase === "draft" && simSel && !freshBusy) {
-    const twoP = s.mode === "schnell" && s.players.length === 2 && s.hand.length > 1;
-    const main = s.hand.find((c) => c.id === simSel.cardId);
-    const dc = twoP ? s.hand.find((c) => c.id === simDiscard) : null;
-    html += `<div class="card-panel" style="border:2px solid #fbbf24">
-      <div class="label" style="color:#fcd34d">${s.mode === "langsam" ? "🐢" : "⚡"} Deine Wahl (verdeckt)</div>
-      ${twoP && !dc ? `<div class="banner your" style="margin:0 0 8px">🗑️ Es fehlt noch die ABWURFKARTE – tippe oben in deiner Hand an, welche Karte OFFEN abgelegt wird!</div>` : ""}
-      <div class="chips">
-        <span class="chip chip-amber">${simSel.action === "play" ? "✅ ausspielen" : "📥 einlagern"}: ${esc(main ? main.name || realmInfo(main.realm).name : "?")}</span>
-        ${twoP ? `<span class="chip">${dc ? "🗑️ offen ablegen: " + esc(dc.name || realmInfo(dc.realm).name) : "⏳ noch 1 Karte zum offenen Ablegen wählen"}</span>` : ""}
-      </div>
-      <div style="display:flex;gap:8px;margin-top:8px">
-        <button class="btn-green" style="flex:1" ${!twoP || dc ? "" : "disabled"} onclick="simConfirm()">✅ Fertig!</button>
-        <button class="btn-ghost" style="flex:1" onclick="simEdit()">✏️ Ändern</button>
-      </div>
-      <p class="muted center" style="margin-top:6px">${s.mode === "langsam" ? "Sobald alle fertig sind, deckt ihr NACHEINANDER auf – jeder klickt selbst „Jetzt aufdecken!“." : "Sobald alle fertig sind, wird alles gleichzeitig aufgedeckt und ausgeführt."}</p>
     </div>`;
   }
   if (s.phase === "seasonEnd") {
