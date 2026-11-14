@@ -1258,6 +1258,13 @@ wss.on("connection", (ws) => {
     try { msg = JSON.parse(raw.toString()); } catch { return; }
     const room = joined ? joined.room : (msg.room ? rooms.get(String(msg.room).toUpperCase()) : null);
     if (joined && room) room.lastActivity = Date.now();
+    // 🐛 Sitzplatz der Verbindung NEU auflösen: Nach splice (Bot entfernen /
+    // Spieler verlassen in der Lobby) kann der gespeicherte joined.idx veraltet
+    // sein. Die Verbindung gehört aber eindeutig zu genau einem Platz (p.ws).
+    if (joined && room) {
+      const liveSeat = room.players.findIndex((p) => p.ws === ws);
+      if (liveSeat >= 0 && liveSeat !== joined.idx) joined.idx = liveSeat;
+    }
 
     try {
       switch (msg.t) {
@@ -1414,6 +1421,35 @@ wss.on("connection", (ws) => {
           if (!room.game || (room.game.phase !== "reveal" && room.game.phase !== "lobby")) return;
           room.game = mkGame(room.players.map((p) => p.name), room.seasons || (room.game.totalSeasons || 4), room.mode || room.game.mode || "langsam");
           broadcast(room);
+          break;
+        }
+        // 🚪 Raum verlassen: Gast in der Lobby gibt seinen Platz frei,
+        // Gast in der Partie wird zum abwesenden Platz (Token ungültig),
+        // HOST schließt den Raum komplett – alle landen wieder am Start.
+        case "leave": {
+          if (!room || !joined || !room.players[joined.idx]) return;
+          const i = joined.idx;
+          const me = room.players[i];
+          if (i === 0) {
+            const bye = { t: "closed", msg: `🚪 ${me.name} hat den Raum geschlossen.` };
+            room.players.forEach((p) => sendTo(p.ws, bye));
+            if (room.botTimer) clearTimeout(room.botTimer);
+            room.players.forEach((p) => p.token && tokenMap.delete(p.token));
+            rooms.delete(room.code);
+            joined = null;
+          } else if (room.game && room.game.phase !== "lobby") {
+            me.connected = false;
+            me.ws = null;
+            tokenMap.delete(me.token);
+            addLog(room.game, [`🚪 ${me.name} hat den Raum verlassen.`]);
+            joined = null;
+            broadcast(room);
+          } else {
+            tokenMap.delete(me.token);
+            room.players.splice(i, 1);
+            joined = null;
+            broadcast(room);
+          }
           break;
         }
         case "chat": {
