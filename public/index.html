@@ -74,6 +74,13 @@
   .chatrow { display: flex; gap: 8px; margin-top: 8px; }
   .chatrow input { flex: 1; padding: 8px 12px; font-size: 0.85rem; }
   .chatrow button { padding: 8px 14px; font-size: 0.85rem; }
+#fanfare{position:fixed;inset:0;z-index:200;background:rgba(15,23,42,.72);display:flex;align-items:center;justify-content:center;cursor:pointer}
+#fanfare .fanbox{background:linear-gradient(160deg,#7c2d12,#b91c1c);color:#fff;text-align:center;padding:26px 34px;border-radius:18px;border:3px solid #fbbf24;box-shadow:0 12px 40px rgba(0,0,0,.5);animation:fanpop .5s cubic-bezier(.2,1.4,.4,1);max-width:90vw}
+#fanfare .fanbell{font-size:1.15rem;font-weight:700;letter-spacing:2px;color:#fde68a}
+#fanfare .fantitle{font-size:2rem;font-weight:800;margin:10px 0 4px}
+#fanfare .fansub{font-size:1rem}
+#fanfare .fanwho{margin-top:8px;font-size:1.1rem;font-weight:600}
+@keyframes fanpop{0%{transform:scale(.4);opacity:0}60%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
 </style>
 </head>
 <body>
@@ -137,6 +144,9 @@ function connect() {
     let msg; try { msg = JSON.parse(ev.data); } catch { return; }
     if (msg.t === "state") {
       state = msg;
+      // 🚨 Fanfare: neues FETTES Monster → großes TAMTAM (jede Fanfare nur 1× zeigen)
+      if (state.gameId !== (window._fanGame || 0)) { window._fanGame = state.gameId; window._fanSeen = (state.fanfare && state.fanfare.id) || null; }
+      else if (state.fanfare && state.fanfare.id !== window._fanSeen) { window._fanSeen = state.fanfare.id; showFanfare(state.fanfare); }
       // Auswahl zurücksetzen, wenn die gewählte Karte nicht mehr bei mir liegt
       if (selected && !(state.hand || []).concat(state.stored || []).some((c) => c.id === selected.id)) selected = null;
       // ⚡ verdeckte Wahl pflegen: nach der Ausführung ist sie weg, nach Reconnect wiederherstellen
@@ -277,6 +287,8 @@ function header(s) {
       ${me.credits ? `<span class="chip chip-red">🏦 ${me.credits}</span>` : ""}
       ${(s.mode || "langsam") === "langsam" ? `<span class="chip">🐢 Langsam</span>` : s.mode === "schnell" ? `<span class="chip">⚡ Schnell</span>` : `<span class="chip">🚀 Turbo</span>`}
     </span>
+    ${s.isHost && (s.phase === "draft" || s.phase === "seasonEnd" || s.phase === "danger")
+      ? `<button class="btn-ghost" style="font-size:0.75rem;padding:4px 10px" title="Partie abbrechen und zurück in die Lobby (nur Host)" onclick="newGame()">🔄 Neue Partie</button>` : ""}
   </div>`;
 }
 function seasonBox(s) {
@@ -360,10 +372,47 @@ window.simSetDiscard = (id) => { if (simDiscard === id) simDiscard = null; else 
 window.simConfirm = () => { window._simEditing = false; send({ t: "simPick", cardId: simSel.cardId, action: simSel.action, realm: simSel.realm, discardId: simDiscard }); };
 window.simEdit = () => { simSel = null; simDiscard = null; window._simEditing = true; render(); };
 window.revealNow = () => send({ t: "reveal" }); // 🐢 Langsam: „Jetzt aufdecken!“
+// 🚨 TAMTAM für FETTE Monster (Level 4 Standard / Level 10 Traum): Vollbild-Banner
+// + Dreifach-Gong, verschwindet nach 6 Sek. oder per Tipp auf das Banner.
+function showFanfare(f) {
+  const old = document.getElementById("fanfare");
+  if (old) old.remove();
+  const el = document.createElement("div");
+  el.id = "fanfare";
+  el.innerHTML = `<div class="fanbox">
+    <div class="fanbell">🔔 DING DING DING! 🔔</div>
+    <div class="fantitle">${realmInfo(f.realm).emoji} ${esc(f.name)}</div>
+    <div class="fansub">Ein FETTES Monster wird gespielt!</div>
+    <div class="fanwho">von ${esc(f.player)} · ⭐${f.points}${f.danger ? ` · ⚠️${f.danger}` : ""}</div>
+  </div>`;
+  el.onclick = () => el.remove();
+  document.body.appendChild(el);
+  fanfareDing();
+  setTimeout(() => { if (document.getElementById("fanfare") === el) el.remove(); }, 6000);
+}
+function fanfareDing() {
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    const ctx = fanfareDing._ctx || (fanfareDing._ctx = new AC());
+    [0, 0.18, 0.36].forEach((t) => {
+      const o = ctx.createOscillator(); const gn = ctx.createGain();
+      o.type = "sine"; o.frequency.value = 830;
+      const t0 = ctx.currentTime + t;
+      gn.gain.setValueAtTime(0.0001, t0);
+      gn.gain.exponentialRampToValueAtTime(0.3, t0 + 0.02);
+      gn.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.4);
+      o.connect(gn); gn.connect(ctx.destination);
+      o.start(t0); o.stop(t0 + 0.45);
+    });
+  } catch (e) {}
+}
 window.chooseRealm = (rid) => { window._realm = rid; renderActionBar(); };
 window.seasonDone = () => send({ t: "seasonDone" });
 window.next = () => send({ t: "next" });
 window.rematch = () => send({ t: "rematch" });
+// 🔄 Host: Partie abbrechen und zurück in die Lobby
+window.newGame = () => { if (confirm("Aktuelle Partie abbrechen und zurück in die Lobby? Alle Punkte dieser Partie gehen verloren.")) send({ t: "newGame" }); };
 window.revealNext = () => { revealStep++; render(); };
 
 function myZone(s) {
@@ -506,7 +555,12 @@ function renderLobby(s) {
       </div>
       <div class="card-panel" style="max-width:420px;width:100%">
         <div class="label">Spieler in der Lobby (${s.names.length}/5)</div>
-        ${s.names.map((p) => `<div style="padding:4px 0">${p.connected ? "👤" : "📴"} ${esc(p.name)}</div>`).join("")}
+        ${s.names.map((p) => `<div style="padding:4px 0;display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <span>${p.isBot ? "🤖" : p.connected ? "👤" : "📴"} ${esc(p.name)}${p.isBot ? ` <span class="muted" style="font-size:0.75rem">(Bot)</span>` : ""}</span>
+          ${s.isHost && p.isBot ? `<button class="btn-ghost" style="font-size:0.7rem;padding:2px 10px" title="Bot entfernen" onclick="removeBot('${esc(p.name)}')">✖</button>` : ""}
+        </div>`).join("")}
+        ${s.isHost && s.names.length < 5 ? `<button class="btn-ghost" style="width:100%;margin-top:8px;font-size:0.85rem" onclick="addBot()">🤖 Bot hinzufügen</button>
+        <p class="muted" style="margin:6px 0 0;font-size:0.75rem">Bots spielen ganz normal mit – gut, um zu zweit eine größere Runde zu spielen!</p>` : ""}
       </div>
       ${s.isHost ? `<div class="card-panel" style="max-width:420px;width:100%">
         <div class="label">Saisonanzahl (gilt für alle)</div>
@@ -531,6 +585,9 @@ function renderLobby(s) {
     </div>`;
 }
 window.startGame = () => send({ t: "start" });
+// 🤖 Bots (nur Host, nur Lobby)
+window.addBot = () => send({ t: "addBot" });
+window.removeBot = (name) => { if (confirm(`${name} entfernen?`)) send({ t: "removeBot", name }); };
 
 function renderDanger(s) {
   const d = s.dice;
