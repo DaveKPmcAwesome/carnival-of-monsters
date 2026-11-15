@@ -406,7 +406,7 @@ function dealSeason(g, season) {
   g.awaitFresh = null;
   g.show = null; // 🐢 Langsam: Aufdeck-Runde (wer ist gerade dran)
   g.sim = mkSimState(g); // ⚡ Schnell: verdeckte Wahlen der laufenden Runde
-  g.incoming = g.players.map(() => []); // 🚀 Turbo: wartende Stapel der Nachbarn
+  g.incoming = g.players.map(() => []); // 🚀 Turbo: FIFO-Warteschlange, JEDER Eintrag = EIN kompletter Stapel
   g.turboDiscard = g.players.map(() => false); // 🚀 Turbo: 2er-Ablage-Schritt je Spieler
   g.passed = g.players.map(() => false); // 2er: Stapel bereits weitergegeben?
   g.players.forEach((p) => { p.freshDraw = null; });
@@ -605,18 +605,20 @@ function turboAdvance(g, pIdx) {
   if (g.hands[pIdx].length > 0) {
     const dirLeft = g.season % 2 === 0;
     const next = dirLeft ? (pIdx + 1) % n : (pIdx - 1 + n) % n;
-    g.incoming[next] = [...g.incoming[next], ...g.hands[pIdx]];
+    // 🚀 Der Stapel wandert als EIGENER Eintrag in die Warteschlange – mehrere
+    // wartende Stapel werden NIE verschmolzen, sondern einzeln nacheinander geliefert.
+    g.incoming[next].push(g.hands[pIdx]);
     g.hands[pIdx] = [];
     g.log.unshift(`📤 ${g.players[pIdx].name} gibt den Stapel weiter.`);
-    // Empfänger mit leerer Hand bekommt den Stapel SOFORT (sonst Stau ohne eigene Aktion)
+    // Empfänger mit leerer Hand bekommt sofort den ÄLTESTEN wartenden Stapel (sonst Stau ohne eigene Aktion)
     if (g.hands[next].length === 0) {
-      g.hands[next] = g.incoming[next];
-      g.incoming[next] = [];
+      g.hands[next] = g.incoming[next].shift();
     }
   }
+  // Eigene Warteschlange: erst wenn die Hand LEER ist – und dann auch nur den ältesten Stapel.
+  // So kommen gestaute Stapel einzeln an (erst 7, dann 6 …) statt alle auf einmal.
   if (g.hands[pIdx].length === 0 && (g.incoming[pIdx] || []).length > 0) {
-    g.hands[pIdx] = g.incoming[pIdx];
-    g.incoming[pIdx] = [];
+    g.hands[pIdx] = g.incoming[pIdx].shift();
   }
   // Saisonende erst, wenn wirklich niemand mehr Karten hat (auch keine wartenden)
   if (g.phase === "draft" && g.hands.every((h) => h.length === 0) && g.incoming.every((a) => a.length === 0)) {
@@ -1184,7 +1186,7 @@ function viewFor(room, idx) {
     mySimPick: (g.mode === "schnell" || g.mode === "langsam") ? g.sim.picks[idx] : null,
     // 🐢 Langsam: wer deckt gerade auf? (-1 = es wird noch verdeckt gewählt)
     showTurn: (g.mode === "langsam" && g.show) ? g.show.cur : -1,
-    // 🚀 Turbo: persönlicher Ablage-Schritt + wartende Stapel
+    // 🚀 Turbo: persönlicher Ablage-Schritt + Anzahl wartender STAPEL (Warteschlange, nicht Karten)
     turboDiscard: g.mode === "turbo" ? !!g.turboDiscard[idx] : false,
     incomingCount: g.mode === "turbo" ? (g.incoming[idx] || []).length : 0,
     players: g.players.map((pp, i) => publicPlayer(pp, room.players[i].connected)),
