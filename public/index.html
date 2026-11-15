@@ -307,7 +307,7 @@ function turnBanner(s) {
   if (s.phase === "draft") {
     if (s.mode === "turbo") {
       if (s.turboDiscard) return `<div class="banner your">🗑️ Lege jetzt 1 Karte OFFEN aus dem Spiel ab!</div>`;
-      if (s.hand.length > 0) return `<div class="banner your">🚀 Du bist dran – wähle eine Karte!</div>`;
+      if (s.hand.length > 0) return `<div class="banner your">🚀 Du bist dran – wähle eine Karte!${(s.incomingCount || 0) > 0 ? ` · 📌 noch ${s.incomingCount} Stapel in deiner Warteschlange` : ``}</div>`;
       const n = s.players.length;
       const dirLeft = s.season % 2 === 0;
       const pred = s.players[dirLeft ? (s.you - 1 + n) % n : (s.you + 1) % n];
