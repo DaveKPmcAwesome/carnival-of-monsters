@@ -307,7 +307,14 @@ function turnBanner(s) {
   if (s.phase === "draft") {
     if (s.mode === "turbo") {
       if (s.turboDiscard) return `<div class="banner your">🗑️ Lege jetzt 1 Karte OFFEN aus dem Spiel ab!</div>`;
-      if (s.hand.length > 0) return `<div class="banner your">🚀 Du bist dran – wähle eine Karte!${(s.incomingCount || 0) > 0 ? ` · 📌 noch ${s.incomingCount} Stapel in deiner Warteschlange` : ``}</div>`;
+      // 📌 Stau-Ruf: Hält genau EIN Spieler noch Karten, warten alle anderen bei ihm
+      if (s.hand.length > 0) {
+        if (s.turboStuck === s.you)
+          return `<div class="banner your">🔥 Alle stauen sich bei DIR – wähle deine Karte!${(s.incomingCount || 0) > 0 ? ` · 📌 noch ${s.incomingCount} Stapel in deiner Warteschlange` : ``}</div>`;
+        return `<div class="banner your">🚀 Du bist dran – wähle eine Karte!${(s.incomingCount || 0) > 0 ? ` · 📌 noch ${s.incomingCount} Stapel in deiner Warteschlange` : ``}</div>`;
+      }
+      if ((s.turboStuck || 0) >= 0 && s.turboStuck !== s.you)
+        return `<div class="banner wait">📌 Es staut sich bei ${esc(s.players[s.turboStuck].name)}…</div>`;
       const n = s.players.length;
       const dirLeft = s.season % 2 === 0;
       const pred = s.players[dirLeft ? (s.you - 1 + n) % n : (s.you + 1) % n];
@@ -432,13 +439,17 @@ window.revealNext = () => { revealStep++; render(); };
 function myZone(s) {
   const me = s.players[s.you];
   const freshBusy = (s.freshDraw || []).some((c) => c.type !== "Ziel");
+  // 🃏 Karten der Zieh-Schlange (inkl. gezogener Ziele) – im Lager gesperrt
+  const freshIds = new Set((s.freshDraw || []).map((c) => c.id));
   // Eingelagertes ist in allen Tempos jederzeit spielbar
   const canUse = ((s.phase === "draft") || (s.phase === "seasonEnd" && s.isYourSeasonTurn))
     && !(s.mode === "langsam" && s.awaitDiscard === s.you)
     && !s.turboDiscard;
   const storedCards = s.stored.map((c) => cardHTML(c, {
-    onClick: canUse ? `selectCard(${c.id},'stored')` : null,
-    blocked: canUse && c.type === "Monster" && !canPlayMonster(c, me),
+    // 🃏 Noch nicht entschiedene Gratis-Karten sind hier GESPERRT – sie werden
+    // ausschließlich unten im Zieh-Bereich entschieden (sonst Geister-Eintrag!).
+    onClick: canUse && !freshIds.has(c.id) ? `selectCard(${c.id},'stored')` : null,
+    blocked: canUse && !freshIds.has(c.id) && c.type === "Monster" && !canPlayMonster(c, me),
     selected: selected && selected.id === c.id,
   })).join("");
   const goals = s.goals.map((g) => cardHTML(g)).join("");
@@ -446,7 +457,7 @@ function myZone(s) {
   const meng = (s.menagerie || []).map((m) => `<span class="mon">${realmInfo(m.realm).emoji} ${esc(m.name)} ⭐${m.points}${m.danger ? " ⚠️" + m.danger : ""}</span>`).join("");
   return `<div class="card-panel">
     <div class="label">Nur für dich sichtbar 👀</div>
-    ${s.stored.length ? `<div class="label">📥 Eingelagert – ${canUse ? "antippen zum Ausspielen" : "warten auf deinen Zug"}</div><div class="grid4">${storedCards}</div>` : ""}
+    ${s.stored.length ? `<div class="label">📥 Eingelagert – ${canUse ? "antippen zum Ausspielen" : "warten auf deinen Zug"}${freshIds.size ? " · 🃏 die gratis gezogene Karte entscheidest du unten im Zieh-Bereich!" : ""}</div><div class="grid4">${storedCards}</div>` : ""}
     <button class="btn-ghost" style="width:100%;margin-top:10px" onclick="toggleMenagerie()">🦁 Deine Menagerie ${menagerieOpen ? "▴" : "▾"}</button>
     ${menagerieOpen ? `<div class="chips" style="margin-top:8px">${meng || '<span class="muted">Noch keine Monster in der Menagerie.</span>'}</div>` : ""}
     ${s.goals.length ? `<button class="btn-ghost" style="width:100%;margin-top:10px" onclick="toggleGoals()">🔒 Deine Ziele: ${s.goals.length} ${goalsOpen ? "▴" : "▾"}</button>${goalsOpen ? `<div class="grid4" style="margin-top:8px">${goals}</div>` : ""}` : ""}
@@ -737,7 +748,8 @@ function render() {
           <div style="display:flex;gap:8px;margin-top:8px">
             <button class="btn-green" style="flex:1" ${window._freshRealm ? "" : "disabled"} onclick="freshPlay(${cur.id})">✅ Diese ausspielen</button>
             <button class="btn-indigo" style="flex:1" onclick="freshKeep(${cur.id})">📥 Diese einlagern (gratis)</button>
-          </div>`;
+          </div>
+          ${window._freshRealm ? "" : `<p class="muted center" style="margin-top:6px">👉 „Ausspielen“ wird erst klickbar, wenn du oben den Typ des Landes gewählt hast.</p>`}`;
       } else if (cur.type === "Monster" && cur.realm === "traum") {
         // 🌙 Traum-Monster aus der Zieh-Schlange: Hilfsreich selber aussuchen
         const free = freeLandsOf(s.players[s.you].lands, s.players[s.you].seasonMonsters);
