@@ -311,11 +311,14 @@ function playIntoPlayer(g, pIdx, card, chosenRealm) {
     if (card.kind === "land" && !chosenRealm) return { needRealm: true };
     const cMsg = p.coins < card.cost ? takeCredits(p, card.cost) : "";
     p.coins -= card.cost;
+    // 🐛 Auch als Landpunkt gespielte Mitarbeiter ("Unbekanntes Land") bleiben
+    // Mitarbeiter – sie zählen z. B. für „Arbeitgeber des Jahres“ (3 SP je Mitarbeiter)
+    // und fürs Sommerfest (+2 Kronen je Mitarbeiter) mit.
+    p.staff.push(card);
     if (card.kind === "land") {
       p.lands[chosenRealm] = (p.lands[chosenRealm] || 0) + 1;
       return { ok: true, msg: `✅ ${card.name} als Landpunkt ${realmInfo(chosenRealm).emoji} festgelegt (−${card.cost} 👑)${cMsg}.` };
     }
-    p.staff.push(card);
     return { ok: true, msg: `✅ ${card.name} angestellt (−${card.cost} 👑)${cMsg}.` };
   }
   if (card.type === "Event") return { ok: true, msg: `✅ Event „${card.name}": ${onEvent(p, card)}.` };
@@ -701,6 +704,12 @@ function handlePick(g, pIdx, msg) {
   } else return { err: "Gerade nicht möglich." };
 
   if (!inHand) { // aus der Aufbewahrung (Draft ODER Saisonende)
+    // 🃏 Zieh-Schlange: Noch nicht entschiedene Gratis-Karten laufen NUR über den
+    // Zieh-Bereich – sonst würde die Karte doppelt landen (gespielt + Geister-Eintrag
+    // in der Schlange, der danach nur noch „unsinniges Einlagern“ anbietet).
+    if ((p.freshDraw || []).some((c) => c.id === card.id))
+      return { err: "🃏 Diese Karte wartet noch auf deine Entscheidung im Zieh-Bereich!" };
+    if (msg.action === "keep") return { err: "Eingelagerte Karten kannst du nur ausspielen." };
     p.stored = p.stored.filter((c) => c.id !== card.id);
     const res = playIntoPlayer(g, pIdx, card, msg.realm);
     if (!res) {
@@ -1166,6 +1175,11 @@ function viewFor(room, idx) {
   };
   if (!g || g.phase === "lobby") return base;
   const p = g.players[idx];
+  // 🚀 Turbo-Stau: Der EINZIGE Spieler, der noch Karten hält, während alle
+  // anderen mit leeren Händen auf den nächsten Stapel warten = Engpass.
+  const turboHolders = (g.mode === "turbo" && g.phase === "draft")
+    ? g.players.map((_, i) => i).filter((i) => (g.hands[i] || []).length > 0)
+    : [];
   return {
     ...base,
     season: g.season, seasonCard: g.seasonCard, totalSeasons: g.totalSeasons || 4,
@@ -1189,6 +1203,8 @@ function viewFor(room, idx) {
     // 🚀 Turbo: persönlicher Ablage-Schritt + Anzahl wartender STAPEL (Warteschlange, nicht Karten)
     turboDiscard: g.mode === "turbo" ? !!g.turboDiscard[idx] : false,
     incomingCount: g.mode === "turbo" ? (g.incoming[idx] || []).length : 0,
+    // 🚀 Bei wem staut es sich gerade? (-1 = niemand / mehrere spielen noch)
+    turboStuck: turboHolders.length === 1 ? turboHolders[0] : -1,
     players: g.players.map((pp, i) => publicPlayer(pp, room.players[i].connected)),
     // 2er-Regeln: Nach dem Weitergeben sieht man seinen alten Stapel NICHT mehr
     // (der Mitspieler wählt daraus noch). Erst nach der Rotation kommt die neue Hand.
