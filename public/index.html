@@ -2,93 +2,212 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>Carnival of Monsters – Online</title>
 <style>
-  :root { font-family: system-ui, -apple-system, sans-serif; }
+  /* ===== UI-Übernahme des Prototyps (v2.0) – dunkler Comic-Tisch ===== */
+  :root { --gold:#e9c766; --bg:#0f172a; --panel:#1e2a42; --line:#31405f; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { min-height: 100vh; background: linear-gradient(180deg, #1e1b4b 0%, #0f172a 100%); color: #f1f5f9; padding-bottom: 110px; }
-  .wrap { max-width: 640px; margin: 0 auto; padding: 12px; }
-  h1 { font-size: 1.4rem; text-align: center; margin: 8px 0; }
-  .center { text-align: center; }
-  .muted { color: #94a3b8; font-size: 0.8rem; }
-  .card-panel { background: rgba(255,255,255,0.05); border-radius: 16px; padding: 12px; margin-bottom: 10px; }
-  .label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; margin-bottom: 8px; }
-  button { font-family: inherit; border: none; border-radius: 12px; padding: 10px 16px; font-size: 1rem; font-weight: 700; cursor: pointer; }
-  button:disabled { opacity: 0.4; cursor: default; }
-  .btn-amber { background: #f59e0b; color: #1e293b; }
-  .btn-green { background: #16a34a; color: #fff; }
-  .btn-red { background: #dc2626; color: #fff; }
-  .btn-purple { background: #7c3aed; color: #fff; }
-  .btn-indigo { background: #4f46e5; color: #fff; }
-  .btn-ghost { background: rgba(255,255,255,0.08); color: #f1f5f9; font-weight: 400; }
-  input { font-family: inherit; font-size: 1rem; padding: 12px 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1); color: #fff; width: 100%; outline: none; }
-  input:focus { border-color: #f59e0b; }
-  .stack { display: flex; flex-direction: column; gap: 10px; }
-  .grid2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
-  .grid4 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
-  @media (min-width: 480px) { .grid4 { grid-template-columns: repeat(4, 1fr); } }
-  .chips { display: flex; flex-wrap: wrap; gap: 6px; font-size: 0.8rem; }
-  .chip { background: rgba(255,255,255,0.08); border-radius: 10px; padding: 4px 10px; }
-  .chip-amber { background: rgba(245,158,11,0.2); color: #fcd34d; }
-  .chip-red { background: rgba(239,68,68,0.2); color: #fca5a5; }
-  .card { position: relative; background: #fff; color: #1e293b; border-radius: 12px; border: 2px solid #94a3b8; padding: 8px 10px; text-align: left; width: 100%; font-weight: 400; }
-  .card.selected { outline: 4px solid #fbbf24; transform: translateY(-3px); }
-  .card .type { font-size: 0.6rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; }
-  .card .name { font-size: 0.85rem; font-weight: 800; line-height: 1.15; margin-top: 1px; }
-  .card .info { font-size: 0.68rem; color: #475569; margin-top: 2px; }
-  .card.blocked { opacity: 0.5; }
-  .badge { position: absolute; top: -8px; right: -6px; background: #fbbf24; color: #1e293b; font-size: 0.6rem; font-weight: 800; border-radius: 999px; padding: 2px 7px; }
-  .pbox { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 8px; font-size: 0.72rem; }
-  .pbox.me { background: rgba(245,158,11,0.13); border: 1px solid rgba(245,158,11,0.4); }
-  .pbox .pname { font-weight: 800; color: #e2e8f0; }
-  .pbox .dead { color: #f87171; }
-  .landpill { display: inline-block; border-radius: 8px; padding: 1px 7px; margin: 1px 2px 1px 0; font-size: 0.68rem; }
-  .land-free { background: rgba(34,197,94,0.2); color: #bbf7d0; }
-  .land-full { background: rgba(255,255,255,0.1); color: #94a3b8; }
-  .mon { display: inline-block; background: rgba(239,68,68,0.15); color: #fecaca; border-radius: 8px; padding: 2px 7px; margin: 1px 2px 1px 0; font-size: 0.68rem; }
-  .stf { display: inline-block; background: rgba(6,182,212,0.15); color: #a5f3fc; border-radius: 8px; padding: 2px 7px; margin: 1px 2px 1px 0; font-size: 0.68rem; cursor: pointer; text-decoration: underline dotted; }
-  .stfdetail { background: rgba(6,182,212,0.12); border: 1px solid rgba(6,182,212,0.3); border-radius: 8px; padding: 6px 8px; margin-top: 4px; font-size: 0.66rem; color: #cffafe; }
-  .banner { border-radius: 14px; padding: 10px 14px; margin-bottom: 10px; text-align: center; font-weight: 800; }
-  .banner.your { background: rgba(245,158,11,0.18); border: 1px solid rgba(245,158,11,0.5); color: #fcd34d; }
-  .banner.wait { background: rgba(255,255,255,0.06); color: #94a3b8; font-weight: 600; }
-  .banner.warn { background: rgba(220,38,38,0.15); border: 1px solid rgba(220,38,38,0.5); color: #fca5a5; }
-  #actionbar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(15,23,42,0.96); border-top: 1px solid rgba(255,255,255,0.1); padding: 12px; z-index: 10; }
-  #actionbar .inner { max-width: 640px; margin: 0 auto; display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
-  #actionbar .inner > button { flex: 1 1 120px; }
-  #actionbar .note { width: 100%; text-align: center; font-size: 0.7rem; color: #94a3b8; margin-top: 4px; }
-  #status { position: fixed; top: 0; left: 0; right: 0; text-align: center; font-size: 0.7rem; padding: 4px; z-index: 20; background: rgba(239,68,68,0.9); color: #fff; display: none; }
-  #toast { position: fixed; bottom: 130px; left: 50%; transform: translateX(-50%); background: rgba(220,38,38,0.95); color: #fff; padding: 10px 18px; border-radius: 12px; font-size: 0.85rem; z-index: 30; display: none; max-width: 90%; text-align: center; }
-  .logbox { max-height: 180px; overflow-y: auto; font-size: 0.72rem; color: #cbd5e1; }
-  .logbox div { padding: 2px 0; border-bottom: 1px dashed rgba(255,255,255,0.06); }
-  .season { background: rgba(251,191,36,0.12); border: 1px solid rgba(251,191,36,0.4); border-radius: 14px; padding: 10px 14px; margin-bottom: 10px; font-size: 0.85rem; }
-  .season .t { font-weight: 800; color: #fcd34d; }
-  .season .h { font-size: 0.7rem; color: #cbd5e1; margin-top: 2px; }
-  .bigcode { font-size: 2.6rem; font-weight: 800; letter-spacing: 0.3em; color: #fcd34d; text-align: center; }
-  .rev { background: linear-gradient(180deg, rgba(245,158,11,0.15), rgba(30,27,75,0.4)); border: 1px solid rgba(245,158,11,0.4); border-radius: 16px; padding: 14px; margin-bottom: 10px; }
-  .rev h2 { font-size: 1.1rem; color: #fcd34d; text-align: center; margin-bottom: 10px; }
-  .revrow { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); border-radius: 10px; padding: 8px 12px; margin-bottom: 6px; font-size: 0.85rem; }
-  .revrow.me { background: rgba(245,158,11,0.2); border: 1px solid rgba(245,158,11,0.4); }
-  .revrow .pts { font-weight: 800; white-space: nowrap; margin-left: 10px; }
-  .goal { font-size: 0.68rem; color: #94a3b8; }
-  .chatrow { display: flex; gap: 8px; margin-top: 8px; }
-  .chatrow input { flex: 1; padding: 8px 12px; font-size: 0.85rem; }
-  .chatrow button { padding: 8px 14px; font-size: 0.85rem; }
-#fanfare{position:fixed;inset:0;z-index:200;background:rgba(15,23,42,.72);display:flex;align-items:center;justify-content:center;cursor:pointer}
-#fanfare .fanbox{background:linear-gradient(160deg,#7c2d12,#b91c1c);color:#fff;text-align:center;padding:26px 34px;border-radius:18px;border:3px solid #fbbf24;box-shadow:0 12px 40px rgba(0,0,0,.5);animation:fanpop .5s cubic-bezier(.2,1.4,.4,1);max-width:90vw}
-#fanfare .fanbell{font-size:1.15rem;font-weight:700;letter-spacing:2px;color:#fde68a}
-#fanfare .fantitle{font-size:2rem;font-weight:800;margin:10px 0 4px}
-#fanfare .fansub{font-size:1rem}
-#fanfare .fanwho{margin-top:8px;font-size:1.1rem;font-weight:600}
-@keyframes fanpop{0%{transform:scale(.4);opacity:0}60%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
+  html { height: 100%; }
+  body { min-height: 100dvh; background:#070d1a; color:#e2e8f0; font-family:system-ui,-apple-system,sans-serif; overscroll-behavior:none; }
+  button { font-family: inherit; cursor: pointer; }
+  input { font-family: inherit; }
+  button:disabled { opacity: .5; cursor: default; }
+
+  #status { position:fixed; top:0; left:0; right:0; z-index:300; background:#dc2626; color:#fff; font-weight:700; font-size:.85rem; padding:10px 14px; display:none; }
+  #toast { position:fixed; bottom:130px; left:50%; transform:translateX(-50%); background:#16a34a; color:#fff; font-weight:700; font-size:.9rem; padding:10px 18px; border-radius:999px; box-shadow:0 6px 18px #000a; display:none; z-index:260; pointer-events:none; max-width:92%; text-align:center; }
+
+  /* Spieltisch: das „Handy“-Panel */
+  .phone { width:100%; max-width:430px; margin:0 auto; background:var(--bg); height:100dvh; display:flex; flex-direction:column; position:relative; overflow:hidden; padding-bottom:124px;
+           --ch:250px; --cw:calc(var(--ch)*.667); }
+  .phone.inhand { --ch:min(48dvh,380px); --cw:calc(var(--ch)*.667); }
+
+  /* ---- Kopf: Saison-Symbol mit Richtungspfeil-Ring + Reichs-Lampen ---- */
+  .top { display:flex; align-items:center; gap:10px; padding:10px 12px 4px; }
+  .sicon { width:40px; height:40px; border-radius:50%; background:#17607e; display:flex; align-items:center; justify-content:center; font-size:19px; flex:0 0 40px; position:relative; }
+  .sicon .pfeil { position:absolute; left:-5px; top:-5px; width:50px; height:50px; pointer-events:none; display:block; }
+  .sicon .pfeil .bogen { fill:none; stroke-width:3.4; }
+  .sicon .pfeil .spitze {  }
+  .sicon.ccw .pfeil { transform:scaleX(-1); }
+  .season { flex:1; display:flex; align-items:center; justify-content:center; }
+  .lamps { display:flex; gap:10px; justify-content:center; }
+  .lamp { width:15px; height:15px; border-radius:50%; background:#243452; border:1px solid #31405f; }
+  .lamp.on { background:var(--lc,#e9c766); border-color:transparent; box-shadow:0 0 6px #0008; }
+  .lamp.cur { background:var(--lc,#e9c766); border-color:#fff8; box-shadow:0 0 11px var(--lc,#e9c766); animation:cm-pulse 1.5s infinite; }
+  @keyframes cm-pulse { 50% { box-shadow:0 0 4px var(--lc,#e9c766); } }
+  .menu { width:36px; height:36px; border-radius:50%; background:var(--panel); display:flex; align-items:center; justify-content:center; color:#94a3b8; font-size:1.15rem; flex:0 0 36px; cursor:pointer; }
+
+  /* ---- Drei-Punkte-Optionen ---- */
+  .optionen { position:fixed; top:54px; right:calc(max(50% - 215px, 12px)); background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:5px; z-index:45; display:none; box-shadow:0 10px 30px #000c; width:230px; max-height:calc(100dvh - 70px); overflow-y:auto; }
+  .optionen.open { display:block; }
+  .optitem { display:flex; align-items:center; gap:9px; width:100%; text-align:left; background:none; border:none; color:#e2e8f0; font-size:.88rem; font-weight:600; padding:11px 12px; border-radius:10px; }
+  .optitem:active { background:#31405f; }
+  .optitem small { color:#64748b; font-weight:400; }
+
+  /* ---- Mitspieler-Panels im Sitz-Kreis ---- */
+  .spieler { display:flex; flex-direction:column; gap:6px; padding:6px 12px 2px; }
+  .srow { display:flex; gap:8px; }
+  .srow .spanel { flex:1 1 0; min-width:0; }
+  .srow.oben { padding:0 34px; }
+  .srow.unten { gap:40px; }
+  .srow.solo { justify-content:center; }
+  .srow.solo .spanel { flex:0 1 76%; }
+  .srow.oben .kopf { flex-wrap:wrap; row-gap:2px; }
+  .srow.oben .kenn { flex-basis:100%; margin-left:0; padding-left:36px; }
+  .srow.oben .pf { display:none; }
+  .spanel { background:var(--panel); border-radius:12px; padding:8px 10px; overflow:hidden; position:relative; cursor:pointer; }
+  .kopf { display:flex; align-items:center; gap:8px; }
+  .pav { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:.74rem; background:#0e2a3d; border:2px solid #3f9ac2; flex:0 0 28px; }
+  .pname { font-size:.9rem; font-weight:700; flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .pname small { display:block; font-weight:400; color:#94a3b8; font-size:.62rem; }
+  .dot { width:14px; height:14px; border-radius:50%; border:1px solid #000a; flex:0 0 14px; }
+  .dot.on { box-shadow:0 0 8px #fff7; border-color:#fff9; }
+  .dot.off { filter:saturate(1.35) brightness(.5); }
+  .landrows { margin-top:9px; }
+  .lrow { display:flex; align-items:center; gap:5px; margin:5px 0; flex-wrap:wrap; max-width:calc(5*14px + 4*5px); }
+  .spanel.rechts .lrow { flex-direction:row-reverse; margin-left:auto; }
+  .kenn { display:flex; gap:10px; margin-left:auto; font-size:.74rem; color:#cbd5e1; white-space:nowrap; flex-shrink:0; }
+  .kenn b { color:#fff; }
+  .spanel .saison-lab, .spanel .minis, .spanel .staffbox { display:none; }
+  .spanel.auf .saison-lab, .spanel.auf .minis, .spanel.auf .staffbox { display:block; }
+  .spanel.auf .minis { display:flex; }
+  .spanel.auf { z-index:52; box-shadow:0 12px 32px #000d; }
+  .pf { color:#64748b; font-size:.72rem; flex:0 0 auto; transition:transform .2s; }
+  .spanel.auf .pf { transform:rotate(90deg); color:#cbd5e1; }
+  .saison-lab { font-size:.66rem; color:#94a3b8; margin:8px 0 5px; }
+  .minis { display:flex; gap:8px; overflow-x:auto; scrollbar-width:none; }
+  .minis::-webkit-scrollbar { display:none; }
+  .mini { flex:0 0 72px; height:94px; border-radius:10px; border:3px solid var(--rc,#888); background:#101b2e; position:relative; text-align:center; padding-top:7px; font-size:.58rem; line-height:1.2; }
+  .mini .me { font-size:23px; }
+  .mini .st { position:absolute; bottom:3px; left:50%; transform:translateX(-50%); font-size:.6rem; font-weight:800; color:#fde68a; white-space:nowrap; }
+  .staffbox { margin-top:8px; }
+
+  /* ---- Mitte (Hinweis-Banner & Wechsel-Schirme) ---- */
+  .mitte { flex:1; min-height:0; overflow-y:auto; padding:2px 12px; }
+  .banner { border-radius:14px; padding:10px 14px; margin-bottom:10px; text-align:center; font-weight:800; font-size:.9rem; }
+  .banner.your { background:rgba(245,158,11,.18); border:1px solid rgba(245,158,11,.5); color:#fcd34d; }
+  .banner.wait { background:rgba(255,255,255,.06); color:#94a3b8; font-weight:600; }
+  .banner.warn { background:rgba(220,38,38,.15); border:1px solid rgba(220,38,38,.5); color:#fca5a5; }
+  .chips { display:flex; flex-wrap:wrap; gap:6px; font-size:.8rem; justify-content:center; margin-top:6px; }
+  .chip { background:rgba(255,255,255,.08); border-radius:10px; padding:4px 10px; }
+  .chip-amber { background:rgba(245,158,11,.2); color:#fcd34d; }
+  .chip-red { background:rgba(239,68,68,.2); color:#fca5a5; }
+
+  /* ---- Info-Zeile + Aktionsleiste ---- */
+  .uiband { position:relative; z-index:35; padding:4px 10px 6px; }
+  .info { text-align:center; min-height:20px; font-size:.78rem; color:#fde68a; }
+  #actionbar { position:fixed; bottom:118px; left:50%; transform:translateX(-50%); width:100%; max-width:430px; z-index:46; padding:6px 10px 8px; background:#0b1424f0; border-top:1px solid var(--line); }
+  #actionbar .inner { display:flex; flex-wrap:wrap; gap:8px; }
+  #actionbar .note { flex-basis:100%; text-align:center; font-size:.72rem; color:#fde68a; }
+  #actionbar button { flex:1 1 auto; border:none; border-radius:10px; padding:12px 6px; font-weight:800; font-size:.86rem; color:#fff; min-width:110px; }
+  .btn-amber { background:#f59e0b; color:#1e293b; }
+  .btn-green { background:#16a34a; color:#fff; }
+  .btn-red { background:#dc2626; color:#fff; }
+  .btn-purple { background:#7c3aed; color:#fff; }
+  .btn-indigo { background:#4f46e5; color:#fff; }
+  .btn-ghost { background:rgba(255,255,255,.08); color:#f1f5f9; font-weight:400; }
+
+  /* ---- Der Kartenfächer ---- */
+  .handwrap { position:absolute; left:0; right:0; bottom:64px; height:calc(var(--ch) + 16px); z-index:6;
+              transform:translateY(calc(var(--ch)*.5 - 46px)); transition:transform .4s cubic-bezier(.4,1.3,.5,1); pointer-events:none; }
+  .phone.inhand .handwrap { transform:translateY(-10vh); z-index:40; }
+  .phone.inhand .uiband { z-index:45; }
+  .hand { width:100%; height:100%; overflow-x:auto; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
+  .hand::-webkit-scrollbar { display:none; }
+  .handin { display:flex; align-items:flex-end; height:100%; }
+  .endcap { flex:0 0 calc(50% - var(--cw)/2); height:1px; transition:width .35s; }
+  .k { position:relative; flex:0 0 auto; height:var(--ch); width:var(--cw);
+       margin-right:calc(var(--cw)*-.45); border-radius:12px; border:4px solid var(--rc,#888); background:#101b2e; overflow:hidden; cursor:pointer; pointer-events:auto;
+       container-type:size; transition:width .35s ease, height .35s ease, margin-right .35s ease;
+       touch-action:none; -webkit-user-select:none; user-select:none; }
+  .k:disabled { opacity:.45; }
+  .phone.inhand .k { border-width:5px; }
+  .k .art { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:linear-gradient(#ffffff08,#00000038); font-size:34cqw; }
+  .k .name { position:absolute; top:5px; left:50%; transform:translateX(-50%); background:#0b1424ee; padding:2px 9px; border-radius:999px; font-weight:800; border:1px solid #ffffff26; white-space:nowrap; font-size:clamp(9px,6.5cqw,16px); }
+  .k .med { position:absolute; top:5px; right:6px; border-radius:50%; background:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; border:3px solid var(--rc,#888); color:#1a2433; width:clamp(24px,17cqw,44px); height:clamp(24px,17cqw,44px); font-size:clamp(10px,9cqw,22px); }
+  .k .pts { position:absolute; right:clamp(6px,5cqw,10px); bottom:clamp(4px,3cqh,10px); display:flex; align-items:center; gap:4px; background:#fffdf2de; border-radius:999px; padding:2px 7px; font-weight:800; color:#3a3312; font-size:clamp(11px,9cqw,18px); }
+  .k .eff { display:none; position:absolute; left:8px; bottom:6px; background:#31281add; color:#fde68a; border:1px solid #b08a2e; border-radius:8px; padding:3px 8px; font-size:clamp(9px,7cqw,13px); font-weight:700; }
+  .phone.inhand .k .eff { display:block; }
+  .k.ziel .ztxt { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; padding:10px 12px 30px; text-align:center; }
+  .k.ziel .ztxt b { font-size:clamp(11px,7.5cqw,14px); }
+  .k.ziel .ztxt span { font-size:clamp(8px,6cqw,11px); color:#b9c4d6; line-height:1.35; }
+  .k.ziel .big { font-size:clamp(24px,24cqw,44px); }
+  .k.ziel .secret { position:absolute; top:5px; left:6px; font-size:clamp(7px,6cqw,9px); background:#31281a; color:#fde68a; border:1px solid #b08a2e; padding:2px 6px; border-radius:999px; }
+
+  /* ---- Eigene Länder: je Reich eine Säule (Haufen) ---- */
+  .landleiste { position:fixed; bottom:64px; left:50%; transform:translateX(-50%); width:100%; max-width:430px;
+                display:flex; justify-content:space-evenly; align-items:flex-end; padding:6px 10px 8px;
+                background:#0b1424f2; border-top:1px solid var(--line); z-index:28; min-height:46px; }
+  .lcol { display:flex; flex-direction:column; align-items:center; gap:4px; padding-top:2px; }
+  .lcol .dots { margin:0; display:flex; flex-direction:column-reverse; align-items:center; gap:5px; }
+  .hrow { display:flex; gap:5px; justify-content:center; }
+
+  /* ---- Aufklapper (Drawer) ---- */
+  .drawer { position:fixed; bottom:124px; left:50%; transform:translateX(-50%); width:min(430px, calc(100% - 14px)); background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:10px; display:none; box-shadow:0 -8px 30px #000c; max-height:46dvh; overflow-y:auto; z-index:48; }
+  .drawer.open { display:block; }
+  .drawer h4 { margin:0 0 10px; font-size:.86rem; color:#fbbf24; }
+  .drawer h4 small { font-weight:400; }
+  .drawer .sub { font-size:.7rem; color:#94a3b8; margin:8px 0 6px; }
+  .drawer.frisch { border:2px solid #fbbf24; }
+  .grid4 { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-top:4px; }
+  .mon { display:inline-block; background:rgba(239,68,68,.15); color:#fecaca; border-radius:8px; padding:3px 8px; margin:2px; font-size:.7rem; }
+  .stf { display:inline-block; background:rgba(6,182,212,.15); color:#a5f3fc; border-radius:8px; padding:3px 8px; margin:2px; font-size:.7rem; cursor:pointer; text-decoration:underline dotted; }
+  .stfdetail { background:rgba(6,182,212,.12); border:1px solid rgba(6,182,212,.3); border-radius:10px; padding:8px 10px; font-size:.68rem; margin-top:6px; line-height:1.4; }
+
+  /* kompakte Karten in Aufklappern/Wechsel-Schirmen */
+  .card { position:relative; background:#101b2e; color:#e2e8f0; border-radius:12px; border:2px solid #888; padding:8px 9px; text-align:left; font-size:.72rem; overflow:hidden; }
+  .card:disabled { opacity:.55; }
+  .card.selected { outline:4px solid #fbbf24; }
+  .card .type { font-size:.6rem; font-weight:800; text-transform:uppercase; letter-spacing:.04em; }
+  .card .name { font-size:.85rem; font-weight:800; line-height:1.15; margin-top:1px; }
+  .card .info { font-size:.68rem; color:#94a3b8; margin-top:2px; line-height:1.35; }
+  .card.blocked { opacity:.5; }
+  .sperre { position:absolute; top:-8px; right:-6px; background:#fbbf24; color:#1e293b; font-size:.58rem; font-weight:800; border-radius:999px; padding:2px 8px; transform:rotate(6deg); }
+
+  /* ---- Untere Leiste: runde Eck-Buttons + eigene Werte ---- */
+  .bottombar { position:fixed; bottom:0; width:100%; max-width:430px; left:50%; transform:translateX(-50%); display:flex; gap:7px; align-items:stretch; background:#0b1424f2; border-top:1px solid var(--line); padding:8px; z-index:30; height:64px; }
+  .corner { position:relative; width:46px; height:46px; border-radius:50%; background:var(--panel); border:1px solid var(--line); font-size:1.3rem; display:flex; align-items:center; justify-content:center; flex:0 0 46px; align-self:center; }
+  .corner.open { border-color:var(--gold); }
+  .corner .badge { position:absolute; top:-4px; right:-4px; background:#dc2626; color:#fff; font-size:.62rem; font-weight:800; min-width:17px; height:17px; border-radius:999px; display:flex; align-items:center; justify-content:center; border:2px solid #0f172a; padding:0 2px; }
+  .midst { flex:1; display:flex; align-items:center; justify-content:center; gap:4px; font-size:.85rem; color:#cbd5e1; min-width:0; flex-wrap:wrap; }
+  .midst b { color:#fff; }
+  .midst .sep { color:#31405f; }
+
+  /* ---- Allgemeine Wechsel-Schirme (Lobby, Gefahrenprobe, Wertung) ---- */
+  .cwrap { max-width:440px; margin:0 auto; padding:16px 12px 40px; }
+  .card-panel { background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:12px; margin-bottom:10px; }
+  .label { font-size:.7rem; text-transform:uppercase; letter-spacing:.05em; color:#94a3b8; margin-bottom:6px; }
+  .center { text-align:center; }
+  .muted { color:#94a3b8; font-size:.8rem; }
+  .cwrap button { border:none; border-radius:12px; padding:11px 14px; font-weight:700; font-size:.9rem; }
+  .cwrap input { background:#101b2e; color:#e2e8f0; border:1px solid var(--line); border-radius:12px; padding:11px 12px; font-size:.9rem; width:100%; }
+  .bigcode { font-size:2.6rem; font-weight:800; letter-spacing:.3em; color:#fcd34d; text-align:center; margin:6px 0; }
+  .rev { background:linear-gradient(180deg, rgba(245,158,11,.15), rgba(30,27,75,.4)); border:1px solid rgba(251,191,36,.35); border-radius:16px; padding:12px; margin-top:10px; }
+  .rev h2 { font-size:1.1rem; color:#fcd34d; text-align:center; margin-bottom:10px; }
+  .revrow { display:flex; flex-wrap:wrap; gap:4px 10px; justify-content:space-between; align-items:center; background:rgba(255,255,255,.05); border-radius:10px; padding:8px 10px; margin:4px 0; font-size:.78rem; }
+  .revrow.me { background:rgba(245,158,11,.2); border:1px solid rgba(245,158,11,.4); }
+  .revrow .pts { font-weight:800; white-space:nowrap; margin-left:10px; }
+  .goal { font-size:.68rem; color:#94a3b8; }
+  .logbox { max-height:180px; overflow-y:auto; font-size:.72rem; color:#cbd5e1; }
+  .logbox div { padding:3px 0; border-bottom:1px dashed rgba(255,255,255,.06); }
+  .chatrow { display:flex; gap:8px; margin-top:8px; }
+  .chatrow input { flex:1; }
+  .chatrow button { padding:8px 14px; }
+
+  /* ---- TAMTAM-Fanfare für FETTE Monster ---- */
+  #fanfare { position:fixed; inset:0; z-index:200; background:rgba(15,23,42,.72); display:flex; align-items:center; justify-content:center; }
+  #fanfare .fanbox { background:linear-gradient(160deg,#7c2d12,#b91c1c); color:#fff; text-align:center; padding:22px 30px; border-radius:18px; box-shadow:0 20px 60px #000d; }
+  #fanfare .fanbell { font-size:1.15rem; font-weight:700; letter-spacing:2px; color:#fde68a; }
+  #fanfare .fantitle { font-size:2rem; font-weight:800; margin:10px 0 4px; }
+  #fanfare .fansub { font-size:1rem; }
+  #fanfare .fanwho { margin-top:8px; font-size:1.1rem; font-weight:600; }
 </style>
 </head>
 <body>
 <div id="status">⚠️ Verbindung getrennt – versuche neu zu verbinden…</div>
 <div id="toast"></div>
-<div class="wrap" id="app"></div>
+<div id="app"></div>
 <div id="actionbar" style="display:none"><div class="inner" id="actionbar-inner"></div></div>
-
 <script>
 "use strict";
 const REALMS = [
@@ -205,7 +324,7 @@ function cardHTML(c, opts) {
   const border = cardBorder(c);
   const blocked = opts.blocked ? " blocked" : "";
   const sel = opts.selected ? " selected" : "";
-  const badge = opts.blocked && c.type === "Monster" ? `<span class="badge">gesperrt</span>` : "";
+  const badge = opts.blocked && c.type === "Monster" ? `<span class="sperre">gesperrt</span>` : "";
   const onclick = opts.onClick ? `onclick="${opts.onClick}"` : "disabled";
   return `<button class="card${sel}${blocked}" style="border-color:${border}" ${onclick}>
     <div class="type" style="color:${border}">${cardTypeLabel(c)}</div>
@@ -245,26 +364,7 @@ function cardPlayable(c, me) {
   return true;
 }
 
-function playersGrid(s) {
-  const meIdx = s.you;
-  return `<div class="grid2">${s.players.map((p, i) => {
-    const free = freeLandsOf(p.lands, p.seasonMonsters);
-    const landpills = ALL_REALMS.filter((r) => (p.lands[r.id] || 0) > 0)
-      .map((r) => `<span class="landpill ${free[r.id] > 0 ? "land-free" : "land-full"}">${r.emoji} ${free[r.id]}/${p.lands[r.id]}</span>`).join("");
-    const mons = p.seasonMonsters.map((m) => `<span class="mon">${realmInfo(m.realm).emoji} ${esc(m.name)} ⭐${m.points}${m.danger ? " ⚠️" + m.danger : ""}</span>`).join("");
-    const stf = p.staff.map((x) => `<span class="stf" onclick="toggleStaff(${i},'${esc(x.name)}')">👷 ${esc(x.name)}</span>`).join("");
-    const detail = staffDetail && staffDetail.pi === i ? (() => {
-      const st = p.staff.find((x) => x.name === staffDetail.name);
-      return st ? `<div class="stfdetail"><b>👷 ${esc(st.name)}</b> (−${st.cost} 👑): ${esc(st.text)}</div>` : "";
-    })() : "";
-    return `<div class="pbox ${i === meIdx ? "me" : ""}">
-      <div class="pname">${p.connected ? "" : "📴 "}${esc(p.name)} · 👑${p.coins} · 🏹${p.hunters}${p.credits ? " · 🏦" + p.credits : ""}${p.trophies ? " · 🏆" + p.trophies : ""}</div>
-      <div>${landpills || '<span class="muted">keine Länder</span>'}</div>
-      <div>${mons || ""}</div>
-      ${stf ? `<div>${stf}</div>` : ""}${detail}
-    </div>`;
-  }).join("")}</div>`;
-}
+
 window.toggleStaff = (pi, name) => {
   staffDetail = staffDetail && staffDetail.pi === pi && staffDetail.name === name ? null : { pi, name };
   render();
@@ -284,25 +384,7 @@ window.freshKeep = (id) => send({ t: "freshDecide", cardId: id, action: "keep" }
 window.freshClear = () => send({ t: "freshClear" });
 window.chooseFreshRealm = (rid) => { window._freshRealm = rid; render(); };
 
-function header(s) {
-  const me = s.players[s.you];
-  return `<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:space-between;margin-bottom:8px">
-    <b>🎡 Saison ${s.season + 1}/${s.totalSeasons || 4}</b>
-    <span class="chips">
-      <span class="chip chip-amber">👑 ${me.coins}</span>
-      <span class="chip">🏹 ${me.hunters}</span>
-      ${me.credits ? `<span class="chip chip-red">🏦 ${me.credits}</span>` : ""}
-      ${(s.mode || "langsam") === "langsam" ? `<span class="chip">🐢 Langsam</span>` : s.mode === "schnell" ? `<span class="chip">⚡ Schnell</span>` : `<span class="chip">🚀 Turbo</span>`}
-    </span>
-    ${s.isHost && (s.phase === "draft" || s.phase === "seasonEnd" || s.phase === "danger")
-      ? `<button class="btn-ghost" style="font-size:0.75rem;padding:4px 10px" title="Partie abbrechen und zurück in die Lobby (nur Host)" onclick="newGame()">🔄 Neue Partie</button>` : ""}
-    <button class="btn-ghost" style="font-size:0.75rem;padding:4px 10px" title="Raum verlassen bzw. schließen – zurück zum Startbildschirm" onclick="leaveRoom()">🚪</button>
-  </div>`;
-}
-function seasonBox(s) {
-  return `<div class="season"><div class="t">🎴 ${esc(s.seasonName)}${s.bonusGiven ? ' <span class="muted">(2-Kronen-Bonus bereits kassiert)</span>' : ""}</div>
-  <div class="h">${esc(s.seasonHint)} · Trophäe (+3 SP) für die ${s.seasonCard === "gefahr" ? "meisten ⚠️" : "meisten ⭐ darin"} · 1 übrig gebliebene Krone = 1 SP, 1 Jägermarker = 1 SP</div></div>`;
-}
+
 function turnBanner(s) {
   if (s.phase === "draft") {
     if (s.mode === "turbo") {
@@ -366,6 +448,7 @@ function turnBanner(s) {
   }
   return "";
 }
+
 function logBox(s) {
   return `<div class="card-panel"><div class="label">Spielverlauf &amp; Chat</div>
     <div class="logbox">${(s.log || []).map((l) => `<div>${esc(l)}</div>`).join("") || ""}</div>
@@ -395,6 +478,7 @@ window.simEdit = () => { simSel = null; simDiscard = null; window._simEditing = 
 window.revealNow = () => send({ t: "reveal" }); // 🐢 Langsam: „Jetzt aufdecken!“
 // 🚨 TAMTAM für FETTE Monster (Level 4 Standard / Level 10 Traum): Vollbild-Banner
 // + Dreifach-Gong, verschwindet nach 6 Sek. oder per Tipp auf das Banner.
+
 function showFanfare(f) {
   const old = document.getElementById("fanfare");
   if (old) old.remove();
@@ -436,33 +520,7 @@ window.rematch = () => send({ t: "rematch" });
 window.newGame = () => { if (confirm("Aktuelle Partie abbrechen und zurück in die Lobby? Alle Punkte dieser Partie gehen verloren.")) send({ t: "newGame" }); };
 window.revealNext = () => { revealStep++; render(); };
 
-function myZone(s) {
-  const me = s.players[s.you];
-  const freshBusy = (s.freshDraw || []).some((c) => c.type !== "Ziel");
-  // 🃏 Karten der Zieh-Schlange (inkl. gezogener Ziele) – im Lager gesperrt
-  const freshIds = new Set((s.freshDraw || []).map((c) => c.id));
-  // Eingelagertes ist in allen Tempos jederzeit spielbar
-  const canUse = ((s.phase === "draft") || (s.phase === "seasonEnd" && s.isYourSeasonTurn))
-    && !(s.mode === "langsam" && s.awaitDiscard === s.you)
-    && !s.turboDiscard;
-  const storedCards = s.stored.map((c) => cardHTML(c, {
-    // 🃏 Noch nicht entschiedene Gratis-Karten sind hier GESPERRT – sie werden
-    // ausschließlich unten im Zieh-Bereich entschieden (sonst Geister-Eintrag!).
-    onClick: canUse && !freshIds.has(c.id) ? `selectCard(${c.id},'stored')` : null,
-    blocked: canUse && !freshIds.has(c.id) && c.type === "Monster" && !canPlayMonster(c, me),
-    selected: selected && selected.id === c.id,
-  })).join("");
-  const goals = s.goals.map((g) => cardHTML(g)).join("");
-  // Private Menagerie (abgeschlossene Saisons) – ohne Anzahl & Summe, das kommt erst am Ende raus.
-  const meng = (s.menagerie || []).map((m) => `<span class="mon">${realmInfo(m.realm).emoji} ${esc(m.name)} ⭐${m.points}${m.danger ? " ⚠️" + m.danger : ""}</span>`).join("");
-  return `<div class="card-panel">
-    <div class="label">Nur für dich sichtbar 👀</div>
-    ${s.stored.length ? `<div class="label">📥 Eingelagert – ${canUse ? "antippen zum Ausspielen" : "warten auf deinen Zug"}${freshIds.size ? " · 🃏 die gratis gezogene Karte entscheidest du unten im Zieh-Bereich!" : ""}</div><div class="grid4">${storedCards}</div>` : ""}
-    <button class="btn-ghost" style="width:100%;margin-top:10px" onclick="toggleMenagerie()">🦁 Deine Menagerie ${menagerieOpen ? "▴" : "▾"}</button>
-    ${menagerieOpen ? `<div class="chips" style="margin-top:8px">${meng || '<span class="muted">Noch keine Monster in der Menagerie.</span>'}</div>` : ""}
-    ${s.goals.length ? `<button class="btn-ghost" style="width:100%;margin-top:10px" onclick="toggleGoals()">🔒 Deine Ziele: ${s.goals.length} ${goalsOpen ? "▴" : "▾"}</button>${goalsOpen ? `<div class="grid4" style="margin-top:8px">${goals}</div>` : ""}` : ""}
-  </div>`;
-}
+
 window.selectCard = (id, from) => {
   const src = from === "hand" ? state.hand : state.stored;
   selected = src.find((c) => c.id === id) || null;
@@ -477,6 +535,7 @@ function seasonEndButtons(s) {
   return `<button class="${s.seTurn + 1 < s.players.length ? "btn-amber" : "btn-red"}" onclick="seasonDone()">
     ${s.seTurn + 1 < s.players.length ? `✅ Fertig – weiter an ${esc(s.players[s.seTurn + 1].name)}` : "🎲 Jetzt einmal für alle würfeln!"}</button>`;
 }
+
 
 function renderActionBar() {
   const seTurnActive = state.phase === "seasonEnd" && state.isYourSeasonTurn;
@@ -569,6 +628,7 @@ function renderActionBar() {
 }
 
 // ---------------------------- Bildschirme -----------------------------------
+
 
 function renderConnect() {
   if (state) return; // nur falls noch nichts geladen
@@ -716,115 +776,564 @@ function renderReveal(s) {
   return `<div class="rev"><h2>🏁 Die große Schlusswertung</h2>${body}${nextBtn}</div>`;
 }
 
-function render() {
-  if (!state) { renderConnect(); return; }
-  if (state.phase === "lobby") { actionBar.style.display = "none"; renderLobby(state); return; }
-  const s = state;
+
+
+
+// ============================================================
+// 🎡 UI-ÜBERNAHME (v2.0): Der Tisch aus dem Prototyp –
+// Reichs-Farben, Sitz-Kreis, Lampen, Pfeil-Ring, Kartenfächer,
+// runde Eck-Buttons, Aufklapper. Die ganze Spiellogik (Websocket,
+// Phasen, Aktionsleiste, Modi) bleibt unverändert.
+// ============================================================
+
+const REALM_COLORS = { wald:"#3f9d43", tiefsee:"#3f9ac2", wolken:"#e9c766", hoehlen:"#b07c3f", dunkel:"#94a3b8", traum:"#7c5fb8", gefahr:"#dc2626" };
+const realmColor = (id) => REALM_COLORS[id] || "#8a94a8";
+const AV_COLORS = ["#3f9ac2", "#3f9d43", "#b07c3f", "#7c5fb8", "#e9c766"];
+const AV_DARK = ["#0e2a3d", "#122b18", "#231a3d", "#231a3d", "#2b2410"];
+
+// Zustand der Oberfläche (überlebt den Neuaufbau bei jeder Server-Nachricht)
+let inhand = false;          // Karten hochgehoben (Hand-Modus)
+let suppressClick = false;   // Wisch-Guard: Wisch nicht als Tipp werten
+let openDrawer = null;       // offener Aufklapper: dMen | dLager | dFresh | dChat | dSaison
+let drag = null, dragMoved = false;
+let fanScroll = 0;           // Fächer-Position überlebt den Neuaufbau
+let fanRaf = 0, animId = 0, rubberX = 0;
+let fanWinBound = false;
+
+// ---------------------------- Saison-Kopf -------------------------------
+function saisonHeadHTML(s) {
+  const rc = realmColor(s.seasonCard);
+  const emoji = s.seasonCard === "gefahr" ? "🎲" : realmInfo(s.seasonCard).emoji;
+  const ccw = s.season % 2 === 0; // Richtung wechselt je Saison (wie im Server)
+  const pool = s.seasonPool || [];
+  const reihen = pool.length ? pool : [];
+  let lamps = "";
+  const cur = s.season;
+  if (reihen.length) {
+    lamps = reihen.map((rid, i) => {
+      if (i < cur) return `<i class="lamp on" style="--lc:${REALM_COLORS[rid] || "#94a3b8"}"></i>`;
+      if (i === cur) return `<i class="lamp cur" style="--lc:${REALM_COLORS[rid] || rc}"></i>`;
+      return `<i class="lamp"></i>`;
+    }).join("");
+  } else {
+    // Fallback, falls der Server noch keine Saison-Reihenfolge schickt
+    let lampen = [];
+    for (let i = 0; i < (s.totalSeasons || 4); i++) lampen.push(i === cur ? `<i class="lamp cur" style="--lc:${rc}"></i>` : `<i class="lamp"></i>`);
+    lamps = lampen.join("");
+  }
+  return `<div class="top">
+    <div class="sicon ${ccw ? "ccw" : ""}">${emoji}<svg class="pfeil" viewBox="0 0 48 48" width="50" height="50"><path class="bogen" d="M 32.0 4.6 A 21 21 0 1 1 16.0 4.6" style="stroke:${rc}"/><polygon class="spitze" points="14.7,1.4 17.3,7.8 22.5,1.9" style="fill:${rc}"/></svg></div>
+    <div class="season"><div class="lamps">${lamps}</div></div>
+    <div class="menu" onclick="event.stopPropagation();toggleMenu()">⋮</div>
+  </div>`;
+}
+
+// ---------------------------- Mitspieler-Panels -------------------------
+function statusFor(s, i) {
+  const p = s.players[i];
+  if (!p.connected && s.phase === "draft") return "📴 Verbindung weg…";
+  if (s.phase === "danger") return "🎲 Gefahrenprobe";
+  if (s.phase === "reveal") return "🏁 Wertung";
+  if (s.phase === "seasonEnd") return s.seTurn === i ? "📐 spielt Eingelagertes" : "✅ fertig";
+  if (s.mode === "schnell" || s.mode === "langsam") {
+    if (s.showTurn >= 0) return s.showTurn === i ? "🔍 deckt gerade auf" : (s.simReady && s.simReady[i] ? "✅" : "⏳");
+    return s.simReady && s.simReady[i] ? "✅ hat gewählt" : "⏳ wählt verdeckt…";
+  }
+  if (s.awaitDiscard === i) return "🗑️ legt offen ab…";
+  if (s.turn === i) return "🎯 ist am Zug";
+  return "⏳";
+}
+
+function spanelHTML(s, pi, links) {
+  const p = s.players[pi];
+  const free = freeLandsOf(p.lands, p.seasonMonsters);
+  const rows = ALL_REALMS.filter((r) => (p.lands[r.id] || 0) > 0).map((r) => {
+    const total = p.lands[r.id], occ = total - free[r.id];
+    let dots = "";
+    for (let k = 0; k < free[r.id]; k++) dots += `<i class="dot on" style="background:${realmColor(r.id)}"></i>`;
+    for (let k = 0; k < occ; k++) dots += `<i class="dot off" style="background:${realmColor(r.id)}"></i>`;
+    return `<div class="lrow">${dots}</div>`;
+  }).join("");
+  const mons = (p.seasonMonsters || []).map((m) =>
+    `<div class="mini" style="--rc:${realmColor(m.realm)}"><div class="me">${m.realm === "traum" ? "🌙" : realmInfo(m.realm).emoji}</div>${esc(m.name)}<div class="st">Lv ${m.cost} · ⭐${m.points}${m.danger ? " ⚠️" + m.danger : ""}</div></div>`).join("");
+  const stf = (p.staff || []).map((x) => `<span class="stf" onclick="event.stopPropagation();toggleStaff(${pi},'${esc(x.name)}')">${esc(x.name)}</span>`).join("");
+  const detail = staffDetail && staffDetail.pi === pi ? (() => {
+    const st = (p.staff || []).find((x) => x.name === staffDetail.name);
+    return st ? `<div class="stfdetail"><b>👷 ${esc(st.name)}</b> (−${st.cost} 👑): ${esc(st.text)}</div>` : "";
+  })() : "";
+  const x = ((p.name || "?").trim().charAt(0) || "?").toUpperCase();
+  return `<div class="spanel${links ? "" : " rechts"}" onclick="event.stopPropagation();this.classList.toggle('auf')">
+    <div class="kopf">
+      <div class="pav" style="border-color:${AV_COLORS[pi % 5]};background:${AV_DARK[pi % 5]}">${esc(x)}</div>
+      <div class="pname">${p.connected ? "" : "📴 "}${esc(p.name)}<small>${statusFor(s, pi)}</small></div>
+      <div class="kenn"><span>👑 <b>${p.coins}</b></span><span>🏹 <b>${p.hunters}</b></span><span>💳 <b>${p.credits}</b></span>${p.trophies ? `<span>🏆 <b>${p.trophies}</b></span>` : ""}<i class="pf">▸</i></div>
+    </div>
+    <div class="landrows">${rows}</div>
+    <div class="saison-lab">Diese Saison ausgespielt (Panel antippen):</div>
+    <div class="minis">${mons}</div>
+    ${stf ? `<div class="staffbox"><div class="saison-lab">Mitarbeiter (antippen für den Effekt):</div><div onclick="event.stopPropagation()">${stf}</div></div>` : ""}
+    ${detail}
+  </div>`;
+}
+
+/* Sitz-Kreis: Gegenüber sitzen oben (schmaler = weiter weg), deine Sitznachbarn
+   unten an den Rändern – die Lücke in der Mitte ist dein Platz.
+   Von links nach rechts liest man den Karten-Umlauf. */
+function spielerBoxHTML(s) {
+  const n = s.players.length, me = s.you;
+  const flowLeft = s.season % 2 === 0;
+  const opp = [];
+  for (let k = 1; k < n; k++) opp.push(flowLeft ? (me + k) % n : ((me - k) % n + n) % n);
+  const m = opp.length;
+  let reihen;
+  if (m === 1) reihen = [{ row: "solo", sitze: [[opp[0], true]] }];
+  else if (m === 2) reihen = [{ row: "", sitze: [[opp[0], true], [opp[1], false]] }];
+  else if (m === 3) reihen = [{ row: "solo", sitze: [[opp[1], true]] }, { row: "unten", sitze: [[opp[0], true], [opp[2], false]] }];
+  else reihen = [{ row: "oben", sitze: [[opp[1], true], [opp[2], false]] }, { row: "unten", sitze: [[opp[0], true], [opp[3], false]] }];
+  return reihen.map((r) =>
+    `<div class="srow ${r.row}">` + r.sitze.map(([pi, links]) => spanelHTML(s, pi, links)).join("") + `</div>`
+  ).join("");
+}
+
+// ---------------------------- Eigene Länder (Haufen) --------------------
+function landsStripHTML(s) {
+  const me = s.players[s.you];
+  const free = freeLandsOf(me.lands, me.seasonMonsters);
+  return `<div class="landleiste">` + ALL_REALMS.filter((r) => (me.lands[r.id] || 0) > 0).map((r) => {
+    const total = me.lands[r.id], occ = total - free[r.id];
+    const dots = [];
+    for (let k = 0; k < free[r.id]; k++) dots.push(true);
+    for (let k = 0; k < occ; k++) dots.push(false);
+    const hr = (arr) => `<div class="hrow">` + arr.map((f) => `<i class="dot ${f ? "on" : "off"}" style="background:${realmColor(r.id)}"></i>`).join("") + `</div>`;
+    if (dots.length <= 2) return `<div class="lcol"><div class="dots">${dots.map((f) => `<i class="dot ${f ? "on" : "off"}" style="background:${realmColor(r.id)}"></i>`).join("")}</div></div>`;
+    const unten = Math.ceil(dots.length / 2);
+    return `<div class="lcol"><div class="dots">${hr(dots.slice(0, unten))}${hr(dots.slice(unten))}</div></div>`;
+  }).join("") + `</div>`;
+}
+
+// ---------------------------- Kartenfächer ------------------------------
+function fanCardHTML(c, opts) {
+  opts = opts || {};
+  const ri = realmInfo(c.realm);
+  let art = c.realm === "traum" ? "🌙" : ri.emoji, med = "", pts = "", eff = "", zielK = false, rc = realmColor(c.realm);
+  if (c.type === "Monster") {
+    med = String(c.cost); pts = `⭐${c.points}`;
+    if (c.draw) eff += `🃏 zieht ${c.draw} · `;
+    if (c.danger) eff += `⚠️${c.danger}`;
+  } else if (c.type === "Land") {
+    pts = `${c.level} P`;
+    if (c.realm !== "traum" && c.level >= 2) eff = "entfernt · Land-Vorbedingung nötig";
+  } else if (c.type === "Mitarbeiter") {
+    rc = "#0891b2"; art = "👷"; med = String(c.cost); pts = "👑";
+    eff = c.kind === "land" ? "Entdecker – Landtyp wählen" : "dauerhafter Effekt";
+  } else if (c.type === "Event") {
+    rc = "#ea580c"; art = "🎪";
+  } else {
+    rc = "#7c5fb8"; art = "🎯"; zielK = true;
+  }
+  const sel = opts.selected ? " sel" : "";
+  const click = opts.onClick ? ` onclick="${opts.onClick}"` : " disabled";
+  const info = esc(`${cardTypeLabel(c)} · ${cardInfo(c)}`);
+  return `<button class="k${sel}${zielK ? " ziel" : ""}" style="--rc:${rc}" data-fid="${c.id}" data-info="${info}"${click}>` +
+    (zielK
+      ? `<span class="secret">🔒 geheim</span><div class="ztxt"><div class="big">🎯</div><b>${esc(c.name || "Ziel")}</b><span>${esc(c.text || "")}</span></div>`
+      : `<div class="art">${art}</div><div class="name">${esc(c.name || ri.name)}</div>${med ? `<div class="med">${med}</div>` : ""}${eff ? `<div class="eff">${esc(eff)}</div>` : ""}${pts ? `<div class="pts">${pts}</div>` : ""}`) +
+    `</button>`;
+}
+
+function handwrapHTML(s) {
+  if (s.phase !== "draft" || !s.hand || !s.hand.length) return "";
   const freshBusy = (s.freshDraw || []).some((c) => c.type !== "Ziel");
-  let html = header(s) + seasonBox(s) + turnBanner(s);
-  html += `<div class="label">Alle Spieler (öffentliche Infos)</div>` + playersGrid(s);
-  // 2er-Regeln: offene Ablage + Nachziehstapel (öffentliche Info)
-  if (s.players.length === 2 && s.phase === "draft") {
+  const pickDiscard = s.mode === "schnell" && !!simSel && s.players.length === 2 && s.hand.length > 1;
+  const canPickHand = s.awaitDiscard === s.you || s.turboDiscard
+    || (s.mode === "turbo" && !s.turboDiscard)
+    || ((s.mode === "schnell" || s.mode === "langsam") && (!s.mySimPick || window._simEditing) && !freshBusy && s.showTurn < 0);
+  const ks = s.hand.map((c) => {
+    let onClick = null;
+    if (pickDiscard) onClick = c.id === simSel.cardId ? "simEdit()" : `simSetDiscard(${c.id})`;
+    else if (s.mode === "schnell" || s.mode === "langsam")
+      onClick = canPickHand ? ((simSel && c.id === simSel.cardId) ? "simEdit()" : `fanSel(${c.id})`) : null;
+    else onClick = canPickHand ? `fanSel(${c.id})` : null;
+    const isSel = (selected && selected.id === c.id) || (simSel && c.id === simSel.cardId) || (!!simDiscard && c.id === simDiscard);
+    return fanCardHTML(c, { onClick, selected: isSel });
+  }).join("");
+  return `<div class="handwrap" id="wrap"><div class="hand" id="hand"><div class="handin" id="handin"><div class="endcap"></div>${ks}<div class="endcap"></div></div></div></div>`;
+}
+
+const phoneOf = () => document.getElementById("phone");
+const handOf = () => document.getElementById("hand");
+function karten() { const h = handOf(); return h ? Array.prototype.slice.call(h.querySelectorAll(".k")) : []; }
+
+function updateFan() {
+  const hand = handOf();
+  if (!hand) return;
+  const ks = hand.querySelectorAll(".k");
+  if (!ks.length) return;
+  const w = hand.clientWidth, mid = hand.scrollLeft + w / 2;
+  ks.forEach(function (el) {
+    const c = el.offsetLeft + el.offsetWidth / 2;
+    const d = Math.abs((c - mid) / el.offsetWidth);
+    const a = Math.min(d, 2.6);
+    const s = 1 - .26 * a;
+    const ty = a * a * 7 + (el.classList.contains("sel") ? -12 : 0);
+    el.style.transform = "translateY(" + ty + "px) scale(" + s + ")";
+    el.style.zIndex = String(100 - Math.round(d * 20));
+    el.style.opacity = String(Math.max(.25, 1 - d * .22));
+    if (el.classList.contains("sel")) el.style.boxShadow = "0 0 0 3px var(--gold), 0 12px 28px #000c";
+    else el.style.boxShadow = "";
+  });
+}
+
+function cardZiel(hand, el) { return el.offsetLeft - (hand.clientWidth - el.offsetWidth) / 2; }
+
+function animiere(ziel) {
+  const hand = handOf();
+  if (!hand) return;
+  cancelAnimationFrame(animId);
+  const von = hand.scrollLeft, dist = ziel - von;
+  if (Math.abs(dist) < 1) { hand.scrollLeft = ziel; updateFan(); return; }
+  const dauer = Math.max(200, Math.min(480, 170 + Math.abs(dist) * .85));
+  const t0 = performance.now();
+  function frame(t) {
+    const p = Math.min(1, (t - t0) / dauer);
+    hand.scrollLeft = von + dist * (1 - Math.pow(1 - p, 3));
+    updateFan();
+    if (p < 1 && handOf() === hand) animId = requestAnimationFrame(frame);
+  }
+  animId = requestAnimationFrame(frame);
+}
+
+function centerCard(el) {
+  const hand = handOf();
+  if (hand && el) animiere(cardZiel(hand, el));
+}
+
+function fanFollow(ms) {
+  const st = Date.now();
+  const iv = setInterval(function () {
+    updateFan();
+    if (Date.now() - st > ms) clearInterval(iv);
+  }, 40);
+}
+
+function handModus(an, focusEl) {
+  inhand = an;
+  const ph = phoneOf();
+  if (!ph) return;
+  ph.classList.toggle("inhand", an);
+  if (an) {
+    const f = focusEl || karten()[0];
+    if (f) centerCard(f);
+    const f2 = f;
+    if (f2) setTimeout(function () { if (inhand) { const noch = document.querySelector('.k[data-fid="' + (f2.dataset ? f2.dataset.fid : "") + '"]'); if (noch) centerCard(noch); } }, 430);
+  }
+  fanFollow(500);
+}
+
+window.fanSel = (id) => {
+  if (suppressClick) return;
+  selected = (state.hand || []).find((c) => c.id === id) || null;
+  selectedFrom = "hand";
+  window._realm = null;
+  render();
+  if (selected) {
+    const el = document.querySelector('.k[data-fid="' + id + '"]');
+    handModus(true, el);
+    const info = document.getElementById("info");
+    if (info && el && el.dataset.info) info.textContent = el.dataset.info;
+  }
+};
+
+// Auswahl ersetzt die alte Funktion: nach dem Neuaufbau die Karte zentrieren
+window.selectCard = (id, from) => {
+  const src = from === "hand" ? state.hand : state.stored;
+  selected = src.find((c) => c.id === id) || null;
+  selectedFrom = from;
+  window._realm = null;
+  render();
+  if (from === "hand" && selected) {
+    const el = document.querySelector('.k[data-fid="' + id + '"]');
+    handModus(true, el);
+  }
+};
+
+// Wischen: 1:1 am Finger, Trägheit, Gummi an den Enden (wie Prototyp)
+function onFanMove(e) {
+  if (!drag) return;
+  const hand = handOf();
+  if (!hand) { drag = null; return; }
+  const dx = e.clientX - drag.x;
+  if (Math.abs(dx) > 8) dragMoved = true;
+  const jetzt = Date.now();
+  drag.samples.push({ t: jetzt, x: e.clientX });
+  while (drag.samples.length > 2 && jetzt - drag.samples[0].t > 120) drag.samples.shift();
+  const min = 0, max = hand.scrollWidth - hand.clientWidth;
+  let ziel = drag.sl - dx;
+  if (ziel < min) { hand.scrollLeft = min; rubberX = ziel * .3; }
+  else if (ziel > max) { hand.scrollLeft = max; rubberX = (ziel - max) * .3; }
+  else { hand.scrollLeft = ziel; rubberX = 0; }
+  const hin = document.getElementById("handin");
+  if (hin) hin.style.transform = rubberX ? "translateX(" + rubberX.toFixed(1) + "px)" : "";
+}
+function onFanUp() {
+  if (!drag) return;
+  const hand = handOf();
+  const s = drag.samples; drag = null;
+  if (!hand) return;
+  if (rubberX) {
+    const start = rubberX, t0 = performance.now();
+    rubberX = 0;
+    (function fr(t) {
+      const p = Math.min(1, (t - t0) / 220);
+      const hin = document.getElementById("handin");
+      if (hin) hin.style.transform = p < 1 ? "translateX(" + (start * (1 - p * p)) + "px)" : "";
+      if (p < 1) requestAnimationFrame(fr);
+    })(t0);
+  }
+  let v = 0;
+  if (s.length > 1 && s[s.length - 1].t > s[0].t) v = (s[s.length - 1].x - s[0].x) / (s[s.length - 1].t - s[0].t);
+  let vorhersage = hand.scrollLeft - v * 240;
+  const ks = karten();
+  let best = 0, bd = 1e9;
+  ks.forEach(function (c, i) {
+    const d = Math.abs(cardZiel(hand, c) - vorhersage);
+    if (d < bd) { bd = d; best = i; }
+  });
+  if (Math.abs(v) > .55) best = Math.max(0, Math.min(ks.length - 1, best + (v < 0 ? 1 : -1)));
+  if (ks[best]) animiere(cardZiel(hand, ks[best]));
+  if (dragMoved) { suppressClick = true; setTimeout(function () { suppressClick = false; }, 90); }
+}
+
+// Tipp außerhalb: legt Karten ab / schließt Aufklapper + Menü
+function outsideTap(e) {
+  const t = e.target;
+  if (!t || !t.closest) return;
+  const drawerWasOpen = !!document.querySelector(".drawer.open");
+  if (!t.closest(".drawer") && !t.closest(".corner") && !t.closest(".midst")) closeDrawersNow();
+  if (!t.closest(".optionen") && !t.closest(".menu")) closeMenu();
+  if (inhand && !suppressClick && !drawerWasOpen
+    && !t.closest(".k") && !t.closest("#actionbar") && !t.closest(".uiband")
+    && !t.closest(".bottombar") && !t.closest(".optionen") && !t.closest(".menu")
+    && !t.closest(".spanel") && !t.closest(".landleiste")) handModus(false);
+}
+
+function bindFan() {
+  const hand = handOf();
+  if (!hand) return;
+  hand.scrollLeft = fanScroll;
+  hand.addEventListener("scroll", function () {
+    fanScroll = hand.scrollLeft;
+    if (!fanRaf) fanRaf = requestAnimationFrame(function () { fanRaf = 0; updateFan(); });
+  });
+  document.querySelectorAll(".k").forEach(function (el) {
+    el.addEventListener("pointerdown", function (e) {
+      cancelAnimationFrame(animId);
+      drag = { x: e.clientX, sl: hand.scrollLeft, samples: [{ t: Date.now(), x: e.clientX }] };
+      dragMoved = false;
+    });
+  });
+  if (!fanWinBound) {
+    fanWinBound = true;
+    window.addEventListener("pointermove", onFanMove);
+    window.addEventListener("pointerup", onFanUp);
+    window.addEventListener("pointercancel", function () { drag = null; });
+    window.addEventListener("resize", updateFan);
+    document.addEventListener("click", outsideTap);
+  }
+  updateFan();
+  fanFollow(500);
+}
+
+// ---------------------------- Aufklapper & Menü -------------------------
+window.toggleMenu = () => { const m = document.getElementById("optmenu"); if (m) m.classList.toggle("open"); };
+window.closeMenu = () => { const m = document.getElementById("optmenu"); if (m) m.classList.remove("open"); };
+function closeDrawersNow() {
+  document.querySelectorAll(".drawer.open").forEach((x) => x.classList.remove("open"));
+  document.querySelectorAll(".corner.open").forEach((x) => x.classList.remove("open"));
+  openDrawer = null;
+}
+window.toggleDrawerById = (id) => {
+  const d = document.getElementById(id);
+  if (!d) return;
+  openDrawer = d.classList.contains("open") ? null : id;
+  document.querySelectorAll(".drawer.open").forEach((x) => x.classList.remove("open"));
+  document.querySelectorAll(".corner.open").forEach((x) => x.classList.remove("open"));
+  if (openDrawer) {
+    d.classList.add("open");
+    const map = { dMen: "cMen", dLager: "cLager" };
+    if (map[id]) { const c = document.getElementById(map[id]); if (c) c.classList.add("open"); }
+  }
+};
+
+function drawerMenHTML(s) {
+  const meng = (s.menagerie || []).map((m) =>
+    `<div class="mini" style="--rc:${realmColor(m.realm)}"><div class="me">${m.realm === "traum" ? "🌙" : realmInfo(m.realm).emoji}</div>${esc(m.name)}<div class="st">⭐${m.points}${m.danger ? " ⚠️" + m.danger : ""}</div></div>`).join("");
+  return `<div class="drawer ${openDrawer === "dMen" ? "open" : ""}" id="dMen"><h4>🎭 Deine Menagerie – nur für dich sichtbar</h4>
+    <div class="minis">${meng || '<span class="muted">Noch keine Monster in der Menagerie – am Ende jeder Saison wandern deine Saison-Monster hierher.</span>'}</div></div>`;
+}
+
+function drawerLagerHTML(s) {
+  const me = s.players[s.you];
+  const freshIds = new Set((s.freshDraw || []).map((c) => c.id));
+  const canUse = ((s.phase === "draft") || (s.phase === "seasonEnd" && s.isYourSeasonTurn))
+    && !(s.mode === "langsam" && s.awaitDiscard === s.you)
+    && !s.turboDiscard;
+  const storedCards = (s.stored || []).map((c) => cardHTML(c, {
+    onClick: canUse && !freshIds.has(c.id) ? `selectCard(${c.id},'stored')` : null,
+    blocked: canUse && !freshIds.has(c.id) && c.type === "Monster" && !canPlayMonster(c, me),
+    selected: selected && selected.id === c.id,
+  })).join("");
+  const goals = (s.goals || []).map((g) => cardHTML(g)).join("");
+  return `<div class="drawer ${openDrawer === "dLager" ? "open" : ""}" id="dLager">
+    <h4>📥 Eingelagert (${(s.stored || []).length})${canUse && (s.stored || []).length ? ' <small class="muted">– antippen zum Ausspielen</small>' : ""}</h4>
+    ${(s.stored || []).length ? `<div class="grid4">${storedCards}</div>` : '<p class="muted">Noch nichts eingelagert.</p>'}
+    ${(s.goals || []).length ? `<div class="sub">🔒 Deine Ziele (${s.goals.length}) – nur für dich sichtbar</div><div class="grid4">${goals}</div>` : ""}
+  </div>`;
+}
+
+function drawerFreshHTML(s) {
+  if ((s.phase !== "draft" && s.phase !== "seasonEnd") || !(s.freshDraw || []).length) return "";
+  const open = (s.freshDraw || []).filter((c) => c.type !== "Ziel");
+  const cur = open[0];
+  if (cur && window._freshRealmFor !== cur.id) { window._freshRealm = null; window._freshRealmFor = cur.id; }
+  let inner = `<h4>🃏 Gratis gezogen${open.length > 1 ? ` – noch ${open.length} offen` : ""} – jetzt entscheiden!</h4>`;
+  inner += `<div class="grid4">${s.freshDraw.map((c) => cardHTML(c, { selected: cur && c.id === cur.id })).join("")}</div>`;
+  if (s.freshDraw.some((c) => c.type === "Ziel")) inner += `<p class="muted center" style="margin-top:6px">🔒 Gezogene Ziele liegen direkt bei deinen Zielen – gratis angenommen.</p>`;
+  if (s.mode === "schnell") inner += `<p class="muted center" style="margin-top:6px">⚡ Dein neues Blatt bleibt verdeckt, bis du entschieden hast – das ist fair für alle.</p>`;
+  if (cur) {
+    if (cur.type === "Mitarbeiter" && cur.kind === "land") {
+      inner += `<p class="muted center" style="margin-top:8px">„${esc(cur.name)}“ – Typ des Landes festlegen: <b>dauerhaft!</b></p>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;justify-content:center">${ALL_REALMS.map((r) => `<button class="btn-indigo" style="flex:1;font-size:.85rem;border:none;border-radius:10px;padding:9px 6px;font-weight:700" onclick="chooseFreshRealm('${r.id}')">${r.emoji}${window._freshRealm === r.id ? " ✓" : ""}</button>`).join("")}</div>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button class="btn-green" style="flex:1;border:none;border-radius:10px;padding:11px;font-weight:800" ${window._freshRealm ? "" : "disabled"} onclick="freshPlay(${cur.id})">✅ Diese ausspielen</button>
+          <button class="btn-indigo" style="flex:1;border:none;border-radius:10px;padding:11px;font-weight:800" onclick="freshKeep(${cur.id})">📥 Diese einlagern (gratis)</button>
+        </div>
+        ${window._freshRealm ? "" : `<p class="muted center" style="margin-top:6px">👉 „Ausspielen“ wird erst klickbar, wenn du oben den Typ des Landes gewählt hast.</p>`}`;
+    } else if (cur.type === "Monster" && cur.realm === "traum") {
+      const free = freeLandsOf(s.players[s.you].lands, s.players[s.you].seasonMonsters);
+      let opts = "";
+      if (free.traum >= cur.cost) opts += `<button class="btn-green" style="flex:1;min-width:150px;border:none;border-radius:10px;padding:11px;font-weight:800" onclick="freshDecideTraum(${cur.id},null)">✅ Nur 🌙 (${cur.cost} 🌙)</button>`;
+      REALMS.forEach((r) => {
+        const helper = free[r.id] || 0;
+        if (helper > 0 && free.traum < cur.cost && free.traum + helper >= cur.cost)
+          opts += `<button class="btn-indigo" style="flex:1;min-width:150px;border:none;border-radius:10px;padding:11px;font-weight:800" onclick="freshDecideTraum(${cur.id},'${r.id}')">✅ ${free.traum} 🌙 + ${cur.cost - free.traum} ${r.emoji}</button>`;
+      });
+      inner += `<p class="muted center" style="margin-top:8px">🌙 Bezahlt mit Traumland und/oder GENAU EINEM Hilfsreich:</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:6px">${opts || '<span class="muted">Passt gerade nicht – nur Einlagern möglich.</span>'}</div>
+        <button class="btn-indigo" style="width:100%;margin-top:8px;border:none;border-radius:10px;padding:11px;font-weight:800" onclick="freshKeep(${cur.id})">📥 Diese einlagern (gratis)</button>`;
+    } else {
+      const playable = cardPlayable(cur, s.players[s.you]);
+      inner += `<div style="display:flex;gap:8px;margin-top:8px">
+          <button class="btn-green" style="flex:1;border:none;border-radius:10px;padding:11px;font-weight:800" ${playable ? "" : "disabled"} onclick="freshPlay(${cur.id})">✅ Diese ausspielen</button>
+          <button class="btn-indigo" style="flex:1;border:none;border-radius:10px;padding:11px;font-weight:800" onclick="freshKeep(${cur.id})">📥 Diese einlagern (gratis)</button>
+        </div>
+        ${playable ? "" : `<p class="muted center" style="margin-top:6px">Passt gerade nicht – du kannst die Karte nur gratis einlagern.</p>`}`;
+    }
+  } else {
+    inner += `<button class="btn-amber" style="width:100%;margin-top:8px;border:none;border-radius:10px;padding:11px;font-weight:800" onclick="freshClear()">✅ Alles klar</button>`;
+  }
+  return `<div class="drawer frisch ${openDrawer === "dFresh" ? "open" : ""}" id="dFresh">${inner}</div>`;
+}
+
+function drawerChatHTML(s) {
+  return `<div class="drawer ${openDrawer === "dChat" ? "open" : ""}" id="dChat"><h4>💬 Spielverlauf & Chat</h4>
+    <div class="logbox">${(s.log || []).map((l) => `<div>${esc(l)}</div>`).join("")}</div>
+    <div class="chatrow"><input id="chatinput" placeholder="Nachricht an alle…" maxlength="200" /><button class="btn-ghost" onclick="sendChat()">💬</button></div></div>`;
+}
+
+function drawerSaisonHTML(s) {
+  const modeTxt = (s.mode || "langsam") === "langsam" ? "🐢 Langsam – alle wählen verdeckt, decken nacheinander auf"
+    : s.mode === "schnell" ? "⚡ Schnell – alle wählen gleichzeitig" : "🚀 Turbo – jeder im eigenen Tempo";
+  return `<div class="drawer ${openDrawer === "dSaison" ? "open" : ""}" id="dSaison">
+    <h4>${s.seasonCard === "gefahr" ? "🎲" : realmInfo(s.seasonCard).emoji} Saison ${s.season + 1} von ${s.totalSeasons || 4}: ${esc(s.seasonName)}</h4>
+    <p style="font-size:.8rem;margin:0 0 8px">${esc(s.seasonHint)}</p>
+    <p class="muted" style="margin:0 0 6px">Trophäe (+3 SP) für die ${s.seasonCard === "gefahr" ? "meisten ⚠️" : "meisten ⭐"} in dieser Saison · 1 übrig gebliebene Krone = 1 SP · 1 Jägermarker = 1 SP</p>
+    ${s.bonusGiven ? '<p class="muted" style="margin:0 0 6px">2-Kronen-Bonus bereits kassiert.</p>' : ""}
+    ${s.players.length === 2 && s.phase === "draft" ? `<p class="muted" style="margin:0 0 6px">🗑️ 2er-Regeln: offene Ablage · Nachziehstapel: ${s.stackCount || 0} Karten verdeckt</p>` : ""}
+    <p class="muted" style="margin:0">${modeTxt}</p></div>`;
+}
+
+function bottombarHTML(s) {
+  const me = s.players[s.you];
+  const lagN = (s.stored || []).length + (s.goals || []).length;
+  const mengN = (s.menagerie || []).length;
+  return `<div class="bottombar">
+    <button class="corner" id="cMen" onclick="event.stopPropagation();toggleDrawerById('dMen')"><span class="emoji">🎭</span>${mengN ? `<span class="badge">${mengN}</span>` : ""}</button>
+    <div class="midst" onclick="event.stopPropagation()">
+      <span>👑 <b>${me.coins}</b></span><span class="sep">·</span>
+      <span>🏹 <b>${me.hunters}</b></span><span class="sep">·</span>
+      <span>💳 <b>${me.credits}</b></span>${me.trophies ? `<span class="sep">·</span><span>🏆 <b>${me.trophies}</b></span>` : ""}
+    </div>
+    <button class="corner" id="cLager" onclick="event.stopPropagation();toggleDrawerById('dLager')"><span class="emoji">📥</span>${lagN ? `<span class="badge">${lagN}</span>` : ""}</button>
+  </div>`;
+}
+
+function menuHTML(s) {
+  return `<div class="optionen" id="optmenu">
+    <button class="optitem" onclick="closeMenu();toggleDrawerById('dSaison')">ℹ️ <span>Saison-Info & Spieltempo</span></button>
+    <button class="optitem" onclick="closeMenu();toggleDrawerById('dChat')">💬 <span>Spielverlauf & Chat</span></button>
+    ${s.isHost && (s.phase === "draft" || s.phase === "seasonEnd" || s.phase === "danger")
+      ? `<button class="optitem" onclick="closeMenu();newGame()">🔄 <span>Neue Partie (zur Lobby)</span></button>` : ""}
+    <button class="optitem" onclick="closeMenu();leaveRoom()">🚪 <span>Raum ${s.isHost ? "schließen" : "verlassen"}</span></button>
+  </div>`;
+}
+
+// ---------------------------- Wechsel-Schirme & 2er-Infos ---------------
+function mitteHTML(s) {
+  let html = turnBanner(s);
+  if (s.phase === "draft" && s.players.length === 2) {
     const chips = (s.openDiscards || []).map((d) =>
       `<span class="chip" style="background:rgba(249,115,22,0.18);color:#fdba74">${esc(s.players[d.by].name)}: ${esc(d.card.name)}${d.card.type === "Monster" ? " ⭐" + d.card.points : d.card.type === "Land" ? " +" + d.card.level : ""}</span>`).join("");
     html += `<div class="card-panel"><div class="label">🗑️ Offene Ablage · Nachziehstapel: ${s.stackCount || 0} Karten verdeckt</div>
       <div class="chips">${chips || '<span class="muted">Noch nichts offen abgelegt.</span>'}</div></div>`;
   }
-  html += myZone(s);
-  // 🃏 Zieh-Schlange – jede gezogene Karte einzeln entscheiden, erst dann geht der Zug weiter
-  if ((s.phase === "draft" || s.phase === "seasonEnd") && (s.freshDraw || []).length) {
-    const open = s.freshDraw.filter((c) => c.type !== "Ziel");
-    const cur = open[0];
-    if (cur && window._freshRealmFor !== cur.id) { window._freshRealm = null; window._freshRealmFor = cur.id; }
-    html += `<div class="card-panel" style="border:2px solid #fbbf24;background:rgba(251,191,36,0.08)">
-      <div class="label" style="color:#fcd34d">🃏 Gratis gezogen${open.length > 1 ? ` – noch ${open.length} offen` : ""}</div>
-      <div class="grid4" style="max-width:440px">${s.freshDraw.map((c) => cardHTML(c, { selected: cur && c.id === cur.id })).join("")}</div>
-      ${s.freshDraw.some((c) => c.type === "Ziel") ? `<p class="muted center" style="margin-top:6px">🔒 Gezogene Ziele liegen direkt bei deinen Zielen – gratis angenommen.</p>` : ""}
-      ${s.mode === "schnell" ? `<p class="muted center" style="margin-top:6px">⚡ Dein neues Blatt bleibt verdeckt, bis du entschieden hast – das ist fair für alle.</p>` : ""}`;
-    if (cur) {
-      if (cur.type === "Mitarbeiter" && cur.kind === "land") {
-        html += `<p class="muted center" style="margin-top:8px">„${esc(cur.name)}" – Typ des Landes festlegen: <b>dauerhaft!</b></p>
-          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">${ALL_REALMS.map((r) => `<button class="btn-indigo" style="flex:1;font-size:0.85rem" onclick="chooseFreshRealm('${r.id}')">${r.emoji}${window._freshRealm === r.id ? " ✓" : ""}</button>`).join("")}</div>
-          <div style="display:flex;gap:8px;margin-top:8px">
-            <button class="btn-green" style="flex:1" ${window._freshRealm ? "" : "disabled"} onclick="freshPlay(${cur.id})">✅ Diese ausspielen</button>
-            <button class="btn-indigo" style="flex:1" onclick="freshKeep(${cur.id})">📥 Diese einlagern (gratis)</button>
-          </div>
-          ${window._freshRealm ? "" : `<p class="muted center" style="margin-top:6px">👉 „Ausspielen“ wird erst klickbar, wenn du oben den Typ des Landes gewählt hast.</p>`}`;
-      } else if (cur.type === "Monster" && cur.realm === "traum") {
-        // 🌙 Traum-Monster aus der Zieh-Schlange: Hilfsreich selber aussuchen
-        const free = freeLandsOf(s.players[s.you].lands, s.players[s.you].seasonMonsters);
-        let opts = "";
-        if (free.traum >= cur.cost)
-          opts += `<button class="btn-green" style="flex:1;min-width:150px" onclick="freshDecideTraum(${cur.id},null)">✅ Nur 🌙 (${cur.cost} 🌙)</button>`;
-        REALMS.forEach((r) => {
-          const helper = free[r.id] || 0;
-          if (helper > 0 && free.traum < cur.cost && free.traum + helper >= cur.cost)
-            opts += `<button class="btn-indigo" style="flex:1;min-width:150px" onclick="freshDecideTraum(${cur.id},'${r.id}')">✅ ${free.traum} 🌙 + ${cur.cost - free.traum} ${r.emoji}</button>`;
-        });
-        html += `<p class="muted center" style="margin-top:8px">🌙 Bezahlt mit Traumland und/oder GENAU EINEM Hilfsreich:</p>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:6px">${opts || '<span class="muted">Passt gerade nicht – nur Einlagern möglich.</span>'}</div>
-          <button class="btn-indigo" style="width:100%;margin-top:8px" onclick="freshKeep(${cur.id})">📥 Diese einlagern (gratis)</button>`;
-      } else {
-        const playable = cardPlayable(cur, s.players[s.you]);
-        html += `<div style="display:flex;gap:8px;margin-top:8px">
-            <button class="btn-green" style="flex:1" ${playable ? "" : "disabled"} onclick="freshPlay(${cur.id})">✅ Diese ausspielen</button>
-            <button class="btn-indigo" style="flex:1" onclick="freshKeep(${cur.id})">📥 Diese einlagern (gratis)</button>
-          </div>
-          ${playable ? "" : `<p class="muted center" style="margin-top:6px">Passt gerade nicht – du kannst die Karte nur gratis einlagern.</p>`}`;
-      }
-    } else {
-      html += `<button class="btn-amber" style="width:100%;margin-top:8px" onclick="freshClear()">✅ Alles klar</button>`;
-    }
-    html += `</div>`;
-  }
-  // 2er-Regeln: eigene Hand erst nach der Übergabe wieder sichtbar
   if (s.phase === "draft" && s.mode === "langsam" && s.players.length === 2 && !s.hand.length && s.awaitDiscard !== s.you) {
     const other = s.players[1 - s.you];
     html += `<div class="card-panel"><div class="label">⏳ Deine neue Hand kommt gleich…</div>
       <p class="muted center">${esc(other.name)} wählt gerade eine Karte und legt offen ab.<br/>Erst danach siehst du den übergebenen Stapel – vorher weiß niemand, was reinkommt.</p></div>`;
   }
-  // 🚀 Turbo: eigene Hand ist leer, die anderen spielen noch
   if (s.phase === "draft" && s.mode === "turbo" && !s.hand.length && !s.turboDiscard) {
-    html += `<div class="card-panel"><div class="label">⏳ Neue Karten kommen gleich…</div>
-      <p class="muted center">Die anderen spielen noch – sobald ein Stapel bei dir ankommt, geht es für dich weiter.</p></div>`;
-  }
-  if (s.phase === "draft" && s.hand.length) {
-    const pickDiscard = s.mode === "schnell" && !!simSel && s.players.length === 2 && s.hand.length > 1;
-    const canPickHand = s.awaitDiscard === s.you || s.turboDiscard
-      || (s.mode === "turbo" && !s.turboDiscard)
-      || ((s.mode === "schnell" || s.mode === "langsam") && (!s.mySimPick || window._simEditing) && !freshBusy && s.showTurn < 0);
-    const handLabel = s.awaitDiscard === s.you || s.turboDiscard
-      ? "🗑️ Wähle 1 Karte, die OFFEN aus dem Spiel abgelegt wird – alle sehen sie!"
-      : pickDiscard
-        ? "🗑️ JETZT die ABWURFKARTE antippen – sie wird OFFEN abgelegt (alle sehen sie)!"
-        : (s.mode === "schnell" || s.mode === "langsam")
-          ? `${s.mode === "langsam" ? "🐢" : "⚡"} Deine Hand (${s.hand.length} Karten) – wähle verdeckt!`
-          : `Deine Hand (${s.hand.length} Karten)`;
-    html += `<div class="card-panel"><div class="label">${handLabel}</div><div class="grid4">${
-      s.hand.map((c) => cardHTML(c, {
-        onClick: pickDiscard
-          ? (c.id === simSel.cardId ? "simEdit()" : `simSetDiscard(${c.id})`)
-          : ((s.mode === "schnell" || s.mode === "langsam")
-              ? ((simSel && c.id === simSel.cardId) ? "simEdit()" : (canPickHand ? `selectCard(${c.id},'hand')` : null))
-              : (canPickHand ? `selectCard(${c.id},'hand')` : null)),
-        selected: (selected && selected.id === c.id) || (simSel && c.id === simSel.cardId) || (!!simDiscard && c.id === simDiscard),
-      })).join("")}</div>
-      ${pickDiscard ? `<p class="muted center" style="margin-top:6px">Auf eine andere Karte tippen = offene Ablage. Auf deine Wahl (gelber Rahmen) tippen = ändern.</p>` : ""}
-    </div>`;
+    html += `<div class="card-panel"><div class="label">⏳ Neue Karten kommen gleich…</div><p class="muted center">Die anderen spielen noch – sobald ein Stapel bei dir ankommt, geht es für dich weiter.</p></div>`;
   }
   if (s.phase === "seasonEnd") {
     html += `<div class="card-panel"><div class="banner your" style="margin:0 0 8px">📐 Alle Karten gewählt!</div>
       <p class="muted center">${s.isYourSeasonTurn
-        ? "Spiele noch Eingelagertes aus – danach tippe unten auf „✅ Fertig“. Am Ende wird <b>einmal für alle</b> gewürfelt."
-        : "Warte kurz, bis alle fertig sind…"}</p>
-    </div>`;
+        ? "Spiele noch Eingelagertes aus (📥 unten links) – danach tippe unten auf „✅ Fertig“. Am Ende wird <b>einmal für alle</b> gewürfelt."
+        : "Warte kurz, bis alle fertig sind…"}</p></div>`;
   }
   if (s.phase === "danger") html += renderDanger(s);
   if (s.phase === "reveal") html += renderReveal(s);
-  html += logBox(s);
-  app.innerHTML = html;
+  return html;
+}
+
+// ---------------------------- Der Spieltisch ----------------------------
+function phoneShellHTML(s) {
+  if ((s.freshDraw || []).some((c) => c.type !== "Ziel")) openDrawer = "dFresh";
+  if (!(s.phase === "draft" && s.hand && s.hand.length)) inhand = false;
+  return `<div class="phone${inhand ? " inhand" : ""}" id="phone">`
+    + saisonHeadHTML(s)
+    + `<div class="spieler" id="spielerBox">${spielerBoxHTML(s)}</div>`
+    + `<div class="mitte">${mitteHTML(s)}</div>`
+    + `<div class="uiband"><div class="info" id="info"></div></div>`
+    + handwrapHTML(s)
+    + landsStripHTML(s)
+    + drawerMenHTML(s)
+    + drawerLagerHTML(s)
+    + drawerFreshHTML(s)
+    + drawerChatHTML(s)
+    + drawerSaisonHTML(s)
+    + bottombarHTML(s)
+    + menuHTML(s)
+    + `</div>`;
+}
+
+function render() {
+  if (!state) { renderConnect(); return; }
+  if (state.phase === "lobby") { actionBar.style.display = "none"; renderLobby(state); return; }
+  app.innerHTML = phoneShellHTML(state);
   renderActionBar();
-  if (s.phase !== "draft" && s.phase !== "seasonEnd") { selected = null; }
+  bindFan();
+  if (state.phase !== "draft" && state.phase !== "seasonEnd") { selected = null; }
 }
 
 window.addEventListener("load", connect);
