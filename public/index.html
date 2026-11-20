@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>Carnival of Monsters – Online</title>
 <style>
-  /* ===== UI-Übernahme des Prototyps (v2.0) – dunkler Comic-Tisch ===== */
+  /* ===== UI-Übernahme des Prototyps (v2.0) – dunkler Comic-Tisch · v2.1 Feinschliff ===== */
   :root { --gold:#e9c766; --bg:#0f172a; --panel:#1e2a42; --line:#31405f; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html { height: 100%; }
@@ -57,7 +57,7 @@
   .srow.oben .pf { display:none; }
   .spanel { background:var(--panel); border-radius:12px; padding:8px 10px; overflow:hidden; position:relative; cursor:pointer; }
   .kopf { display:flex; align-items:center; gap:8px; }
-  .pav { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:.74rem; background:#0e2a3d; border:2px solid #3f9ac2; flex:0 0 28px; }
+  .pav { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:.74rem; background:#0e2a3d; border:2px solid #3f9ac2; flex:0 0 28px; color:#fff; }
   .pname { font-size:.9rem; font-weight:700; flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .pname small { display:block; font-weight:400; color:#94a3b8; font-size:.62rem; }
   .dot { width:14px; height:14px; border-radius:50%; border:1px solid #000a; flex:0 0 14px; }
@@ -111,6 +111,7 @@
   .handwrap { position:absolute; left:0; right:0; bottom:64px; height:calc(var(--ch) + 16px); z-index:6;
               transform:translateY(calc(var(--ch)*.5 - 46px)); transition:transform .4s cubic-bezier(.4,1.3,.5,1); pointer-events:none; }
   .phone.inhand .handwrap { transform:translateY(-10vh); z-index:40; }
+  .phone.inhand.bandhoch .handwrap { transform:translateY(calc(-10vh - 96px)); }
   .phone.inhand .uiband { z-index:45; }
   .hand { width:100%; height:100%; overflow-x:auto; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
   .hand::-webkit-scrollbar { display:none; }
@@ -194,6 +195,21 @@
   .chatrow input { flex:1; }
   .chatrow button { padding:8px 14px; }
 
+  /* ---- v2.1: Heller Start-/Lobby-Skin – „wie vorher“ ---- */
+  .start { min-height:100dvh; background:linear-gradient(180deg,#d9e7fb 0%,#eef3fa 55%,#fdfeff 100%); color:#17233c; }
+  .start h1 { color:#17233c; }
+  .start .muted { color:#5d6d88; }
+  .start .label { color:#7c8aa5; }
+  .start .card-panel { background:#fff; color:#17233c; border:1px solid #dde6f4; border-radius:16px; box-shadow:0 10px 26px rgba(35,62,110,.13); }
+  .start input { background:#fff; color:#17233c; border:1.5px solid #c3d0e8; }
+  .start .chip { background:#e9f0fb; color:#2c4270; }
+  .start .btn-amber { background:#f59e0b; color:#fff; }
+  .start .btn-amber:disabled { background:#cdd7e4; color:#eef3fa; }
+  .start .btn-ghost { background:rgba(255,255,255,.82); color:#33518f; font-weight:600; border:1.5px solid #c3d0e8; }
+  .start .bigcode { color:#b45309; }
+  .start .banner { background:#fdf3d3; color:#8a6c1c; border:1px solid #edd89a; }
+  .start button.btn-amber, .start button.btn-ghost { border:none; border-radius:12px; padding:11px 16px; font-weight:700; font-size:.9rem; }
+
   /* ---- TAMTAM-Fanfare für FETTE Monster ---- */
   #fanfare { position:fixed; inset:0; z-index:200; background:rgba(15,23,42,.72); display:flex; align-items:center; justify-content:center; }
   #fanfare .fanbox { background:linear-gradient(160deg,#7c2d12,#b91c1c); color:#fff; text-align:center; padding:22px 30px; border-radius:18px; box-shadow:0 20px 60px #000d; }
@@ -224,6 +240,14 @@ const realmInfo = (id) => ALL_REALMS.find((r) => r.id === id) || TRAUM;
 const app = document.getElementById("app");
 const actionBar = document.getElementById("actionbar");
 const actionInner = document.getElementById("actionbar-inner");
+
+// v2.1: Band-Sichtbarkeit zentral steuern - haelt zusaetzlich die phone-Klasse "bandhoch"
+// synchron, damit die gewaehlte Karte UEBER dem Band sitzt statt dahinter.
+function actionBand(show) {
+  actionBar.style.display = show ? "block" : "none";
+  const ph = document.getElementById("phone");
+  if (ph) ph.classList.toggle("bandhoch", !!(show && typeof inhand !== "undefined" && inhand));
+}
 const statusEl = document.getElementById("status");
 const toastEl = document.getElementById("toast");
 
@@ -472,7 +496,11 @@ window.setMode = (m) => send({ t: "setMode", mode: m });
 window.stagePlay = () => { simSel = { cardId: selected.id, action: "play", realm: window._realm || null }; render(); };
 window.stageTraum = (rid) => { simSel = { cardId: selected.id, action: "play", realm: rid }; render(); };
 window.stageKeep = () => { simSel = { cardId: selected.id, action: "keep", realm: null }; simDiscard = null; render(); };
-window.simSetDiscard = (id) => { if (simDiscard === id) simDiscard = null; else simDiscard = id; render(); };
+window.simSetDiscard = (id) => { if (!inhand) { handModus(true); return; } if (simDiscard === id) simDiscard = null; else simDiscard = id; render(); };
+// v2.1: Karten unten = erst anheben. Erst der zweite Tipp waehlt die Abwurfkarte
+// bzw. oeffnet den Aendern-Modus fuer die schon gewaehlte (staged) Karte.
+window.simDiscTap = (id) => { if (suppressClick) return; if (!inhand) { handModus(true); return; } if (simSel && id === simSel.cardId) simEdit(); else simSetDiscard(id); };
+window.simStagedTap = () => { if (suppressClick) return; if (!inhand) { handModus(true); return; } simEdit(); };
 window.simConfirm = () => { window._simEditing = false; send({ t: "simPick", cardId: simSel.cardId, action: simSel.action, realm: simSel.realm, discardId: simDiscard }); };
 window.simEdit = () => { simSel = null; simDiscard = null; window._simEditing = true; render(); };
 window.revealNow = () => send({ t: "reveal" }); // 🐢 Langsam: „Jetzt aufdecken!“
@@ -542,32 +570,35 @@ function renderActionBar() {
   // ⚡/🐢 schon bestätigt und nicht im Ändern-Modus: unten großer „Ändern“-Knopf –
   // die Wahl bleibt änderbar, solange nicht alle Spieler fertig sind
   if ((state.mode === "schnell" || state.mode === "langsam") && state.phase === "draft" && state.showTurn < 0 && state.mySimPick && !window._simEditing) {
+    // v2.1: Solange der Fächer unten ist, kein Band – der „Ändern“-Knopf kommt
+    // wieder, sobald die Karten angehoben werden (handModus(true) ruft renderActionBar).
+    if ((state.hand || []).length && !inhand) { actionBand(false); return; }
     actionInner.innerHTML = `<button class="btn-indigo" onclick="simEdit()">✏️ Ändern</button>
       <div class="note">Deine Wahl steht fest – du kannst sie noch ändern, solange nicht alle fertig sind.</div>`;
-    actionBar.style.display = "block";
+    actionBand(true);
     return;
   }
-  if ((!selected || !(state.phase === "draft" || state.phase === "seasonEnd")) && !seTurnActive) { actionBar.style.display = "none"; return; }
+  if ((!selected || !(state.phase === "draft" || state.phase === "seasonEnd")) && !seTurnActive) { actionBand(false); return; }
   // offene Ablage: 2er-Wartezustand (Langsam) oder persönlicher Turbo-Schritt
   if (state.phase === "draft" && (state.awaitDiscard === state.you || (state.mode === "turbo" && state.turboDiscard))) {
-    if (state.mode === "turbo" && selectedFrom !== "hand") { actionBar.style.display = "none"; return; }
+    if (state.mode === "turbo" && selectedFrom !== "hand") { actionBand(false); return; }
     actionInner.innerHTML = `<button style="background:#ea580c;color:#fff;flex:1" onclick="discardOpen()">🗑️ „${esc(selected.name || realmInfo(selected.realm).name)}" offen aus dem Spiel ablegen</button>
       <div class="note">Alle sehen, was raus ist. Danach wird 1 Karte verdeckt vom Nachziehstapel auf den weiterzugebenden Stapel gelegt.</div>`;
-    actionBar.style.display = "block";
+    actionBand(true);
     return;
   }
   const me = state.players[state.you];
   // 📐 Saisonende, keine Karte gewählt: nur der „Fertig“-Knopf unten
   if (seTurnActive && !selected) {
     actionInner.innerHTML = seasonEndButtons(state) + `<div class="note">Du darfst vorher noch Eingelagertes ausspielen – einfach antippen.</div>`;
-    actionBar.style.display = "block";
+    actionBand(true);
     return;
   }
   let canUse;
   if (state.phase === "seasonEnd") canUse = state.isYourSeasonTurn;
   else if (state.mode === "langsam") canUse = state.isYourTurn || state.phase === "draft"; // 🐢 verdeckte Wahl ist gleichzeitig (v1.7) – jeder darf die Leiste nutzen
   else canUse = true; // ⚡/🚀: Eingelagertes jederzeit, Hand sobald du Karten hast
-  if (!canUse) { actionBar.style.display = "none"; return; }
+  if (!canUse) { actionBand(false); return; }
   // ⚡/🐢 Schnell & Langsam: Hand-Karten werden nur verdeckt GEWÄHLT –
   // ⚡ führt der „Fertig“-Klick alles aus, 🐢 der eigene „Jetzt aufdecken!“-Button
   const staging = (state.mode === "schnell" || state.mode === "langsam") && state.phase === "draft" && selectedFrom === "hand";
@@ -624,7 +655,7 @@ function renderActionBar() {
   if (selected.type === "Ziel") note += " · Ziele nur annehmen, nicht ausspielen";
   if (seTurnActive) inner += seasonEndButtons(state);
   actionInner.innerHTML = inner + `<div class="note">${note}</div>`;
-  actionBar.style.display = "block";
+  actionBand(true);
 }
 
 // ---------------------------- Bildschirme -----------------------------------
@@ -633,7 +664,7 @@ function renderActionBar() {
 function renderConnect() {
   if (state) return; // nur falls noch nichts geladen
   app.innerHTML = `
-    <div style="min-height:80vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px">
+    <div class="start" style="min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px">
       <div style="font-size:3.5rem">🎡</div>
       <h1>Carnival of Monsters</h1>
       <p class="muted center" style="max-width:340px">Online-Version für euren Freundeskreis. Dein Name:</p>
@@ -658,7 +689,7 @@ window.joinRoom = () => {
 function renderLobby(s) {
   const link = location.origin;
   app.innerHTML = `
-    <div style="min-height:80vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding-top:40px">
+    <div class="start" style="min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding-top:40px">
       <h1>🏰 Raum erstellt!</h1>
       <div class="card-panel" style="max-width:420px;width:100%">
         <div class="label center">Teile diesen Code mit deinen Freunden:</div>
@@ -861,7 +892,10 @@ function spanelHTML(s, pi, links) {
     const st = (p.staff || []).find((x) => x.name === staffDetail.name);
     return st ? `<div class="stfdetail"><b>👷 ${esc(st.name)}</b> (−${st.cost} 👑): ${esc(st.text)}</div>` : "";
   })() : "";
-  const x = ((p.name || "?").trim().charAt(0) || "?").toUpperCase();
+  // v2.1: Bot-Namen starten mit 🤖 – charAt(0) zerreißt das Emoji (halbes Surrogat-Paar
+  // wird unsichtbar). Array.from arbeitet zeichenweise (nicht UTF-16-blockweise).
+  const avName = String(p.name || "?").trim();
+  const x = ((Array.from(avName)[0]) || "?").toUpperCase();
   return `<div class="spanel${links ? "" : " rechts"}" onclick="event.stopPropagation();this.classList.toggle('auf')">
     <div class="kopf">
       <div class="pav" style="border-color:${AV_COLORS[pi % 5]};background:${AV_DARK[pi % 5]}">${esc(x)}</div>
@@ -950,9 +984,9 @@ function handwrapHTML(s) {
     || ((s.mode === "schnell" || s.mode === "langsam") && (!s.mySimPick || window._simEditing) && !freshBusy && s.showTurn < 0);
   const ks = s.hand.map((c) => {
     let onClick = null;
-    if (pickDiscard) onClick = c.id === simSel.cardId ? "simEdit()" : `simSetDiscard(${c.id})`;
+    if (pickDiscard) onClick = `simDiscTap(${c.id})`;
     else if (s.mode === "schnell" || s.mode === "langsam")
-      onClick = canPickHand ? ((simSel && c.id === simSel.cardId) ? "simEdit()" : `fanSel(${c.id})`) : null;
+      onClick = canPickHand ? ((simSel && c.id === simSel.cardId) ? "simStagedTap()" : `fanSel(${c.id})`) : null;
     else onClick = canPickHand ? `fanSel(${c.id})` : null;
     const isSel = (selected && selected.id === c.id) || (simSel && c.id === simSel.cardId) || (!!simDiscard && c.id === simDiscard);
     return fanCardHTML(c, { onClick, selected: isSel });
@@ -1026,12 +1060,26 @@ function handModus(an, focusEl) {
     if (f) centerCard(f);
     const f2 = f;
     if (f2) setTimeout(function () { if (inhand) { const noch = document.querySelector('.k[data-fid="' + (f2.dataset ? f2.dataset.fid : "") + '"]'); if (noch) centerCard(noch); } }, 430);
+    renderActionBar(); // v2.1: Band darf beim Anheben wiederkommen (z. B. „✏️ Ändern“)
+  } else {
+    // v2.1: Karten abgelegt -> gewaehlte Handkarte abwaehlen, Infozeile leeren,
+    // Band neu berechnen (verschwindet - ausser z. B. „Fertig“ im Saisonende).
+    if (selected && selectedFrom === "hand") { selected = null; selectedFrom = null; window._realm = null; }
+    // Gold-Rahmen der zuletzt gewaehlten Karte entfernen (kein render() hier)
+    karten().forEach(function (el) { el.classList.remove("sel"); });
+    const info = document.getElementById("info");
+    if (info) info.textContent = "";
+    if (state) renderActionBar();
   }
   fanFollow(500);
 }
 
 window.fanSel = (id) => {
   if (suppressClick) return;
+  // v2.1: Erster Tipp auf die halb sichtbaren Karten hebt NUR an - gewaehlt wird,
+  // wenn der Faecher schon oben ist. Noch mal auf die gewaehlte Karte tippen = abwaehlen.
+  if (!inhand) { handModus(true); return; }
+  if (selected && selected.id === id) { selected = null; selectedFrom = null; window._realm = null; render(); return; }
   selected = (state.hand || []).find((c) => c.id === id) || null;
   selectedFrom = "hand";
   window._realm = null;
@@ -1045,8 +1093,10 @@ window.fanSel = (id) => {
 };
 
 // Auswahl ersetzt die alte Funktion: nach dem Neuaufbau die Karte zentrieren
+// v2.1: Noch mal auf die gewaehlte Karte tippen = abwaehlen (Band verschwindet).
 window.selectCard = (id, from) => {
   const src = from === "hand" ? state.hand : state.stored;
+  if (selected && selected.id === id && selectedFrom === from) { selected = null; selectedFrom = null; window._realm = null; render(); return; }
   selected = src.find((c) => c.id === id) || null;
   selectedFrom = from;
   window._realm = null;
