@@ -1183,6 +1183,7 @@ function viewFor(room, idx) {
   return {
     ...base,
     season: g.season, seasonCard: g.seasonCard, totalSeasons: g.totalSeasons || 4,
+    seasonPool: g.seasonPool,
     seasonName: SEASON_NAMES[g.seasonCard], seasonHint: seasonHint(g.seasonCard),
     bonusGiven: g.bonusGiven[idx],
     turn: g.turn, seTurn: g.seTurn,
