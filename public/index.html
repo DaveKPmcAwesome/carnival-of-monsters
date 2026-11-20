@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>Carnival of Monsters – Online</title>
 <style>
-  /* ===== UI-Übernahme des Prototyps (v2.0) – dunkler Comic-Tisch · Feinschliff v2.3 ===== */
+  /* ===== UI-Übernahme des Prototyps (v2.0) – dunkler Comic-Tisch · Feinschliff v2.4 ===== */
   :root { --gold:#e9c766; --bg:#0f172a; --panel:#1e2a42; --line:#31405f; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html { height: 100%; }
@@ -453,11 +453,11 @@ function turnBanner(s) {
       if (s.mySimPick && !window._simEditing)
         return `<div class="banner your">✅ Deine Wahl steht fest – du kannst unten noch ✏️ ändern, solange nicht alle fertig sind…</div>${chips}`;
       if (s.mySimPick && window._simEditing)
-        return `<div class="banner your">✏️ Wähle neu und tippe danach unten auf „✅ Fertig!“ – bis dahin bleibt deine bisherige Wahl bestehen.</div>${chips}`;
+        return `<div class="banner your">✏️ Wähle einfach neu – nach dem Tipp auf Ausspielen/Einlagern ist die neue Wahl sofort raus. Bis dahin bleibt die alte stehen.</div>${chips}`;
       if (simSel) {
         if (s.players.length === 2 && s.mode === "schnell" && s.hand.length > 1 && !simDiscard)
-          return `<div class="banner your">🗑️ Karte gewählt – jetzt die ABWURFKARTE antippen: Sie wird OFFEN abgelegt und alle sehen sie!</div>${chips}`;
-        return `<div class="banner your">✅ Deine Wahl steht – tippe unten auf „✅ Fertig!“</div>${chips}`;
+          return `<div class="banner your">🗑️ Karte gewählt – jetzt die ABWURFKARTE antippen: Sie wird OFFEN abgelegt und alle sehen sie. Der Tipp bestätigt deine Wahl gleich mit!</div>${chips}`;
+        return `<div class="banner your">✅ Deine Wahl steht fest – unten kannst du jederzeit mit ✏️ ändern…</div>${chips}`;
       }
       return `<div class="banner your">${s.mode === "langsam" ? "🐢" : "⚡"} Alle wählen gleichzeitig verdeckt – such dir eine Karte aus!</div>${chips}`;
     }
@@ -497,16 +497,29 @@ window.pickKeep = () => send({ t: "pick", cardId: selected.id, action: "keep" })
 window.discardOpen = () => send({ t: "discard", cardId: selected.id });
 window.setSeasons = (n) => send({ t: "setSeasons", seasons: n });
 window.setMode = (m) => send({ t: "setMode", mode: m });
-// ⚡ Schnell: verdeckte Wahl stufenweise zusammenbauen, dann bestätigen
-window.stagePlay = () => { simSel = { cardId: selected.id, action: "play", realm: window._realm || null }; render(); };
-window.stageTraum = (rid) => { simSel = { cardId: selected.id, action: "play", realm: rid }; render(); };
-window.stageKeep = () => { simSel = { cardId: selected.id, action: "keep", realm: null }; simDiscard = null; render(); };
-window.simSetDiscard = (id) => { if (!inhand) { handModus(true); return; } if (simDiscard === id) simDiscard = null; else simDiscard = id; render(); };
+// ⚡ Schnell: verdeckte Wahl stufenweise zusammenbauen und SOFORT abschicken (v2.4 –
+// kein gesonderter „Fertig“-Tipp mehr nötig; ändern jederzeit über „✏️ Ändern“).
+function simAutoSend() {
+  // Nur ⚡2er mit mehr als 1 Handkarte braucht laut Hausregel erst die Abwurfkarte.
+  const twoP = state.mode === "schnell" && state.players.length === 2 && (state.hand || []).length > 1;
+  if (!twoP && simSel) simConfirm();
+}
+window.stagePlay = () => { simSel = { cardId: selected.id, action: "play", realm: window._realm || null }; simAutoSend(); render(); };
+window.stageTraum = (rid) => { simSel = { cardId: selected.id, action: "play", realm: rid }; simAutoSend(); render(); };
+window.stageKeep = () => { simSel = { cardId: selected.id, action: "keep", realm: null }; simDiscard = null; simAutoSend(); render(); };
+window.simSetDiscard = (id) => {
+  if (!inhand) { handModus(true); return; }
+  if (simDiscard === id) { simDiscard = null; render(); return; }
+  simDiscard = id;
+  // v2.4: Die Abwurfkarte ist der letzte offene Schritt – ihr Tipp bestätigt die Wahl mit.
+  if (simSel) simConfirm();
+  render();
+};
 // v2.1: Karten unten = erst anheben. Erst der zweite Tipp waehlt die Abwurfkarte
 // bzw. oeffnet den Aendern-Modus fuer die schon gewaehlte (staged) Karte.
 window.simDiscTap = (id) => { if (suppressClick) return; if (!inhand) { handModus(true); return; } if (simSel && id === simSel.cardId) simEdit(); else simSetDiscard(id); };
 window.simStagedTap = () => { if (suppressClick) return; if (!inhand) { handModus(true); return; } simEdit(); };
-window.simConfirm = () => { window._simEditing = false; send({ t: "simPick", cardId: simSel.cardId, action: simSel.action, realm: simSel.realm, discardId: simDiscard }); };
+window.simConfirm = () => { if (!simSel) return; window._simEditing = false; send({ t: "simPick", cardId: simSel.cardId, action: simSel.action, realm: simSel.realm, discardId: simDiscard }); };
 window.simEdit = () => { simSel = null; simDiscard = null; window._simEditing = true; render(); };
 window.revealNow = () => send({ t: "reveal" }); // 🐢 Langsam: „Jetzt aufdecken!“
 // 🚨 TAMTAM für FETTE Monster (Level 4 Standard / Level 10 Traum): Vollbild-Banner
@@ -626,9 +639,17 @@ function renderActionBar() {
     // Gleiche Button-Klassen & kein Extra-Wrapper → exakt dasselbe Format wie Ausspielen/Einlagern.
     // Bei ⚡ 2er ist „Fertig“ erst klickbar, wenn die Abwurfkarte gewählt ist.
     const twoP = state.mode === "schnell" && state.players.length === 2 && state.hand.length > 1;
-    inner = `<div class="note" style="margin-bottom:6px">✅ Diese Karte ist schon gewählt – „✅ Fertig!“ bestätigt die Wahl, mit „✏️ Ändern“ (oder einer anderen Handkarte) kannst du noch neu wählen.</div>
-      <button class="btn-green" ${!twoP || simDiscard ? "" : "disabled"} onclick="simConfirm()">✅ Fertig!</button>
-      <button class="btn-indigo" onclick="simEdit()">✏️ Ändern</button>`;
+    if (twoP && !simDiscard) {
+      // v2.4: ⚡2er mit Abwurf-Pflicht – hier gibt es (noch) nichts zu bestätigen:
+      // die Abwurfkarte selbst schließt die Wahl ab. Kein toter „Fertig“-Knopf mehr.
+      inner = `<div class="note" style="margin-bottom:6px">🗑️ Und jetzt deine <b>ABWURFKARTE</b> im Kartenfächer antippen – das bestätigt deine Wahl automatisch.</div>
+        <button class="btn-indigo" onclick="simEdit()">✏️ Ändern</button>`;
+    } else {
+      // Ausnahmefenster zwischen Absenden und der Rückmeldung des Servers.
+      inner = `<div class="note" style="margin-bottom:6px">✅ Wahl abgeschickt – sobald alle fertig sind, wird ausgeführt. Mit „✏️ Ändern“ kannst du noch neu wählen.</div>
+        <button class="btn-green" onclick="simConfirm()">✅ Fertig!</button>
+        <button class="btn-indigo" onclick="simEdit()">✏️ Ändern</button>`;
+    }
   } else if (isEntdecker) {
     inner = `<div class="note" style="margin-bottom:6px">„${esc(selected.name)}" – Typ des Landes festlegen: <b>dauerhaft!</b> (−${selected.cost} 👑)</div>`;
     inner += ALL_REALMS.map((r) => `<button class="btn-indigo" onclick="chooseRealm('${r.id}')" ${staged ? "disabled" : ""}>${r.emoji} ${r.short}${window._realm === r.id ? " ✓" : ""}</button>`).join("");
@@ -946,7 +967,10 @@ function spielerBoxHTML(s) {
 function landsStripHTML(s) {
   const me = s.players[s.you];
   const free = freeLandsOf(me.lands, me.seasonMonsters);
-  return `<div class="landleiste">` + ALL_REALMS.filter((r) => (me.lands[r.id] || 0) > 0).map((r) => {
+  // v2.4: Tipp auf die eigene Länder-Zeile zeigt die eigenen Saison-Monster
+  // (dieselbe Ansicht wie bei den Mitspielern) – nur wenn es etwas zu sehen gibt.
+  const hat = (me.seasonMonsters || []).length || (me.staff || []).length;
+  return `<div class="landleiste"${hat ? ` onclick="event.stopPropagation();toggleDrawerById('dEigen')"` : ""}>` + ALL_REALMS.filter((r) => (me.lands[r.id] || 0) > 0).map((r) => {
     const total = me.lands[r.id], occ = total - free[r.id];
     const dots = [];
     for (let k = 0; k < free[r.id]; k++) dots.push(true);
@@ -1235,6 +1259,26 @@ function drawerMenHTML(s) {
     <div class="minis">${meng || '<span class="muted">Noch keine Monster in der Menagerie – am Ende jeder Saison wandern deine Saison-Monster hierher.</span>'}</div></div>`;
 }
 
+// v2.4: Eigene Saison-Monster & Mitarbeiter – per Tipp auf die eigene Länder-Zeile
+// aufklappbar. Exakt dieselben Kacheln/Chips wie in den Mitspieler-Panels.
+function drawerEigenHTML(s) {
+  const me = s.players[s.you];
+  const mons = (me.seasonMonsters || []).map((m) =>
+    `<div class="mini" style="--rc:${realmColor(m.realm)}"><div class="me">${m.realm === "traum" ? "🌙" : realmInfo(m.realm).emoji}</div>${esc(m.name)}<div class="st">Lv ${m.cost} · ⭐${m.points}${m.danger ? " ⚠️" + m.danger : ""}</div></div>`).join("");
+  const stf = (me.staff || []).map((x) => `<span class="stf" onclick="event.stopPropagation();toggleStaff(${s.you},'${esc(x.name)}')">${esc(x.name)}</span>`).join("");
+  if (!mons && !stf) return "";
+  const detail = staffDetail && staffDetail.pi === s.you ? (() => {
+    const st = (me.staff || []).find((x) => x.name === staffDetail.name);
+    return st ? `<div class="stfdetail"><b>👷 ${esc(st.name)}</b> (−${st.cost} 👑): ${esc(st.text)}</div>` : "";
+  })() : "";
+  return `<div class="drawer ${openDrawer === "dEigen" ? "open" : ""}" id="dEigen">
+    <h4>🎭 Deine Saison-Monster${(me.seasonMonsters || []).length ? ` (${me.seasonMonsters.length})` : ""} <small>– dieselbe Ansicht wie bei den Mitspielern</small></h4>
+    <div class="minis">${mons || '<span class="muted">Noch nichts ausgespielt.</span>'}</div>
+    ${stf ? `<div class="sub">👷 Deine Mitarbeiter (antippen für den Effekt)</div><div onclick="event.stopPropagation()">${stf}</div>` : ""}
+    ${detail}
+  </div>`;
+}
+
 function drawerLagerHTML(s) {
   const me = s.players[s.you];
   const freshIds = new Set((s.freshDraw || []).map((c) => c.id));
@@ -1382,6 +1426,7 @@ function phoneShellHTML(s) {
     + landsStripHTML(s)
     + drawerMenHTML(s)
     + drawerLagerHTML(s)
+    + drawerEigenHTML(s)
     + drawerFreshHTML(s)
     + drawerChatHTML(s)
     + drawerSaisonHTML(s)
