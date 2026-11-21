@@ -7,7 +7,8 @@
 // Der Server verwaltet den Spielstand AUTORITATIV:
 //   - Deck, Hände, Ziele und Würfel liegen NUR hier.
 //   - Jeder Spieler erhält nur seine eigenen verdeckten Karten.
-//   - Gefahrenprobe: EIN Wurf mit 3 Würfeln, gilt für ALLE gleich.
+//   - Gefahrenprobe: EIN Wurf mit 3 Würfeln, gilt für ALLE gleich
+//     (v3.1: den wirft der HOST für alle, als großer Kasten in der Mitte).
 //   - Schlusswertung (v3.0): der HOST blättert die Aufdeck-Schritte für ALLE
 //     gemeinsam weiter (g.revealStep) – niemand hängt im eigenen Tempo vor.
 // ============================================================================
@@ -807,14 +808,28 @@ function handleFreshDecide(g, pIdx, msg) {
   return { ok: true };
 }
 
-// „Fertig" im Saisonende → nächster Spieler; der LETZTE löst den Wurf für alle aus.
+// „Fertig" im Saisonende → nächster Spieler; der LETZTE beendet die Runde.
+// v3.1: Der Wurf läuft jetzt NICHT mehr automatisch hier – alle landen auf dem
+// Gefahren-Schirm und der HOST würfelt den einen Wurf für alle (s.u.).
 function handleSeasonDone(g, pIdx) {
   if (g.phase !== "seasonEnd" || g.seTurn !== pIdx) return { err: "Du bist gerade nicht dran." };
   if (g.seTurn + 1 < g.players.length) {
     g.seTurn += 1;
     return { ok: true };
   }
-  endSeason(g);
+  g.phase = "danger";
+  g.dice = null;
+  g.log.unshift("🎲 Alle sind bereit – der Host würfelt die Gefahrenprobe für alle!");
+  return { ok: true };
+}
+
+// 🎲 Gefahrenprobe (v3.1): Der HOST würfelt den EINEN Wurf für alle – jeder
+// Bildschirm zeigt dasselbe im selben Moment, niemand würfelt im eigenen Tempo.
+function handleDangerRoll(g, pIdx) {
+  if (g.phase !== "danger") return { err: "Ungültiger Zeitpunkt." };
+  if (pIdx !== 0) return { err: "Nur der Host darf würfeln." };
+  if (g.dice) return { err: "Es wurde schon gewürfelt." };
+  endSeason(g); // EIN Wurf für alle + Ergebnisse + Trophäe (unverändert)
   return { ok: true };
 }
 
@@ -859,8 +874,11 @@ function endSeason(g) {
 }
 
 // Nach den Gefahrenproben: nächste Saison oder Schlusswertung
-function handleNext(g) {
+// v3.1: Weiter geht nur vom HOST – und erst NACHDEM gewürfelt wurde.
+function handleNext(g, pIdx) {
   if (g.phase !== "danger") return { err: "Ungültiger Zeitpunkt." };
+  if (pIdx !== 0) return { err: "Nur der Host darf fortfahren." };
+  if (!g.dice) return { err: "Es wurde noch nicht gewürfelt." };
   if (g.season >= (g.totalSeasons || 4) - 1) {
     g.reveal = computeReveal(g);
     g.phase = "reveal";
@@ -1437,7 +1455,15 @@ wss.on("connection", (ws) => {
         }
         case "next": {
           if (!room || !room.game || !joined) return;
-          const res = handleNext(room.game);
+          const res = handleNext(room.game, joined.idx);
+          if (res && res.err) reply({ t: "error", msg: res.err });
+          else broadcast(room);
+          break;
+        }
+        // 🎲 Gefahrenprobe (v3.1): NUR der Host würfelt den einen Wurf für alle
+        case "dangerRoll": {
+          if (!room || !room.game || !joined) return;
+          const res = handleDangerRoll(room.game, joined.idx);
           if (res && res.err) reply({ t: "error", msg: res.err });
           else broadcast(room);
           break;
