@@ -8,6 +8,8 @@
 //   - Deck, Hände, Ziele und Würfel liegen NUR hier.
 //   - Jeder Spieler erhält nur seine eigenen verdeckten Karten.
 //   - Gefahrenprobe: EIN Wurf mit 3 Würfeln, gilt für ALLE gleich.
+//   - Schlusswertung (v3.0): der HOST blättert die Aufdeck-Schritte für ALLE
+//     gemeinsam weiter (g.revealStep) – niemand hängt im eigenen Tempo vor.
 // ============================================================================
 
 const http = require("http");
@@ -71,18 +73,18 @@ const TRAUM_MONSTERS = [
   { name: "Uralter Feind", lvl: 10, pts: 13, dg: 3, draw: 2 },
 ];
 const STAFF_CARDS = [
-  { name: "Robin Goodall", cost: 3, kind: "realm", realm: "wald", text: "+2 Kronen je 🌲-Monster" },
-  { name: "Katie Aronnax", cost: 3, kind: "realm", realm: "tiefsee", text: "+2 Kronen je 🌊-Monster" },
-  { name: "Amelia Fogg", cost: 3, kind: "realm", realm: "wolken", text: "+2 Kronen je ☁️-Monster" },
-  { name: "Johann Lidenbrock", cost: 3, kind: "realm", realm: "hoehlen", text: "+2 Kronen je 🕳️-Monster" },
-  { name: "John Michael Dyer", cost: 3, kind: "realm", realm: "dunkel", text: "+2 Kronen je 🌑-Monster" },
-  { name: "Henry W. Remington", cost: 2, kind: "cage", text: "Ignoriert 1 ⚠️ je Saison" },
-  { name: "Michonne N. Fraser", cost: 2, kind: "cage", text: "Ignoriert 1 ⚠️ je Saison" },
-  { name: "Isaac van Horn", cost: 2, kind: "dangerCoin", text: "+1 Krone je ⚠️ ausgespielter Monster" },
-  { name: "Lara Oakley", cost: 2, kind: "land", text: "Unbekanntes Land: Typ beim Ausspielen bestimmen" },
-  { name: "Roald Starbuck", cost: 2, kind: "land", text: "Unbekanntes Land: Typ beim Ausspielen bestimmen" },
-  { name: "Selma Cardenas", cost: 2, kind: "land", text: "Unbekanntes Land: Typ beim Ausspielen bestimmen" },
-  { name: "Mungo Boyle", cost: 2, kind: "land", text: "Unbekanntes Land: Typ beim Ausspielen bestimmen" },
+  { name: "Robin Goodall", cost: 3, kind: "realm", realm: "wald", text: "+2 Kronen jedes Mal, wenn du ein Monster des Verwunschenen Waldes ausspielst" },
+  { name: "Katie Aronnax", cost: 3, kind: "realm", realm: "tiefsee", text: "+2 Kronen jedes Mal, wenn du ein Monster der Tiefsee ausspielst" },
+  { name: "Amelia Fogg", cost: 3, kind: "realm", realm: "wolken", text: "+2 Kronen jedes Mal, wenn du ein Monster der Wolkenlande ausspielst" },
+  { name: "Johann Lidenbrock", cost: 3, kind: "realm", realm: "hoehlen", text: "+2 Kronen jedes Mal, wenn du ein Monster der Höhlenlande ausspielst" },
+  { name: "John Michael Dyer", cost: 3, kind: "realm", realm: "dunkel", text: "+2 Kronen jedes Mal, wenn du ein Monster der Dunkellande ausspielst" },
+  { name: "Henry W. Remington", cost: 2, kind: "cage", text: "Ignoriert in jeder Saison 1 Gefahrensymbol" },
+  { name: "Michonne N. Fraser", cost: 2, kind: "cage", text: "Ignoriert in jeder Saison 1 Gefahrensymbol" },
+  { name: "Isaac van Horn", cost: 2, kind: "dangerCoin", text: "+1 Krone je Gefahrensymbol auf Monstern, die du ausspielst" },
+  { name: "Lara Oakley", cost: 2, kind: "land", text: "Unbekanntes Land: Bestimme den Typ des Landes, sobald du es ausspielst." },
+  { name: "Roald Starbuck", cost: 2, kind: "land", text: "Unbekanntes Land: Bestimme den Typ des Landes, sobald du es ausspielst." },
+  { name: "Selma Cardenas", cost: 2, kind: "land", text: "Unbekanntes Land: Bestimme den Typ des Landes, sobald du es ausspielst." },
+  { name: "Mungo Boyle", cost: 2, kind: "land", text: "Unbekanntes Land: Bestimme den Typ des Landes, sobald du es ausspielst." },
   { name: "P. T. Martini", cost: 3, kind: "eventCoin", text: "Immer wenn du ein Event ausspielst, erhältst du eine Krone" },
 ];
 const HUNTER_EVENTS = ["Herausragende Jagdtechniken", "Materialforschung", "Wissenschaftliche Erkenntnisse", "Sicherheitstraining", "Erfahrung ist der beste Schutz", "Verbesserte Sicherheitsvorkehrungen", "Fortschrittliche Ausrüstung"];
@@ -91,27 +93,27 @@ const TOUR_EVENTS = { wald: "Führung in den Verwunschenen Wald", tiefsee: "Füh
 
 // 21 Geheime Ziele
 const GOAL_DEFS = [
-  { key: "sparsam", name: "Sparsamkeit ist eine Tugend", text: "6 SP ohne Kredit", fn: (p) => (p.credits === 0 ? 6 : 0) },
-  { key: "entdecker", name: "Entdecker der letzten Grenzen", text: "2 SP je entferntem Land (2/3-Punkte, ohne 🌙)", fn: (p) => 2 * Object.values(p.distant).reduce((a, b) => a + b, 0) },
-  { key: "gefahrSP", name: "Gefahrensucher", text: "1 SP je ⚠️ in der Menagerie", fn: (p) => p.monsters.reduce((s, m) => s + (m.danger || 0), 0) },
-  { key: "traumExp", name: "Autorität für übernatürliche Kreaturen", text: "2 SP je Traum-Monster", fn: (p) => 2 * p.monsters.filter((m) => m.realm === "traum").length },
-  { key: "verwalter", name: "Verwalter", text: "2 SP je anderem Ziel", fn: (p) => 2 * Math.max(0, p.goals.length - 1) },
-  { key: "grosswild", name: "Großwildjäger", text: "2 SP je Level 3, 3 SP je Level 4+", fn: (p) => p.monsters.reduce((s, m) => s + (m.cost === 3 ? 2 : m.cost >= 4 ? 3 : 0), 0) },
-  { key: "spezialist", name: "Spezialist", text: "7 SP bei ≤3 Regionen, 4 SP bei 4", fn: (p) => { const r = ALL_REALMS.filter((x) => (p.lands[x.id] || 0) > 0).length; return r <= 3 ? 7 : r === 4 ? 4 : 0; } },
-  { key: "waldExp", name: "Autorität für waldbewohnende Kreaturen", text: "2 SP je 🌲-Monster", fn: (p) => 2 * p.monsters.filter((m) => m.realm === "wald").length },
-  { key: "besessen", name: "Eine offensichtliche Besessenheit", text: "7 SP bei 7+ Landpunkten eines Typs (ohne 🌙)", fn: (p) => (REALMS.some((r) => (p.lands[r.id] || 0) >= 7) ? 7 : 0) },
-  { key: "ehrenmann", name: "Ein wahrer Ehrenmann zahlt seine Schulden", text: "2 SP je Kredit", fn: (p) => 2 * p.credits },
-  { key: "hoehlenExp", name: "Autorität für unterirdische Kreaturen", text: "2 SP je 🕳️-Monster", fn: (p) => 2 * p.monsters.filter((m) => m.realm === "hoehlen").length },
-  { key: "wolkenExp", name: "Autorität für fliegende Kreaturen", text: "2 SP je ☁️-Monster", fn: (p) => 2 * p.monsters.filter((m) => m.realm === "wolken").length },
-  { key: "tiefseeExp", name: "Autorität für schwimmende Kreaturen", text: "2 SP je 🌊-Monster", fn: (p) => 2 * p.monsters.filter((m) => m.realm === "tiefsee").length },
-  { key: "dunkelExp", name: "Autorität für düstere Kreaturen", text: "2 SP je 🌑-Monster", fn: (p) => 2 * p.monsters.filter((m) => m.realm === "dunkel").length },
-  { key: "silber", name: "Mit dem Silberlöffel im Mund geboren", text: "4 SP sofort", fn: () => 4 },
-  { key: "arbeitgeber", name: "Arbeitgeber des Jahres", text: "3 SP je Mitarbeiter", fn: (p) => 3 * p.staff.length },
-  { key: "traumland", name: "Suchender jenseits des Tores der Träume", text: "2 SP je Traumland-Karte", fn: (p) => 2 * (p.traumCards || 0) },
-  { key: "tausendsassa", name: "Tausendsassa", text: "7 SP bei 2+ Punkten in allen 6 Regionen", fn: (p) => (ALL_REALMS.every((r) => (p.lands[r.id] || 0) >= 2) ? 7 : 0) },
-  { key: "klein", name: "Freund kleiner Dinge", text: "1 SP je Level-1-Monster", fn: (p) => p.monsters.filter((m) => m.cost === 1).length },
-  { key: "ausruestung", name: "Solide Ausrüstung", text: "2 SP je übrigem Jägermarker", fn: (p) => 2 * p.hunters },
-  { key: "zweite", name: "Die zweite Reihe ist gut genug für mich", text: "7 SP bei Platz 2 oder punktgleich Führung", fn: null },
+  { key: "sparsam", name: "Sparsamkeit ist eine Tugend", text: "6 SP, falls du keinen Kredit aufgenommen hast.", fn: (p) => (p.credits === 0 ? 6 : 0) },
+  { key: "entdecker", name: "Entdecker der letzten Grenzen", text: "2 SP für jedes entfernte Land, das du im Spiel hast (Länder mit 2/3 Landpunkten, Traumlande ausgenommen).", fn: (p) => 2 * Object.values(p.distant).reduce((a, b) => a + b, 0) },
+  { key: "gefahrSP", name: "Gefahrensucher", text: "1 SP für jedes Gefahrensymbol auf Monstern in deiner Menagerie.", fn: (p) => p.monsters.reduce((s, m) => s + (m.danger || 0), 0) },
+  { key: "traumExp", name: "Autorität für übernatürliche Kreaturen", text: "2 SP für jedes Monster der Traumlande in deiner Menagerie.", fn: (p) => 2 * p.monsters.filter((m) => m.realm === "traum").length },
+  { key: "verwalter", name: "Verwalter", text: "2 SP für jedes geheime Ziel, das du außer diesem hast.", fn: (p) => 2 * Math.max(0, p.goals.length - 1) },
+  { key: "grosswild", name: "Großwildjäger", text: "2 SP für jedes Level-3-Monster in deiner Menagerie. 3 SP für jedes Level-4+-Monster in deiner Menagerie.", fn: (p) => p.monsters.reduce((s, m) => s + (m.cost === 3 ? 2 : m.cost >= 4 ? 3 : 0), 0) },
+  { key: "spezialist", name: "Spezialist", text: "7 SP, falls du nur Länder aus 3 oder weniger Regionen im Spiel hast. 4 SP, falls du Länder aus genau 4 Regionen im Spiel hast.", fn: (p) => { const r = ALL_REALMS.filter((x) => (p.lands[x.id] || 0) > 0).length; return r <= 3 ? 7 : r === 4 ? 4 : 0; } },
+  { key: "waldExp", name: "Autorität für waldbewohnende Kreaturen", text: "2 SP für jedes Monster des Verwunschenen Waldes in deiner Menagerie.", fn: (p) => 2 * p.monsters.filter((m) => m.realm === "wald").length },
+  { key: "besessen", name: "Eine offensichtliche Besessenheit", text: "7 SP, falls du 7 oder mehr Landpunkte desselben Typs im Spiel hast (Traumlande zählen nicht).", fn: (p) => (REALMS.some((r) => (p.lands[r.id] || 0) >= 7) ? 7 : 0) },
+  { key: "ehrenmann", name: "Ein wahrer Ehrenmann zahlt seine Schulden", text: "2 SP für jeden Kredit, den du aufgenommen hast.", fn: (p) => 2 * p.credits },
+  { key: "hoehlenExp", name: "Autorität für unterirdische Kreaturen", text: "2 SP für jedes Monster der Höhlen in deiner Menagerie.", fn: (p) => 2 * p.monsters.filter((m) => m.realm === "hoehlen").length },
+  { key: "wolkenExp", name: "Autorität für fliegende Kreaturen", text: "2 SP für jedes Monster der Wolkenlande in deiner Menagerie.", fn: (p) => 2 * p.monsters.filter((m) => m.realm === "wolken").length },
+  { key: "tiefseeExp", name: "Autorität für schwimmende Kreaturen", text: "2 SP für jedes Monster der Tiefsee in deiner Menagerie.", fn: (p) => 2 * p.monsters.filter((m) => m.realm === "tiefsee").length },
+  { key: "dunkelExp", name: "Autorität für düstere Kreaturen", text: "2 SP für jedes Monster der Dunkellande in deiner Menagerie.", fn: (p) => 2 * p.monsters.filter((m) => m.realm === "dunkel").length },
+  { key: "silber", name: "Mit dem Silberlöffel im Mund geboren", text: "4 SP.", fn: () => 4 },
+  { key: "arbeitgeber", name: "Arbeitgeber des Jahres", text: "3 SP für jede Mitarbeitenden-Karte, die du im Spiel hast.", fn: (p) => 3 * p.staff.length },
+  { key: "traumland", name: "Suchender jenseits des Tores der Träume", text: "2 SP für jede Traumland-Karte, die du im Spiel hast.", fn: (p) => 2 * (p.traumCards || 0) },
+  { key: "tausendsassa", name: "Tausendsassa", text: "7 SP, falls du 2 oder mehr Landpunkte aus jeder der 6 Regionen im Spiel hast.", fn: (p) => (ALL_REALMS.every((r) => (p.lands[r.id] || 0) >= 2) ? 7 : 0) },
+  { key: "klein", name: "Freund kleiner Dinge", text: "1 SP für jedes Level-1-Monster in deiner Menagerie.", fn: (p) => p.monsters.filter((m) => m.cost === 1).length },
+  { key: "ausruestung", name: "Solide Ausrüstung", text: "2 SP für jeden Jägermarker, den du am Ende des Spiels noch hast.", fn: (p) => 2 * p.hunters },
+  { key: "zweite", name: "Die zweite Reihe ist gut genug für mich", text: "7 SP, falls du nach allen anderen Punkten auf dem 2. Platz oder punktgleich mit dem Ersten bist.", fn: null },
 ];
 
 // --------------------------- Deck & Logik ----------------------------------
@@ -136,10 +138,10 @@ function makeDeck() {
   STAFF_CARDS.forEach((s) => deck.push({ id: ++cardId, type: "Mitarbeiter", ...s }));
   HUNTER_EVENTS.forEach((n) => deck.push({ id: ++cardId, type: "Event", name: n, kind: "hunter", text: "+1 Jägermarker" }));
   COIN_EVENTS.forEach((n) => deck.push({ id: ++cardId, type: "Event", name: n, kind: "coins2", text: "+2 Kronen" }));
-  Object.entries(TOUR_EVENTS).forEach(([rid, n]) => deck.push({ id: ++cardId, type: "Event", name: n, kind: "tour", realm: rid, text: "+1 Krone je Landpunkt dieser Region" }));
-  deck.push({ id: ++cardId, type: "Event", name: "Sommerfest", kind: "summer", text: "+2 Kronen je Mitarbeiter" });
-  deck.push({ id: ++cardId, type: "Event", name: "Beratung für die Behörden", kind: "show", text: "+1 Krone je eingelagertem Monster" });
-  deck.push({ id: ++cardId, type: "Event", name: "Pressevorführung", kind: "show", text: "+1 Krone je eingelagertem Monster" });
+  Object.entries(TOUR_EVENTS).forEach(([rid, n]) => deck.push({ id: ++cardId, type: "Event", name: n, kind: "tour", realm: rid, text: `Erhalte 1 Krone für jeden ${({wald:"Verwunschenen-Wald",tiefsee:"Tiefsee",wolken:"Wolkenlande",hoehlen:"Höhlenlande",dunkel:"Dunkellande"})[rid]}-Landpunkt, den du im Spiel hast.` }));
+  deck.push({ id: ++cardId, type: "Event", name: "Sommerfest", kind: "summer", text: "Erhalte 2 Kronen für jede Mitarbeitenden-Karte, die du im Spiel hast." });
+  deck.push({ id: ++cardId, type: "Event", name: "Beratung für die Behörden", kind: "show", text: "Zeige eine beliebige Anzahl deiner aufgehobenen Karten (nicht deiner Menagerie). Erhalte 1 Krone für jedes Monster, das du so zeigst." });
+  deck.push({ id: ++cardId, type: "Event", name: "Pressevorführung", kind: "show", text: "Zeige eine beliebige Anzahl deiner aufgehobenen Karten (nicht deiner Menagerie). Erhalte 1 Krone für jedes Monster, das du so zeigst." });
   GOAL_DEFS.forEach((g) => deck.push({ id: ++cardId, type: "Ziel", name: g.name, text: g.text, key: g.key }));
   return deck;
 }
@@ -377,7 +379,7 @@ function mkGame(playerNames, totalSeasons, mode) {
     stack: [], openDiscards: [], awaitDiscard: null, awaitFresh: null,
     hands: [], seasonCard: null, bonusGiven: [],
     turn: 0, roundIdx: 0, roundNo: 0, seTurn: 0,
-    season: -1, phase: "draft", dice: null, reveal: null, show: null,
+    season: -1, phase: "draft", dice: null, reveal: null, show: null, revealStep: 0,
     gameId: ++gameIdCounter, fanfareId: 0, fanfare: null,
     log: [],
   };
@@ -862,12 +864,24 @@ function handleNext(g) {
   if (g.season >= (g.totalSeasons || 4) - 1) {
     g.reveal = computeReveal(g);
     g.phase = "reveal";
+    g.revealStep = 0; // 🔎 Schlusswertung: Aufdeck-Schritt für alle gemeinsam (Host steuert, v3.0)
     g.log.unshift("🏁 Schlusswertung – die Ziele werden aufgedeckt!");
   } else {
     dealSeason(g, g.season + 1);
     g.phase = "draft";
   }
   g.log = g.log.slice(0, 40);
+  return { ok: true };
+}
+
+// 🔎 Schlusswertung (v3.0): WEITER-AUFDECKEN nur durch den Host –
+// g.revealStep wird im State an ALLE ausgeliefert, damit jeder Bildschirm
+// denselben Schritt zeigt. Alle gucken sich die Wertung gemeinsam an.
+function handleRevealNext(g, pIdx) {
+  if (g.phase !== "reveal") return { err: "Ungültiger Zeitpunkt." };
+  if (pIdx !== 0) return { err: "Nur der Host darf weiterblättern." };
+  if ((g.revealStep || 0) >= 4) return { err: "Die Wertung ist schon am Ende." };
+  g.revealStep = (g.revealStep || 0) + 1;
   return { ok: true };
 }
 
@@ -1224,6 +1238,7 @@ function viewFor(room, idx) {
     log: g.log,
     dice: g.dice,
     reveal: g.reveal,
+    revealStep: (g && g.revealStep) || 0,
   };
 }
 
@@ -1423,6 +1438,14 @@ wss.on("connection", (ws) => {
         case "next": {
           if (!room || !room.game || !joined) return;
           const res = handleNext(room.game);
+          if (res && res.err) reply({ t: "error", msg: res.err });
+          else broadcast(room);
+          break;
+        }
+        // 🔎 Schlusswertung (v3.0): NUR der Host blättert für alle weiter
+        case "revealNext": {
+          if (!room || !room.game || !joined) return;
+          const res = handleRevealNext(room.game, joined.idx);
           if (res && res.err) reply({ t: "error", msg: res.err });
           else broadcast(room);
           break;
