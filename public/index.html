@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>Carnival of Monsters – Online</title>
 <style>
-  /* ===== UI-Übernahme des Prototyps (v2.0) – dunkler Comic-Tisch · Feinschliff v2.9 ===== */
+  /* ===== UI-Übernahme des Prototyps (v2.0) – dunkler Comic-Tisch · Feinschliff v3.0 ===== */
   :root { --gold:#e9c766; --bg:#0f172a; --panel:#1e2a42; --line:#31405f; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html { height: 100%; }
@@ -215,7 +215,10 @@
   .cwrap button { border:none; border-radius:12px; padding:11px 14px; font-weight:700; font-size:.9rem; }
   .cwrap input { background:#101b2e; color:#e2e8f0; border:1px solid var(--line); border-radius:12px; padding:11px 12px; font-size:.9rem; width:100%; }
   .bigcode { font-size:2.6rem; font-weight:800; letter-spacing:.3em; color:#fcd34d; text-align:center; margin:6px 0; }
-  .rev { background:linear-gradient(180deg, rgba(245,158,11,.15), rgba(30,27,75,.4)); border:1px solid rgba(251,191,36,.35); border-radius:16px; padding:12px; margin-top:10px; }
+  /* 🔎 v3.0 Schlusswertung: großer Kasten in der MITTE, ÜBER allem anderen (Overlay),
+     so muss man auch mit 5 Spielern nicht erst an den Mitspielern vorbei scrollen. */
+  .revwrap { position:fixed; inset:0; z-index:60; background:rgba(3,7,15,.74); display:flex; align-items:center; justify-content:center; padding:12px; }
+  .rev { width:min(680px,100%); max-height:min(88dvh,830px); overflow-y:auto; background:linear-gradient(180deg, rgba(245,158,11,.15), rgba(30,27,75,.4)); border:1px solid rgba(251,191,36,.35); border-radius:16px; padding:14px; margin:0; box-shadow:0 18px 50px rgba(0,0,0,.6); }
   .rev h2 { font-size:1.1rem; color:#fcd34d; text-align:center; margin-bottom:10px; }
   .revrow { display:flex; flex-wrap:wrap; gap:4px 10px; justify-content:space-between; align-items:center; background:rgba(255,255,255,.05); border-radius:10px; padding:8px 10px; margin:4px 0; font-size:.78rem; }
   .revrow.me { background:rgba(245,158,11,.2); border:1px solid rgba(245,158,11,.4); }
@@ -301,7 +304,6 @@ let state = null;
 let selected = null;       // aktuell gewählte Karte (aus Hand oder Aufbewahrung)
 let selectedFrom = null;    // "hand" | "stored"
 let staffDetail = null;    // {pi, name}
-let revealStep = 0;
 let myName = "";
 let manualClose = false;
 let menagerieOpen = false;  // eigene Menagerie aufgeklappt? (nur für dich sichtbar)
@@ -691,7 +693,9 @@ window.next = () => send({ t: "next" });
 window.rematch = () => send({ t: "rematch" });
 // 🔄 Host: Partie abbrechen und zurück in die Lobby
 window.newGame = () => { if (confirm("Aktuelle Partie abbrechen und zurück in die Lobby? Alle Punkte dieser Partie gehen verloren.")) send({ t: "newGame" }); };
-window.revealNext = () => { revealStep++; render(); };
+// 🔎 v3.0: Weiter-blättern liegt beim SERVER – nur der Host klickt, alle springen
+// synchron auf den nächsten Schritt (kein eigenes Tempo mehr je Spieler).
+window.revealNext = () => send({ t: "revealNext" });
 
 
 window.selectCard = (id, from) => {
@@ -939,6 +943,9 @@ function renderDanger(s) {
 
 function renderReveal(s) {
   const rv = s.reveal;
+  // 🔎 v3.0: Der Aufdeck-Schritt kommt vom SERVER (Host klickt für alle) –
+  // die alte lokale revealStep-Variable ist weg, kein Spieler kann mehr vorpreschen.
+  const revealStep = s.revealStep || 0;
   let body = "";
   const rows = (list, fn) => list.map((p) => {
     const idx = rv.players.indexOf(p);
@@ -969,8 +976,14 @@ function renderReveal(s) {
       (s.isHost ? `<button class="btn-amber" style="width:100%;margin-top:12px" onclick="rematch()">🔄 Neue Partie im gleichen Raum</button>`
                 : `<div class="banner wait" style="margin-top:12px">Der Host kann eine neue Partie starten…</div>`);
   }
-  const nextBtn = revealStep < 4 ? `<button class="btn-amber" style="width:100%;margin-top:10px" onclick="revealNext()">▶️ Weiter aufdecken</button>` : "";
-  return `<div class="rev"><h2>🏁 Die große Schlusswertung</h2>${body}${nextBtn}</div>`;
+  // 🔎 v3.0: Nur der HOST hat den Weiter-Knopf – alle anderen springen mit,
+  // wenn der Server den nächsten Schritt ausliefert.
+  const nextBtn = revealStep < 4
+    ? (s.isHost
+        ? `<button class="btn-amber" style="width:100%;margin-top:10px" onclick="revealNext()">▶️ Weiter aufdecken</button>`
+        : `<div class="banner wait" style="margin-top:10px;text-align:center">Der Host blättert für alle weiter – gemeinsam Schritt für Schritt!</div>`)
+    : "";
+  return `<div class="revwrap" onclick="event.stopPropagation()"><div class="rev"><h2>🏁 Die große Schlusswertung</h2>${body}${nextBtn}</div></div>`;
 }
 
 
