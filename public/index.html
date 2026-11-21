@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>Carnival of Monsters – Online</title>
 <style>
-  /* ===== UI-Übernahme des Prototyps (v2.0) – dunkler Comic-Tisch · Feinschliff v3.0 ===== */
+  /* ===== UI-Übernahme des Prototyps (v2.0) – dunkler Comic-Tisch · Feinschliff v3.1 ===== */
   :root { --gold:#e9c766; --bg:#0f172a; --panel:#1e2a42; --line:#31405f; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html { height: 100%; }
@@ -217,8 +217,10 @@
   .bigcode { font-size:2.6rem; font-weight:800; letter-spacing:.3em; color:#fcd34d; text-align:center; margin:6px 0; }
   /* 🔎 v3.0 Schlusswertung: großer Kasten in der MITTE, ÜBER allem anderen (Overlay),
      so muss man auch mit 5 Spielern nicht erst an den Mitspielern vorbei scrollen. */
-  .revwrap { position:fixed; inset:0; z-index:60; background:rgba(3,7,15,.74); display:flex; align-items:center; justify-content:center; padding:12px; }
-  .rev { width:min(680px,100%); max-height:min(88dvh,830px); overflow-y:auto; background:linear-gradient(180deg, rgba(245,158,11,.15), rgba(30,27,75,.4)); border:1px solid rgba(251,191,36,.35); border-radius:16px; padding:14px; margin:0; box-shadow:0 18px 50px rgba(0,0,0,.6); }
+  .revwrap { position:fixed; inset:0; z-index:60; background:rgba(3,7,15,.88); display:flex; align-items:center; justify-content:center; padding:12px; }
+  /* v3.1: Kasten voll DECKEND (Nutzer-Wunsch: durchscheinender Hintergrund
+     störte beim Lesen) – dunkelgoldener Schein oben, solide dunkle Basis. */
+  .rev { width:min(680px,100%); max-height:min(88dvh,830px); overflow-y:auto; background:linear-gradient(180deg, #4b3a20 0%, #2b3154 45%, #1b2340 100%); border:1px solid rgba(251,191,36,.35); border-radius:16px; padding:14px; margin:0; box-shadow:0 18px 50px rgba(0,0,0,.6); }
   .rev h2 { font-size:1.1rem; color:#fcd34d; text-align:center; margin-bottom:10px; }
   .revrow { display:flex; flex-wrap:wrap; gap:4px 10px; justify-content:space-between; align-items:center; background:rgba(255,255,255,.05); border-radius:10px; padding:8px 10px; margin:4px 0; font-size:.78rem; }
   .revrow.me { background:rgba(245,158,11,.2); border:1px solid rgba(245,158,11,.4); }
@@ -690,6 +692,9 @@ function fanfareDing() {
 window.chooseRealm = (rid) => { window._realm = rid; renderActionBar(); };
 window.seasonDone = () => send({ t: "seasonDone" });
 window.next = () => send({ t: "next" });
+// 🎲 v3.1: Gefahrenprobe – der eine Wurf für alle kommt vom HOST
+// (der Knopf erscheint nur bei ihm, alle anderen sehen das Ergebnis gleichzeitig).
+window.dangerRoll = () => send({ t: "dangerRoll" });
 window.rematch = () => send({ t: "rematch" });
 // 🔄 Host: Partie abbrechen und zurück in die Lobby
 window.newGame = () => { if (confirm("Aktuelle Partie abbrechen und zurück in die Lobby? Alle Punkte dieser Partie gehen verloren.")) send({ t: "newGame" }); };
@@ -921,24 +926,41 @@ window.leaveRoom = () => {
   renderConnect();
 };
 
+// 🎲 v3.1: Auch die Gefahrenprobe läuft als GROSSER Kasten in der Bildschirm-Mitte
+// (Overlay, deckend) – und nur der HOST würfelt bzw. klickt weiter: Alle sehen
+// dasselbe im selben Moment, wie bei der großen Schlusswertung.
 function renderDanger(s) {
   const d = s.dice;
-  const rows = d.results.map((r) => {
-    const idx = s.players.findIndex((p) => p.name === r.name);
-    return `<div class="revrow ${idx === s.you ? "me" : ""}">
-      <span>${esc(r.name)}</span>
-      <span class="pts">${r.danger}⚠️ · ${r.danger === 0 ? "alles ruhig 😌" : ""}
-        ${r.cages ? `👷 ${r.cages} · ` : ""}${r.markers ? `🏹 ${r.markers} · ` : ""}${r.payCoins ? `👑 ${r.payCoins * 3} · ` : ""}${r.newCredits ? `🏦 ${r.newCredits}` : ""}</span>
-    </div>`;
-  }).join("");
-  return `<div class="card-panel">
-    <div class="label center" style="font-size:1rem;color:#fcd34d">🎲 Gefahrenproben – Saison ${s.season + 1}</div>
-    <div class="center" style="margin:6px 0 10px">Ein Wurf für alle: <b>${d.roll.join(" + ")} = ${d.rollSum} Käfige</b></div>
-    ${rows}
-    <button class="btn-amber" style="width:100%;margin-top:10px" onclick="next()">
-      ${s.season >= (s.totalSeasons || 4) - 1 ? "🏁 Zur großen Schlusswertung" : `▶️ Saison ${s.season + 2} starten`}
-    </button>
-  </div>`;
+  const title = `<div class="label center" style="font-size:1rem;color:#fcd34d">🎲 Gefahrenprobe – Saison ${s.season + 1}</div>`;
+  let body = "";
+  let btn = "";
+  if (!d) {
+    // Noch nicht gewürfelt: offene Gefahrensymbole je Spieler sichtbar für alle
+    const rows = s.players.map((p, i) => {
+      const dsum = (p.seasonMonsters || []).reduce((t, m) => t + (m.danger || 0), 0);
+      return `<div class="revrow ${i === s.you ? "me" : ""}"><span>👤 ${esc(p.name)}</span><span class="pts">${dsum} ⚠️</span></div>`;
+    }).join("");
+    body = `<div class="center" style="color:#fde68a;margin:6px 0 10px">Ein Wurf für alle – der Host würfelt!</div>` + rows;
+    btn = s.isHost
+      ? `<button class="btn-amber" style="width:100%;margin-top:10px" onclick="dangerRoll()">🎲 Jetzt würfeln!</button>`
+      : `<div class="banner wait" style="margin-top:10px;text-align:center">Der Host würfelt für alle – bleibt dran!</div>`;
+  } else {
+    const rows = d.results.map((r) => {
+      const idx = s.players.findIndex((p) => p.name === r.name);
+      return `<div class="revrow ${idx === s.you ? "me" : ""}">
+        <span>${esc(r.name)}</span>
+        <span class="pts">${r.danger}⚠️ · ${r.danger === 0 ? "alles ruhig 😌" : ""}
+          ${r.cages ? `👷 ${r.cages} · ` : ""}${r.markers ? `🏹 ${r.markers} · ` : ""}${r.payCoins ? `👑 ${r.payCoins * 3} · ` : ""}${r.newCredits ? `🏦 ${r.newCredits}` : ""}</span>
+      </div>`;
+    }).join("");
+    body = `<div class="center" style="margin:6px 0 10px">Ein Wurf für alle: <b>${d.roll.join(" + ")} = ${d.rollSum} Käfige</b></div>` + rows;
+    btn = s.isHost
+      ? `<button class="btn-amber" style="width:100%;margin-top:10px" onclick="next()">
+          ${s.season >= (s.totalSeasons || 4) - 1 ? "🏁 Zur großen Schlusswertung" : `▶️ Saison ${s.season + 2} starten`}
+        </button>`
+      : `<div class="banner wait" style="margin-top:10px;text-align:center">Der Host macht weiter – alle schauen gemeinsam!</div>`;
+  }
+  return `<div class="revwrap" onclick="event.stopPropagation()"><div class="rev">${title}${body}${btn}</div></div>`;
 }
 
 function renderReveal(s) {
