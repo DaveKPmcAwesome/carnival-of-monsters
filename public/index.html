@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>Carnival of Monsters – Online</title>
 <style>
-  /* ===== UI-Übernahme des Prototyps (v2.0) – dunkler Comic-Tisch · Feinschliff v2.6 ===== */
+  /* ===== UI-Übernahme des Prototyps (v2.0) – dunkler Comic-Tisch · Feinschliff v2.7 ===== */
   :root { --gold:#e9c766; --bg:#0f172a; --panel:#1e2a42; --line:#31405f; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html { height: 100%; }
@@ -62,7 +62,9 @@
   .pname small { display:block; font-weight:400; color:#94a3b8; font-size:.62rem; }
   .dot { width:14px; height:14px; border-radius:50%; border:1px solid #000a; flex:0 0 14px; }
   .dot.on { box-shadow:0 0 8px #fff7; border-color:#fff9; }
-  .dot.off { filter:saturate(1.35) brightness(.5); }
+  /* v2.7: Der alte Einheits-Abdunkel-Filter machte aus den gelben Wolkenlanden
+     ein dunkles Braun (fast wie Höhlenlande). Belegte Punkte bekommen jetzt
+     je Reich ihre eigene Abdunkel-Farbe direkt im HTML (realmOffColor). */
   .landrows { margin-top:9px; }
   .lrow { display:flex; align-items:center; gap:5px; margin:5px 0; flex-wrap:wrap; max-width:calc(5*14px + 4*5px); }
   .spanel.rechts .lrow { flex-direction:row-reverse; margin-left:auto; }
@@ -130,7 +132,10 @@
   .k:disabled { opacity:.45; }
   .phone.inhand .k { border-width:5px; }
   .k .art { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:linear-gradient(#ffffff08,#00000038); font-size:34cqw; }
-  .k .name { position:absolute; top:5px; left:50%; transform:translateX(-50%); background:#0b1424ee; padding:2px 9px; border-radius:999px; font-weight:800; border:1px solid #ffffff26; white-space:nowrap; font-size:clamp(9px,6.5cqw,16px); }
+  .k .name { position:absolute; top:5px; left:6px; right:6px; text-align:center; background:#0b1424ee; padding:2px 8px; border-radius:10px; font-weight:800; border:1px solid #ffffff26; white-space:normal; line-height:1.16; font-size:clamp(9px,6.5cqw,15px); overflow:hidden; max-height:2.4em; }
+  /* v2.7: Titel zweizeilig statt seitlich abgeschnitten; bei Karten mit Kosten-
+     Badge rückt der Titel nur bis zum Badge, damit nichts übereinanderligt. */
+  .k:has(.med) .name { right:calc(clamp(24px,17cqw,44px) + 9px); }
   .k .med { position:absolute; top:5px; right:6px; border-radius:50%; background:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; border:3px solid var(--rc,#888); color:#1a2433; width:clamp(24px,17cqw,44px); height:clamp(24px,17cqw,44px); font-size:clamp(10px,9cqw,22px); }
   .k .pts { position:absolute; right:clamp(6px,5cqw,10px); bottom:clamp(4px,3cqh,10px); display:flex; align-items:center; gap:4px; background:#fffdf2de; border-radius:999px; padding:2px 7px; font-weight:800; color:#3a3312; font-size:clamp(11px,9cqw,18px); }
   .k .eff { display:none; position:absolute; left:6px; right:6px; bottom:6px; background:#31281adde8; color:#fde68a; border:1px solid #b08a2e; border-radius:8px; padding:4px 8px; font-size:clamp(9px,6.6cqw,12px); font-weight:700; line-height:1.3; text-align:left; }
@@ -159,6 +164,11 @@
   .drawer .sub { font-size:.7rem; color:#94a3b8; margin:8px 0 6px; }
   .drawer.frisch { border:2px solid #fbbf24; }
   .grid4 { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-top:4px; }
+  /* v2.7: Gratis gezogene Karten im Drawer GROSS im Handkarten-Format (Nutzer-Wunsch) */
+  .freshfan { display:flex; justify-content:center; flex-wrap:wrap; gap:10px; margin-top:4px; }
+  .freshfan .k { margin-right:0; }
+  .freshfan .k.sel { box-shadow:0 0 0 3px var(--gold), 0 12px 28px #000c; }
+  .drawer .k .eff { display:block; }
   .mon { display:inline-block; background:rgba(239,68,68,.15); color:#fecaca; border-radius:8px; padding:3px 8px; margin:2px; font-size:.7rem; }
   .stf { display:inline-block; background:rgba(6,182,212,.15); color:#a5f3fc; border-radius:8px; padding:3px 8px; margin:2px; font-size:.7rem; cursor:pointer; text-decoration:underline dotted; }
   .stfdetail { background:rgba(6,182,212,.12); border:1px solid rgba(6,182,212,.3); border-radius:10px; padding:8px 10px; font-size:.68rem; margin-top:6px; line-height:1.4; }
@@ -177,6 +187,9 @@
   .bottombar { position:fixed; bottom:0; width:100%; max-width:430px; left:50%; transform:translateX(-50%); display:flex; gap:7px; align-items:stretch; background:#0b1424f2; border-top:1px solid var(--line); padding:8px; z-index:30; height:64px; }
   .corner { position:relative; width:46px; height:46px; border-radius:50%; background:var(--panel); border:1px solid var(--line); font-size:1.3rem; display:flex; align-items:center; justify-content:center; flex:0 0 46px; align-self:center; }
   .corner.open { border-color:var(--gold); }
+  /* v2.7: 🃏-Ziehwahl-Knopf pulsiert golden – die laufende Ziehung nicht übersehen */
+  .corner.hot { border-color:#fbbf24; animation:freshpulse 1.6s ease-in-out infinite; }
+  @keyframes freshpulse { 0%,100% { box-shadow:0 0 0 0 #fbbf2400; } 50% { box-shadow:0 0 0 7px #fbbf233; } }
   .corner .badge { position:absolute; top:-4px; right:-4px; background:#dc2626; color:#fff; font-size:.62rem; font-weight:800; min-width:17px; height:17px; border-radius:999px; display:flex; align-items:center; justify-content:center; border:2px solid #0f172a; padding:0 2px; }
   .midst { flex:1; display:flex; align-items:center; justify-content:center; gap:4px; font-size:.85rem; color:#cbd5e1; min-width:0; flex-wrap:wrap; }
   .midst b { color:#fff; }
@@ -352,6 +365,89 @@ function cardTypeLabel(c) {
   if (c.type === "Land") return `${ri.emoji} Land · ${c.level} Pkt.${c.level >= 2 && c.realm !== "traum" ? " · entfernt" : ""}`;
   return c.type === "Mitarbeiter" ? "👷 Mitarbeiter" : c.type === "Event" ? "🎪 Event" : "🔒 Ziel";
 }
+// ============================================================
+// v2.7: Original-Kartentexte (aus den Kartenscans) liegen zusätzlich
+// IM CLIENT. server.js schickt zwar dieselben Texte mit – aber wenn auf
+// dem Host noch ein ÄLTERER server.js läuft (ohne Texte), zeigen Events,
+// Ziele und Mitarbeitende jetzt trotzdem Originaltext statt Lücke/Kurzform.
+// ============================================================
+const TOUR_ORIGINALS = {
+  wald: "Erhalte 1 Krone für jeden Verwunschenen-Wald-Landpunkt, den du im Spiel hast.",
+  tiefsee: "Erhalte 1 Krone für jeden Tiefsee-Landpunkt, den du im Spiel hast.",
+  wolken: "Erhalte 1 Krone für jeden Wolkenlande-Landpunkt, den du im Spiel hast.",
+  hoehlen: "Erhalte 1 Krone für jeden Höhlenlande-Landpunkt, den du im Spiel hast.",
+  dunkel: "Erhalte 1 Krone für jeden Dunkellande-Landpunkt, den du im Spiel hast.",
+};
+const EVENT_ORIGINALS = {
+  hunter: "+1 Jägermarker",
+  coins2: "+2 Kronen",
+  summer: "Erhalte 2 Kronen für jede Mitarbeitenden-Karte, die du im Spiel hast.",
+  show: "Zeige eine beliebige Anzahl deiner aufgehobenen Karten (nicht deiner Menagerie). Erhalte 1 Krone für jedes Monster, das du so zeigst.",
+};
+const STAFF_ORIGINALS = {
+  "Robin Goodall": "+2 Kronen jedes Mal, wenn du ein Monster des Verwunschenen Waldes ausspielst.",
+  "Katie Aronnax": "+2 Kronen jedes Mal, wenn du ein Monster der Tiefsee ausspielst.",
+  "Amelia Fogg": "+2 Kronen jedes Mal, wenn du ein Monster der Wolkenlande ausspielst.",
+  "Johann Lidenbrock": "+2 Kronen jedes Mal, wenn du ein Monster der Höhlenlande ausspielst.",
+  "John Michael Dyer": "+2 Kronen jedes Mal, wenn du ein Monster der Dunkellande ausspielst.",
+  "Henry W. Remington": "Ignoriert in jeder Saison 1 Gefahrensymbol.",
+  "Michonne N. Fraser": "Ignoriert in jeder Saison 1 Gefahrensymbol.",
+  "Isaac van Horn": "+1 Krone je Gefahrensymbol auf Monstern, die du ausspielst.",
+  "Lara Oakley": "Unbekanntes Land: Bestimme den Typ des Landes, sobald du es ausspielst.",
+  "Roald Starbuck": "Unbekanntes Land: Bestimme den Typ des Landes, sobald du es ausspielst.",
+  "Selma Cardenas": "Unbekanntes Land: Bestimme den Typ des Landes, sobald du es ausspielst.",
+  "Mungo Boyle": "Unbekanntes Land: Bestimme den Typ des Landes, sobald du es ausspielst.",
+  "P. T. Martini": "Immer wenn du ein Event ausspielst, erhältst du eine Krone.",
+};
+const GOAL_ORIGINALS = {
+  sparsam: "6 SP, falls du keinen Kredit aufgenommen hast.",
+  entdecker: "2 SP für jedes entfernte Land, das du im Spiel hast (Länder mit 2/3 Landpunkten, Traumlande ausgenommen).",
+  gefahrSP: "1 SP für jedes Gefahrensymbol auf Monstern in deiner Menagerie.",
+  traumExp: "2 SP für jedes Monster der Traumlande in deiner Menagerie.",
+  verwalter: "2 SP für jedes geheime Ziel, das du außer diesem hast.",
+  grosswild: "2 SP für jedes Level-3-Monster in deiner Menagerie. 3 SP für jedes Level-4+-Monster in deiner Menagerie.",
+  spezialist: "7 SP, falls du nur Länder aus 3 oder weniger Regionen im Spiel hast. 4 SP, falls du Länder aus genau 4 Regionen im Spiel hast.",
+  waldExp: "2 SP für jedes Monster des Verwunschenen Waldes in deiner Menagerie.",
+  besessen: "7 SP, falls du 7 oder mehr Landpunkte desselben Typs im Spiel hast (Traumlande zählen nicht).",
+  ehrenmann: "2 SP für jeden Kredit, den du aufgenommen hast.",
+  hoehlenExp: "2 SP für jedes Monster der Höhlen in deiner Menagerie.",
+  wolkenExp: "2 SP für jedes Monster der Wolkenlande in deiner Menagerie.",
+  tiefseeExp: "2 SP für jedes Monster der Tiefsee in deiner Menagerie.",
+  dunkelExp: "2 SP für jedes Monster der Dunkellande in deiner Menagerie.",
+  silber: "4 SP.",
+  arbeitgeber: "3 SP für jede Mitarbeitenden-Karte, die du im Spiel hast.",
+  traumland: "2 SP für jede Traumland-Karte, die du im Spiel hast.",
+  tausendsassa: "7 SP, falls du 2 oder mehr Landpunkte aus jeder der 6 Regionen im Spiel hast.",
+  klein: "1 SP für jedes Level-1-Monster in deiner Menagerie.",
+  ausruestung: "2 SP für jeden Jägermarker, den du am Ende des Spiels noch hast.",
+  zweite: "7 SP, falls du nach allen anderen Punkten auf dem 2. Platz oder punktgleich mit dem Ersten bist.",
+};
+// Wertung/Aufdecken: Ziele kommen vom Server mit Name statt Key – Namens-Fallback mitfassen.
+const GOAL_ORIGINAL_NAMES = {};
+[
+  ["sparsam", "Sparsamkeit ist eine Tugend"], ["entdecker", "Entdecker der letzten Grenzen"], ["gefahrSP", "Gefahrensucher"],
+  ["traumExp", "Autorität für übernatürliche Kreaturen"], ["verwalter", "Verwalter"], ["grosswild", "Großwildjäger"],
+  ["spezialist", "Spezialist"], ["waldExp", "Autorität für waldbewohnende Kreaturen"], ["besessen", "Eine offensichtliche Besessenheit"],
+  ["ehrenmann", "Ein wahrer Ehrenmann zahlt seine Schulden"], ["hoehlenExp", "Autorität für unterirdische Kreaturen"],
+  ["wolkenExp", "Autorität für fliegende Kreaturen"], ["tiefseeExp", "Autorität für schwimmende Kreaturen"],
+  ["dunkelExp", "Autorität für düstere Kreaturen"], ["silber", "Mit dem Silberlöffel im Mund geboren"],
+  ["arbeitgeber", "Arbeitgeber des Jahres"], ["traumland", "Suchender jenseits des Tores der Träume"],
+  ["tausendsassa", "Tausendsassa"], ["klein", "Freund kleiner Dinge"], ["ausruestung", "Solide Ausrüstung"],
+  ["zweite", "Die zweite Reihe ist gut genug für mich"],
+].forEach(([k, n]) => { GOAL_ORIGINAL_NAMES[n] = GOAL_ORIGINALS[k]; });
+function originalGoalText(g) {
+  return GOAL_ORIGINALS[g.key] || GOAL_ORIGINAL_NAMES[g.name] || g.text || "";
+}
+function originalCardText(c) {
+  if (c.type === "Ziel") return originalGoalText(c);
+  if (c.type === "Mitarbeiter") return STAFF_ORIGINALS[c.name] || c.text
+    || (c.kind === "land" ? "Unbekanntes Land: Bestimme den Typ des Landes, sobald du es ausspielst." : "dauerhafter Effekt");
+  if (c.type === "Event") {
+    if (c.kind === "tour" && TOUR_ORIGINALS[c.realm]) return TOUR_ORIGINALS[c.realm];
+    return EVENT_ORIGINALS[c.kind] || c.text || "";
+  }
+  return c.text || "";
+}
 function cardInfo(c) {
   const ri = realmInfo(c.realm);
   let t = "";
@@ -360,7 +456,7 @@ function cardInfo(c) {
     if (c.draw > 0) t += ` · 🃏 zieht ${c.draw}`;
     if (c.danger > 0) t += ` · ⚠️ ${c.danger}`;
   } else if (c.type === "Mitarbeiter" || c.type === "Event" || c.type === "Ziel") {
-    t = (c.type === "Mitarbeiter" ? `−${c.cost} 👑 · ` : "") + (c.text || "");
+    t = (c.type === "Mitarbeiter" ? `−${c.cost} 👑 · ` : "") + originalCardText(c); // v2.7: Originaltext auch im Drawer/Info
   }
   return t;
 }
@@ -460,7 +556,9 @@ function turnBanner(s) {
         if (s.awaitDiscard === s.you) return `<div class="banner your">🗑️ Lege jetzt 1 Karte OFFEN aus dem Spiel ab!</div>`;
         if (s.showTurn === s.you) {
           if ((s.freshDraw || []).some((c) => c.type !== "Ziel"))
-            return `<div class="banner your">🃏 Entscheide erst über deine gezogenen Karten – dann geht es weiter!</div>`;
+            // v2.7: Banner ist jetzt ein KNOPF – der Zieh-Kasten lässt sich hiermit
+            // jederzeit wieder öffnen (Nachbauten des „Kasten ist weg“-Dead-Ends).
+            return `<div class="banner your" style="cursor:pointer" onclick="event.stopPropagation();toggleDrawerById('dFresh')">🃏 Deine gezogenen Karten warten – hier antippen, falls der Kasten zu ist!</div>`;
           return `<div class="banner your">🔍 Du bist dran – decke deine Karte auf!</div>
             <div class="center" style="margin-top:6px"><button class="btn-green" onclick="revealNow()">👁️ Jetzt aufdecken!</button></div>`;
         }
@@ -840,7 +938,7 @@ function renderReveal(s) {
       <div class="label" style="margin-bottom:4px">👤 ${esc(p.name)}</div>
       ${p.goalResults.length === 0 ? '<span class="muted">keine Ziele</span>' : ""}
       ${p.goalResults.map((gr) => `<div class="revrow" style="background:${gr.pts > 0 ? "rgba(124,58,237,0.25)" : "rgba(255,255,255,0.05)"};opacity:${gr.pts > 0 ? 1 : 0.65}">
-        <span><b>${esc(gr.name)}</b> <span class="goal">(${esc(gr.text)})</span></span><span class="pts">+${gr.pts}</span></div>`).join("")}
+        <span><b>${esc(gr.name)}</b> <span class="goal">(${esc(originalGoalText(gr))})</span></span><span class="pts">+${gr.pts}</span></div>`).join("")}
       ${p.goalResults.length ? `<div class="revrow" style="background:rgba(245,158,11,0.2)"><span><b>🎯 Ziele gesamt</b></span><span class="pts"><b>+${p.goalResults.reduce((sum, gr) => sum + gr.pts, 0)}</b></span></div>` : ""}
       </div>`).join("");
   if (revealStep === 3) body = `<p class="center muted" style="margin-bottom:8px">Kronen, Jäger &amp; Kredite (1 👑 = 1 SP · 1 🏹 = 1 SP · Kredit = −5 SP)</p>` +
@@ -871,7 +969,12 @@ function renderReveal(s) {
 // ============================================================
 
 const REALM_COLORS = { wald:"#3f9d43", tiefsee:"#3f9ac2", wolken:"#e9c766", hoehlen:"#b07c3f", dunkel:"#94a3b8", traum:"#7c5fb8", gefahr:"#dc2626" };
+// v2.7: Belegte Land-Punkte kriegen je Reich eine EIGENE Abdunkel-Farbe statt
+// des alten Einheits-Filters: Wolkenlande bleiben sichtbar GELB und sind nicht
+// mehr mit den dunklen Höhlenlanden zu verwechseln.
+const REALM_OFF_COLORS = { wald:"#2f7a34", tiefsee:"#2b7ea8", wolken:"#c9a12e", hoehlen:"#4a3016", dunkel:"#5c6878", traum:"#584690", gefahr:"#993333" };
 const realmColor = (id) => REALM_COLORS[id] || "#8a94a8";
+const realmOffColor = (id) => REALM_OFF_COLORS[id] || "#55607a";
 const AV_COLORS = ["#3f9ac2", "#3f9d43", "#b07c3f", "#7c5fb8", "#e9c766"];
 const AV_DARK = ["#0e2a3d", "#122b18", "#231a3d", "#231a3d", "#2b2410"];
 
@@ -935,7 +1038,7 @@ function spanelHTML(s, pi, links) {
     const total = p.lands[r.id], occ = total - free[r.id];
     let dots = "";
     for (let k = 0; k < free[r.id]; k++) dots += `<i class="dot on" style="background:${realmColor(r.id)}"></i>`;
-    for (let k = 0; k < occ; k++) dots += `<i class="dot off" style="background:${realmColor(r.id)}"></i>`;
+    for (let k = 0; k < occ; k++) dots += `<i class="dot off" style="background:${realmOffColor(r.id)}"></i>`;
     return `<div class="lrow">${dots}</div>`;
   }).join("");
   const mons = (p.seasonMonsters || []).map((m) =>
@@ -943,7 +1046,7 @@ function spanelHTML(s, pi, links) {
   const stf = (p.staff || []).map((x) => `<span class="stf" onclick="event.stopPropagation();toggleStaff(${pi},'${esc(x.name)}')">${esc(x.name)}</span>`).join("");
   const detail = staffDetail && staffDetail.pi === pi ? (() => {
     const st = (p.staff || []).find((x) => x.name === staffDetail.name);
-    return st ? `<div class="stfdetail"><b>👷 ${esc(st.name)}</b> (−${st.cost} 👑): ${esc(st.text)}</div>` : "";
+    return st ? `<div class="stfdetail"><b>👷 ${esc(st.name)}</b> (−${st.cost} 👑): ${esc(originalCardText({ type: "Mitarbeiter", name: st.name, text: st.text }))}</div>` : "";
   })() : "";
   // v2.5: Anfangsbuchstabe im Avatar – auch bei Bots: „🤖 Name“ zeigt den Buchstaben,
   // nicht das Roboter-Emoji. Vorangestellte Nicht-Buchstaben (Emoji/Leerzeichen)
@@ -996,8 +1099,8 @@ function landsStripHTML(s) {
     const dots = [];
     for (let k = 0; k < free[r.id]; k++) dots.push(true);
     for (let k = 0; k < occ; k++) dots.push(false);
-    const hr = (arr) => `<div class="hrow">` + arr.map((f) => `<i class="dot ${f ? "on" : "off"}" style="background:${realmColor(r.id)}"></i>`).join("") + `</div>`;
-    if (dots.length <= 2) return `<div class="lcol"><div class="dots">${dots.map((f) => `<i class="dot ${f ? "on" : "off"}" style="background:${realmColor(r.id)}"></i>`).join("")}</div></div>`;
+    const hr = (arr) => `<div class="hrow">` + arr.map((f) => `<i class="dot ${f ? "on" : "off"}" style="background:${f ? realmColor(r.id) : realmOffColor(r.id)}"></i>`).join("") + `</div>`;
+    if (dots.length <= 2) return `<div class="lcol"><div class="dots">${dots.map((f) => `<i class="dot ${f ? "on" : "off"}" style="background:${f ? realmColor(r.id) : realmOffColor(r.id)}"></i>`).join("")}</div></div>`;
     const unten = Math.ceil(dots.length / 2);
     return `<div class="lcol"><div class="dots">${hr(dots.slice(0, unten))}${hr(dots.slice(unten))}</div></div>`;
   }).join("") + `</div>`;
@@ -1017,21 +1120,22 @@ function fanCardHTML(c, opts) {
     if (c.realm !== "traum" && c.level >= 2) eff = "entfernt · Land-Vorbedingung nötig";
   } else if (c.type === "Mitarbeiter") {
     rc = "#0891b2"; art = "👷"; med = String(c.cost); pts = "👑";
-    // v2.6: Original-Kartentext als Effekt statt Platzhalter („dauerhafter Effekt“).
-    eff = c.text || (c.kind === "land" ? "Entdecker – Landtyp wählen" : "dauerhafter Effekt");
+    // v2.7: Original-Kartentext als Effekt – mit Client-Fallback, falls der
+    // Server (noch) keine Texte schickt.
+    eff = originalCardText(c);
   } else if (c.type === "Event") {
     rc = "#ea580c"; art = "🎪";
-    // v2.6: Der Event-Effekt stand nie auf der Karte – jetzt der Original-Text.
-    eff = c.text || "";
+    // v2.7: Der Event-Effekt – Originaltext mit Client-Fallback.
+    eff = originalCardText(c);
   } else {
     rc = "#7c5fb8"; art = "🎯"; zielK = true;
   }
   const sel = opts.selected ? " sel" : "";
-  const click = opts.onClick ? ` onclick="${opts.onClick}"` : " disabled";
+  const click = opts.noClick ? "" : (opts.onClick ? ` onclick="${opts.onClick}"` : " disabled");
   const info = esc(`${cardTypeLabel(c)} · ${cardInfo(c)}`);
   return `<button class="k${sel}${zielK ? " ziel" : ""}" style="--rc:${rc}" data-fid="${c.id}" data-info="${info}"${click}>` +
     (zielK
-      ? `<span class="secret">🔒 geheim</span><div class="ztxt"><div class="big">🎯</div><b>${esc(c.name || "Ziel")}</b><span>${esc(c.text || "")}</span></div>`
+      ? `<span class="secret">🔒 geheim</span><div class="ztxt"><div class="big">🎯</div><b>${esc(c.name || "Ziel")}</b><span>${esc(originalCardText(c))}</span></div>`
       : `<div class="art">${art}</div><div class="name">${esc(c.name || ri.name)}</div>${med ? `<div class="med">${med}</div>` : ""}${eff ? `<div class="eff">${esc(eff)}</div>` : ""}${pts ? `<div class="pts">${pts}</div>` : ""}`) +
     `</button>`;
 }
@@ -1221,6 +1325,12 @@ function onFanUp() {
 function outsideTap(e) {
   const t = e.target;
   if (!t || !t.closest) return;
+  // v2.7: Wurde das angetippte Element durch render() bereits ERSETZT (z. B.
+  // Reich-Wahl beim gezogenen Entdecker: chooseFreshRealm ruft render()), ist
+  // der Tipp ein Tipp auf die ALTE Oberfläche – die NEUE darf nicht als
+  // „Tipp außerhalb“ werten und den Aufklapper schließen. Genau deshalb
+  // verschwand der Kasten beim Wählen des Landes!
+  if (!t.isConnected) return;
   const drawerWasOpen = !!document.querySelector(".drawer.open");
   if (!t.closest(".drawer") && !t.closest(".corner") && !t.closest(".midst")) closeDrawersNow();
   if (!t.closest(".optionen") && !t.closest(".menu")) closeMenu();
@@ -1239,6 +1349,9 @@ function bindFan() {
     if (!fanRaf) fanRaf = requestAnimationFrame(function () { fanRaf = 0; updateFan(); });
   });
   document.querySelectorAll(".k").forEach(function (el) {
+    // v2.7: Die großen Zieh-Karten im Draco liegen im Drawer – ein Wisch darüber
+    // darf den Kartenfächer darunter NICHT verschieben.
+    if (el.closest(".drawer")) return;
     el.addEventListener("pointerdown", function (e) {
       cancelAnimationFrame(animId);
       drag = { x: e.clientX, sl: hand.scrollLeft, samples: [{ t: Date.now(), x: e.clientX }] };
@@ -1273,7 +1386,7 @@ window.toggleDrawerById = (id) => {
   document.querySelectorAll(".corner.open").forEach((x) => x.classList.remove("open"));
   if (openDrawer) {
     d.classList.add("open");
-    const map = { dMen: "cMen", dLager: "cLager" };
+    const map = { dMen: "cMen", dLager: "cLager", dFresh: "cFresh" };
     if (map[id]) { const c = document.getElementById(map[id]); if (c) c.classList.add("open"); }
   }
 };
@@ -1295,7 +1408,7 @@ function drawerEigenHTML(s) {
   if (!mons && !stf) return "";
   const detail = staffDetail && staffDetail.pi === s.you ? (() => {
     const st = (me.staff || []).find((x) => x.name === staffDetail.name);
-    return st ? `<div class="stfdetail"><b>👷 ${esc(st.name)}</b> (−${st.cost} 👑): ${esc(st.text)}</div>` : "";
+    return st ? `<div class="stfdetail"><b>👷 ${esc(st.name)}</b> (−${st.cost} 👑): ${esc(originalCardText({ type: "Mitarbeiter", name: st.name, text: st.text }))}</div>` : "";
   })() : "";
   // v2.5: Keine Beschriftung – die Kacheln und Chips sprechen für sich (Nutzer-Wunsch).
   return `<div class="drawer ${openDrawer === "dEigen" ? "open" : ""}" id="dEigen">
@@ -1330,13 +1443,15 @@ function drawerFreshHTML(s) {
   const cur = open[0];
   if (cur && window._freshRealmFor !== cur.id) { window._freshRealm = null; window._freshRealmFor = cur.id; }
   let inner = `<h4>🃏 Gratis gezogen${open.length > 1 ? ` – noch ${open.length} offen` : ""} – jetzt entscheiden!</h4>`;
-  inner += `<div class="grid4">${s.freshDraw.map((c) => cardHTML(c, { selected: cur && c.id === cur.id })).join("")}</div>`;
+  // v2.7: Gezogene Karten GROSS im Handkarten-Format (Nutzer-Wunsch: präsenter
+  // wie die Handkarten) – inklusive Effekt-Text unten auf der Karte.
+  inner += `<div class="freshfan">${s.freshDraw.map((c) => fanCardHTML(c, { noClick: true, selected: cur && c.id === cur.id })).join("")}</div>`;
   if (s.freshDraw.some((c) => c.type === "Ziel")) inner += `<p class="muted center" style="margin-top:6px">🔒 Gezogene Ziele liegen direkt bei deinen Zielen – gratis angenommen.</p>`;
   if (s.mode === "schnell") inner += `<p class="muted center" style="margin-top:6px">⚡ Dein neues Blatt bleibt verdeckt, bis du entschieden hast – das ist fair für alle.</p>`;
   if (cur) {
     if (cur.type === "Mitarbeiter" && cur.kind === "land") {
       inner += `<p class="muted center" style="margin-top:8px">„${esc(cur.name)}“ – Typ des Landes festlegen: <b>dauerhaft!</b></p>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;justify-content:center">${ALL_REALMS.map((r) => `<button class="btn-indigo" style="flex:1;font-size:.85rem;border:none;border-radius:10px;padding:9px 6px;font-weight:700" onclick="chooseFreshRealm('${r.id}')">${r.emoji}${window._freshRealm === r.id ? " ✓" : ""}</button>`).join("")}</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;justify-content:center">${ALL_REALMS.map((r) => `<button class="btn-indigo" style="flex:1;min-height:48px;font-size:.92rem;border:none;border-radius:10px;padding:13px 6px;font-weight:700" onclick="chooseFreshRealm('${r.id}')">${r.emoji}${window._freshRealm === r.id ? " ✓" : ""}</button>`).join("")}</div>
         <div style="display:flex;gap:8px;margin-top:8px">
           <button class="btn-green" style="flex:1;border:none;border-radius:10px;padding:11px;font-weight:800" ${window._freshRealm ? "" : "disabled"} onclick="freshPlay(${cur.id})">✅ Diese ausspielen</button>
           <button class="btn-indigo" style="flex:1;border:none;border-radius:10px;padding:11px;font-weight:800" onclick="freshKeep(${cur.id})">📥 Diese einlagern (gratis)</button>
@@ -1390,8 +1505,12 @@ function bottombarHTML(s) {
   const me = s.players[s.you];
   const lagN = (s.stored || []).length + (s.goals || []).length;
   const mengN = (s.menagerie || []).length;
+  // v2.7: Solange Gratis-Ziehungen offen sind, gibt es einen eigenen 🃏-Knopf –
+  // der Zieh-Kasten kann damit IMMER wieder geöffnet werden.
+  const freshN = (s.freshDraw || []).filter((c) => c.type !== "Ziel").length;
   return `<div class="bottombar">
     <button class="corner" id="cMen" onclick="event.stopPropagation();toggleDrawerById('dMen')"><span class="emoji">🎭</span>${mengN ? `<span class="badge">${mengN}</span>` : ""}</button>
+    ${freshN ? `<button class="corner hot" id="cFresh" onclick="event.stopPropagation();toggleDrawerById('dFresh')"><span class="emoji">🃏</span><span class="badge">${freshN}</span></button>` : ""}
     <div class="midst" onclick="event.stopPropagation()">
       <span>👑 <b>${me.coins}</b></span><span class="sep">·</span>
       <span>🏹 <b>${me.hunters}</b></span><span class="sep">·</span>
