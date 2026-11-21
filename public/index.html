@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>Carnival of Monsters – Online</title>
 <style>
-  /* ===== UI-Übernahme des Prototyps (v2.0) – dunkler Comic-Tisch · Feinschliff v2.4 ===== */
+  /* ===== UI-Übernahme des Prototyps (v2.0) – dunkler Comic-Tisch · Feinschliff v2.5 ===== */
   :root { --gold:#e9c766; --bg:#0f172a; --panel:#1e2a42; --line:#31405f; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html { height: 100%; }
@@ -100,7 +100,10 @@
   #actionbar .inner { display:flex; flex-wrap:wrap; gap:8px; }
   #actionbar .note { flex-basis:100%; text-align:center; font-size:.72rem; color:#fde68a; }
   #actionbar button { flex:1 1 auto; border:none; border-radius:10px; padding:12px 6px; font-weight:800; font-size:.86rem; color:#fff; min-width:110px; }
-  .btn-amber { background:#f59e0b; color:#1e293b; }
+  /* v2.5: Gold-Verlauf für Übergangs-Buttons (Nächste Saison, Aufdecken, Saisonende-Fertig) –
+     derselbe Look wie in der Lobby, statt des flachen Orange. */
+  .btn-amber { background:linear-gradient(180deg, #f3d98a, #e9c766); color:#241a07; font-weight:800;
+               border:1px solid #b48a2a; box-shadow:0 6px 16px #000a; }
   .btn-green { background:#16a34a; color:#fff; }
   .btn-red { background:#dc2626; color:#fff; }
   .btn-purple { background:#7c3aed; color:#fff; }
@@ -459,7 +462,9 @@ function turnBanner(s) {
           return `<div class="banner your">🗑️ Karte gewählt – jetzt die ABWURFKARTE antippen: Sie wird OFFEN abgelegt und alle sehen sie. Der Tipp bestätigt deine Wahl gleich mit!</div>${chips}`;
         return `<div class="banner your">✅ Deine Wahl steht fest – unten kannst du jederzeit mit ✏️ ändern…</div>${chips}`;
       }
-      return `<div class="banner your">${s.mode === "langsam" ? "🐢" : "⚡"} Alle wählen gleichzeitig verdeckt – such dir eine Karte aus!</div>${chips}`;
+      // v2.5: Der Hinweis „Alle wählen gleichzeitig…“ ist weg (Nutzer-Wunsch) –
+      // die Chips zeigen, wer schon fertig ist, der Rest steht im Band.
+      return chips;
     }
     if (s.awaitDiscard >= 0) {
       if (s.awaitDiscard === s.you) return `<div class="banner your">🗑️ Lege jetzt 1 Karte OFFEN aus dem Spiel ab!</div>`;
@@ -926,9 +931,10 @@ function spanelHTML(s, pi, links) {
     const st = (p.staff || []).find((x) => x.name === staffDetail.name);
     return st ? `<div class="stfdetail"><b>👷 ${esc(st.name)}</b> (−${st.cost} 👑): ${esc(st.text)}</div>` : "";
   })() : "";
-  // v2.1: Bot-Namen starten mit 🤖 – charAt(0) zerreißt das Emoji (halbes Surrogat-Paar
-  // wird unsichtbar). Array.from arbeitet zeichenweise (nicht UTF-16-blockweise).
-  const avName = String(p.name || "?").trim();
+  // v2.5: Anfangsbuchstabe im Avatar – auch bei Bots: „🤖 Name“ zeigt den Buchstaben,
+  // nicht das Roboter-Emoji. Vorangestellte Nicht-Buchstaben (Emoji/Leerzeichen)
+  // werden abgeschnitten, Array.from arbeitet danach zeichenweise surrogat-sicher.
+  const avName = String(p.name || "?").trim().replace(/^[^\p{L}\p{N}]+/u, "").trim();
   const x = ((Array.from(avName)[0]) || "?").toUpperCase();
   return `<div class="spanel${links ? "" : " rechts"}" onclick="event.stopPropagation();this.classList.toggle('auf')">
     <div class="kopf">
@@ -937,9 +943,8 @@ function spanelHTML(s, pi, links) {
       <div class="kenn"><span>👑 <b>${p.coins}</b></span><span>🏹 <b>${p.hunters}</b></span><span>💳 <b>${p.credits}</b></span>${p.trophies ? `<span>🏆 <b>${p.trophies}</b></span>` : ""}<i class="pf">▸</i></div>
     </div>
     <div class="landrows">${rows}</div>
-    <div class="saison-lab">Diese Saison ausgespielt (Panel antippen):</div>
-    <div class="minis">${mons}</div>
-    ${stf ? `<div class="staffbox"><div class="saison-lab">Mitarbeiter (antippen für den Effekt):</div><div onclick="event.stopPropagation()">${stf}</div></div>` : ""}
+    ${mons ? `<div class="minis">${mons}</div>` : ""}
+    ${stf ? `<div class="staffbox"><div onclick="event.stopPropagation()">${stf}</div></div>` : ""}
     ${detail}
   </div>`;
 }
@@ -949,7 +954,9 @@ function spanelHTML(s, pi, links) {
    Von links nach rechts liest man den Karten-Umlauf. */
 function spielerBoxHTML(s) {
   const n = s.players.length, me = s.you;
-  const flowLeft = s.season % 2 === 0;
+  // v2.5: Sitzplätze bleiben über die Saisons STABIL – kein Platztausch mehr.
+  // (Früher: flowLeft = s.season % 2 === 0 → Mitspieler rückten jede Saison um.)
+  const flowLeft = true;
   const opp = [];
   for (let k = 1; k < n; k++) opp.push(flowLeft ? (me + k) % n : ((me - k) % n + n) % n);
   const m = opp.length;
@@ -1137,6 +1144,9 @@ window.selectCard = (id, from) => {
   selected = src.find((c) => c.id === id) || null;
   selectedFrom = from;
   window._realm = null;
+  // v2.5: Aus dem Lager gewählte Karte gleich das Lager schließen – sonst verdeckt
+  // der Drawer das Aktionsband und Ausspielen ist nicht erreichbar (Nutzer-Bugreport).
+  if (from === "stored" && openDrawer) openDrawer = null;
   render();
   if (from === "hand" && selected) {
     const el = document.querySelector('.k[data-fid="' + id + '"]');
@@ -1271,10 +1281,10 @@ function drawerEigenHTML(s) {
     const st = (me.staff || []).find((x) => x.name === staffDetail.name);
     return st ? `<div class="stfdetail"><b>👷 ${esc(st.name)}</b> (−${st.cost} 👑): ${esc(st.text)}</div>` : "";
   })() : "";
+  // v2.5: Keine Beschriftung – die Kacheln und Chips sprechen für sich (Nutzer-Wunsch).
   return `<div class="drawer ${openDrawer === "dEigen" ? "open" : ""}" id="dEigen">
-    <h4>🎭 Deine Saison-Monster${(me.seasonMonsters || []).length ? ` (${me.seasonMonsters.length})` : ""} <small>– dieselbe Ansicht wie bei den Mitspielern</small></h4>
-    <div class="minis">${mons || '<span class="muted">Noch nichts ausgespielt.</span>'}</div>
-    ${stf ? `<div class="sub">👷 Deine Mitarbeiter (antippen für den Effekt)</div><div onclick="event.stopPropagation()">${stf}</div>` : ""}
+    ${mons ? `<div class="minis">${mons}</div>` : ""}
+    ${stf ? `<div onclick="event.stopPropagation()">${stf}</div>` : ""}
     ${detail}
   </div>`;
 }
