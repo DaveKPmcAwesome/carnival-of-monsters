@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>Carnival of Monsters – Online</title>
 <style>
-  /* ===== UI-Übernahme des Prototyps (v2.0) – dunkler Comic-Tisch · Feinschliff v2.7 ===== */
+  /* ===== UI-Übernahme des Prototyps (v2.0) – dunkler Comic-Tisch · Feinschliff v2.8 ===== */
   :root { --gold:#e9c766; --bg:#0f172a; --panel:#1e2a42; --line:#31405f; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html { height: 100%; }
@@ -130,6 +130,10 @@
        container-type:size; transition:width .35s ease, height .35s ease, margin-right .35s ease;
        touch-action:none; -webkit-user-select:none; user-select:none; }
   .k:disabled { opacity:.45; }
+  /* v2.8: Die LETZTE Karte bekommt keinen negativen rechten Außenabstand –
+     sonst frisst die Fächer-Überlappung genau 45% Kartenbreite aus dem rechten
+     Randpolster, und man kann nie ganz zur letzten Karte durchwischen. */
+  .handin .k:last-of-type { margin-right:0; }
   .phone.inhand .k { border-width:5px; }
   .k .art { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:linear-gradient(#ffffff08,#00000038); font-size:34cqw; }
   .k .name { position:absolute; top:5px; left:6px; right:6px; text-align:center; background:#0b1424ee; padding:2px 8px; border-radius:10px; font-weight:800; border:1px solid #ffffff26; white-space:normal; line-height:1.16; font-size:clamp(9px,6.5cqw,15px); overflow:hidden; max-height:2.4em; }
@@ -156,6 +160,9 @@
 
   /* ---- Aufklapper (Drawer) ---- */
   .drawer { position:fixed; bottom:124px; left:50%; transform:translateX(-50%); width:min(430px, calc(100% - 14px)); background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:10px; display:none; box-shadow:0 -8px 30px #000c; max-height:46dvh; overflow-y:auto; z-index:48; transition:transform .25s ease; }
+  /* v2.8: Zieh-Kasten darf höher werden, damit die Buttons DIRECT unter der
+     großen Karte sitzen, ohne im Kasten scrollen zu müssen (Nutzer-Wunsch). */
+  .drawer.frisch { max-height:76dvh; }
   /* v2.6: offener Drawer rutscht über das Aktionsband, damit Ausspielen erreichbar bleibt */
   .phone.lagerhoch .drawer { transform:translate(-50%, calc(-1 * var(--lagerlift, 118px))); }
   .drawer.open { display:block; }
@@ -164,10 +171,14 @@
   .drawer .sub { font-size:.7rem; color:#94a3b8; margin:8px 0 6px; }
   .drawer.frisch { border:2px solid #fbbf24; }
   .grid4 { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-top:4px; }
-  /* v2.7: Gratis gezogene Karten im Drawer GROSS im Handkarten-Format (Nutzer-Wunsch) */
-  .freshfan { display:flex; justify-content:center; flex-wrap:wrap; gap:10px; margin-top:4px; }
-  .freshfan .k { margin-right:0; }
-  .freshfan .k.sel { box-shadow:0 0 0 3px var(--gold), 0 12px 28px #000c; }
+  /* v2.7: Gratis gezogene Karten im Drawer GROSS im Handkarten-Format (Nutzer-Wunsch)
+     v2.8: leicht verkleinert + fächerig überlappend (aktuelle Karte ganz rechts/oben),
+     damit alles auf einen Blick passt: Karte + Button direkt darunter, ohne Scroll. */
+  .freshfan { display:flex; justify-content:center; align-items:flex-end; flex-wrap:nowrap; gap:0; margin-top:4px;
+              --ch:min(34dvh,230px); --cw:calc(var(--ch)*.667); }
+  .freshfan .k { margin-right:calc(var(--cw)*-.45); }
+  .freshfan .k:last-child { margin-right:0; }
+  .freshfan .k.sel { box-shadow:0 0 0 3px var(--gold), 0 12px 28px #000c; z-index:5; }
   .drawer .k .eff { display:block; }
   .mon { display:inline-block; background:rgba(239,68,68,.15); color:#fecaca; border-radius:8px; padding:3px 8px; margin:2px; font-size:.7rem; }
   .stf { display:inline-block; background:rgba(6,182,212,.15); color:#a5f3fc; border-radius:8px; padding:3px 8px; margin:2px; font-size:.7rem; cursor:pointer; text-decoration:underline dotted; }
@@ -1445,7 +1456,12 @@ function drawerFreshHTML(s) {
   let inner = `<h4>🃏 Gratis gezogen${open.length > 1 ? ` – noch ${open.length} offen` : ""} – jetzt entscheiden!</h4>`;
   // v2.7: Gezogene Karten GROSS im Handkarten-Format (Nutzer-Wunsch: präsenter
   // wie die Handkarten) – inklusive Effekt-Text unten auf der Karte.
-  inner += `<div class="freshfan">${s.freshDraw.map((c) => fanCardHTML(c, { noClick: true, selected: cur && c.id === cur.id })).join("")}</div>`;
+  // v2.8: Aktuelle Karte ans ENDE des Fächers – so liegt sie ganz oben (spätere
+  // Karten überdecken frühere) und bleibt komplett sichtbar, die restlichen
+  // warten fächerig dahinter.
+  const wartende = s.freshDraw.slice();
+  const curPos = wartende.indexOf(cur); if (curPos >= 0) wartende.push(wartende.splice(curPos, 1)[0]);
+  inner += `<div class="freshfan">${wartende.map((c) => fanCardHTML(c, { noClick: true, selected: cur && c.id === cur.id })).join("")}</div>`;
   if (s.freshDraw.some((c) => c.type === "Ziel")) inner += `<p class="muted center" style="margin-top:6px">🔒 Gezogene Ziele liegen direkt bei deinen Zielen – gratis angenommen.</p>`;
   if (s.mode === "schnell") inner += `<p class="muted center" style="margin-top:6px">⚡ Dein neues Blatt bleibt verdeckt, bis du entschieden hast – das ist fair für alle.</p>`;
   if (cur) {
@@ -1583,6 +1599,22 @@ function phoneShellHTML(s) {
 function render() {
   if (!state) { renderConnect(); return; }
   if (state.phase === "lobby") { actionBar.style.display = "none"; renderLobby(state); return; }
+  // v2.8: Geister-Wahl abscheiden. Der Server führt ⚡-Runden sofort aus, sobald
+  // ALLE gewählt haben (Bots tippen blitzschnell), rotiert die Hände und setzt
+  // die Wahl zurück. Der Client zeigte aber die gestufte Wahl („✅ Fertig!“ /
+  // „✏️ Ändern“) einfach WEITER an – für eine Karte, die gar nicht mehr auf der
+  // Hand liegt. Klick darauf lief ins Leere bzw. der Server antwortete mit
+  // „Karte nicht gefunden“. Merkregel: Liegt die gestufte/gewählte Karte nicht
+  // mehr auf der Hand, ist die Runde längst ausgeführt -> Zustand zurücksetzen
+  // statt toter Buttons. (Vor dem Server-Echo ist das sicher: die Karte verlässt
+  // die Hand NUR durch die eigene, bereits abgeschickte Wahl.)
+  if (state.phase === "draft" && Array.isArray(state.hand)) {
+    if (simSel && !state.hand.some((c) => c.id === simSel.cardId)) { simSel = null; simDiscard = null; }
+    else if (simDiscard != null && !state.hand.some((c) => c.id === simDiscard)) simDiscard = null;
+    if (selected && selectedFrom === "hand" && !state.hand.some((c) => c.id === selected.id)) {
+      selected = null; selectedFrom = null; window._realm = null;
+    }
+  }
   app.innerHTML = phoneShellHTML(state);
   renderActionBar();
   bindFan();
