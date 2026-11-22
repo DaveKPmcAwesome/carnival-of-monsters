@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<!-- 📲 PWA (v3.5): App-Installation – Manifest, Icons (Browser-/iOS-/Android-)
+<!-- 𯓲 PWA (v3.5): App-Installation – Manifest, Icons (Browser-/iOS-/Android-)
      und Farbwelt. Wer will, installiert die Seite als App: Icon auf dem
      Homescreen, startet im Vollbild ohne Adresszeile. Im Browser-Betrieb
      ändern diese Zeilen nichts. -->
@@ -63,7 +63,7 @@
   .coinfly { position: fixed; z-index: 280; width: 20px; height: 20px; border-radius: 50%; background: radial-gradient(circle at 32% 30%, #fde68a 0%, #e9c766 55%, #92400e 100%); box-shadow: 0 2px 6px #000a; pointer-events: none; opacity: 0; }
   .huntfly { position: fixed; z-index: 280; width: 22px; height: 22px; border-radius: 50%; background: #1f3d2b; border: 2px solid #86a896; color: #eaf5ee; font-size: 12px; line-height: 1; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px #000a; pointer-events: none; opacity: 0; }
   .midst span.cpop { animation: fx-coinpop .9s ease; }
-  /* 🃏 v3.9: Rückseite der verdeckt gezogenen Karten */
+  /* 𯃏 v3.9: Rückseite der verdeckt gezogenen Karten */
   .k.rueck { background: linear-gradient(165deg, #232649 0%, #161a35 55%, #0d1026 100%); }
   .k.rueck .rueckm { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: calc(var(--ch)*.06); }
   /* v3.10: Rückseite = großes Fragezeichen (Nutzer-Wunsch) */
@@ -75,9 +75,9 @@
   @keyframes fx-pop { 0% { transform: scale(.2); opacity: 0; } 55% { transform: scale(1.22); opacity: 1; box-shadow: 0 0 14px 3px rgba(233,199,102,.85); } 100% { transform: scale(1); opacity: 1; } }
   .mini.neu, .stf.neu { animation: fx-pop .7s cubic-bezier(.2,.7,.3,1); }
   /* v3.10: Eigene gespielte Karte blitzt kurz groß in der Mitte auf */
-  .playflash { position: fixed; inset: 0; z-index: 150; display: flex; align-items: center; justify-content: center; pointer-events: none; }
-  .playflash .k { animation: fx-playin 1.15s ease forwards; }
-  @keyframes fx-playin { 0% { transform: scale(.35) rotateY(70deg); opacity: 0; } 18% { transform: scale(1.05) rotateY(0deg); opacity: 1; } 72% { transform: scale(1); opacity: 1; } 100% { transform: scale(.92); opacity: 0; } }
+  /* v3.11: Mitspieler-Aktionen - kleine Karte im Panel, verdeckte Karte am Rand */
+  .opfx { position: fixed; left: 0; top: 0; z-index: 160; pointer-events: none; }
+  .opfx .k { pointer-events: none; cursor: default; margin-right: 0; }
   /* v3.10: Konfetti für das TAMTAM */
   .confetti { position: fixed; top: -20px; z-index: 240; pointer-events: none; border-radius: 2px; opacity: .95; }
   .menu { width:36px; height:36px; border-radius:50%; background:var(--panel); display:flex; align-items:center; justify-content:center; color:#94a3b8; font-size:1.15rem; flex:0 0 36px; cursor:pointer; }
@@ -243,7 +243,7 @@
   .bottombar { position:fixed; bottom:0; width:100%; max-width:430px; left:50%; transform:translateX(-50%); display:flex; gap:7px; align-items:stretch; background:#0b1424f2; border-top:1px solid var(--line); padding:8px; z-index:30; height:64px; }
   .corner { position:relative; width:46px; height:46px; border-radius:50%; background:var(--panel); border:1px solid var(--line); font-size:1.3rem; display:flex; align-items:center; justify-content:center; flex:0 0 46px; align-self:center; }
   .corner.open { border-color:var(--gold); }
-  /* v2.7: 🃏-Ziehwahl-Knopf pulsiert golden – die laufende Ziehung nicht übersehen */
+  /* v2.7: 𯃏-Ziehwahl-Knopf pulsiert golden – die laufende Ziehung nicht übersehen */
   .corner.hot { border-color:#fbbf24; animation:freshpulse 1.6s ease-in-out infinite; }
   @keyframes freshpulse { 0%,100% { box-shadow:0 0 0 0 #fbbf2400; } 50% { box-shadow:0 0 0 7px #fbbf233; } }
   .corner .badge { position:absolute; top:-4px; right:-4px; background:#dc2626; color:#fff; font-size:.62rem; font-weight:800; min-width:17px; height:17px; border-radius:999px; display:flex; align-items:center; justify-content:center; border:2px solid #0f172a; padding:0 2px; }
@@ -260,7 +260,7 @@
   .cwrap button { border:none; border-radius:12px; padding:11px 14px; font-weight:700; font-size:.9rem; }
   .cwrap input { background:#101b2e; color:#e2e8f0; border:1px solid var(--line); border-radius:12px; padding:11px 12px; font-size:.9rem; width:100%; }
   .bigcode { font-size:2.6rem; font-weight:800; letter-spacing:.3em; color:#fcd34d; text-align:center; margin:6px 0; }
-  /* 🔎 v3.0 Schlusswertung: großer Kasten in der MITTE, ÜBER allem anderen (Overlay),
+  /* 𯔎 v3.0 Schlusswertung: großer Kasten in der MITTE, ÜBER allem anderen (Overlay),
      so muss man auch mit 5 Spielern nicht erst an den Mitspielern vorbei scrollen. */
   .revwrap { position:fixed; inset:0; z-index:60; background:rgba(3,7,15,.88); display:flex; align-items:center; justify-content:center; padding:12px; }
   /* v3.1: Kasten voll DECKEND (Nutzer-Wunsch: durchscheinender Hintergrund
@@ -316,13 +316,13 @@
 <script>
 "use strict";
 const REALMS = [
-  { id: "wald", name: "Verwusch. Wald", short: "Wald", emoji: "🌲" },
-  { id: "tiefsee", name: "Tiefsee", short: "Tiefsee", emoji: "🌊" },
+  { id: "wald", name: "Verwusch. Wald", short: "Wald", emoji: "𯌲" },
+  { id: "tiefsee", name: "Tiefsee", short: "Tiefsee", emoji: "𯌊" },
   { id: "wolken", name: "Wolkenlande", short: "Wolken", emoji: "☁️" },
-  { id: "hoehlen", name: "Höhlenlande", short: "Höhlen", emoji: "🕳️" },
-  { id: "dunkel", name: "Dunkellande", short: "Dunkel", emoji: "🌑" },
+  { id: "hoehlen", name: "Höhlenlande", short: "Höhlen", emoji: "𯕳️" },
+  { id: "dunkel", name: "Dunkellande", short: "Dunkel", emoji: "𯌑" },
 ];
-const TRAUM = { id: "traum", name: "Traumlande", short: "Traum", emoji: "🌙" };
+const TRAUM = { id: "traum", name: "Traumlande", short: "Traum", emoji: "𯌙" };
 const ALL_REALMS = [...REALMS, TRAUM];
 const realmInfo = (id) => ALL_REALMS.find((r) => r.id === id) || TRAUM;
 
@@ -354,14 +354,14 @@ let selectedFrom = null;    // "hand" | "stored"
 let staffDetail = null;    // {pi, name}
 let myName = "";
 let manualClose = false;
-let lastMsg = 0;              // 📡 v3.2: letzter Empfangszeitpunkt (Watchdog gegen stille Verbindungen)
+let lastMsg = 0;              // 𯓡 v3.2: letzter Empfangszeitpunkt (Watchdog gegen stille Verbindungen)
 let menagerieOpen = false;  // eigene Menagerie aufgeklappt? (nur für dich sichtbar)
 let goalsOpen = false;      // eigene Ziele aufgeklappt?
 let simSel = null;          // ⚡ Schnell: verdeckte Wahl {cardId, action, realm}
 let simDiscard = null;      // ⚡ Schnell (2er): Karte für die offene Ablage
 let FX = null;              // ✨ v3.8: Animations-Deltas des aktuellen render()
 let fxPrev = null;          // ✨ v3.8: Zustands-Schnappschuss des letzten render()
-let freshUp = {};           // 🃏 v3.9: schon aufgedeckte Gratis-Zieh-Karten (id -> true)
+let freshUp = {};           // 𯃏 v3.9: schon aufgedeckte Gratis-Zieh-Karten (id -> true)
 window._simEditing = false; // ⚡ „Ändern“-Modus nach dem Bestätigen
 window._simSent = false;    // v2.9: „✅ Fertig“ wurde getippt (Wahl ist raus)
 
@@ -389,7 +389,7 @@ function connect() {
     lastMsg = Date.now();
     if (msg.t === "state") {
       state = msg;
-      // 🚨 Fanfare: neues FETTES Monster → großes TAMTAM (jede Fanfare nur 1× zeigen)
+      // 𯚨 Fanfare: neues FETTES Monster → großes TAMTAM (jede Fanfare nur 1× zeigen)
       if (state.gameId !== (window._fanGame || 0)) { window._fanGame = state.gameId; window._fanSeen = (state.fanfare && state.fanfare.id) || null; }
       else if (state.fanfare && state.fanfare.id !== window._fanSeen) { window._fanSeen = state.fanfare.id; showFanfare(state.fanfare); }
       // Auswahl zurücksetzen, wenn die gewählte Karte nicht mehr bei mir liegt
@@ -407,7 +407,7 @@ function connect() {
     }
     else if (msg.t === "token") localStorage.setItem("com-token", msg.token);
     else if (msg.t === "closed") {
-      // 🚪 Raum wurde geschlossen (Host) – zurück zum Startbildschirm
+      // 𯚪 Raum wurde geschlossen (Host) – zurück zum Startbildschirm
       localStorage.removeItem("com-token");
       state = null; simSel = null; simDiscard = null; selected = null; selectedFrom = null; window._simEditing = false; window._simSent = false; freshUp = {};
       renderConnect();
@@ -421,7 +421,7 @@ function connect() {
   };
 }
 
-// 📡 v3.2 VERBINDUNGS-PULS: Manche Handys frieren die WebSocket im Hintergrund
+// 𯓡 v3.2 VERBINDUNGS-PULS: Manche Handys frieren die WebSocket im Hintergrund
 // still ein – die Seite zeigte dann einen veralteten Stand und „aktualisiert
 // nicht automatisch“, erst ein Neuladen half. Jetzt pulst der Client alle paar
 // Sekunden und bekommt als Antwort immer den frischen Spielstand. Bleibt die
@@ -452,7 +452,7 @@ function cardTypeLabel(c) {
   const ri = realmInfo(c.realm);
   if (c.type === "Monster") return `${ri.emoji} Monster · Level ${c.cost}`;
   if (c.type === "Land") return `${ri.emoji} Land · ${c.level} Pkt.${c.level >= 2 && c.realm !== "traum" ? " · entfernt" : ""}`;
-  return c.type === "Mitarbeiter" ? "👷 Mitarbeiter" : c.type === "Event" ? "🎪 Event" : "🔒 Ziel";
+  return c.type === "Mitarbeiter" ? "𯑷 Mitarbeiter" : c.type === "Event" ? "𯎪 Event" : "𯔒 Ziel";
 }
 // ============================================================
 // v2.7: Original-Kartentexte (aus den Kartenscans) liegen zusätzlich
@@ -541,11 +541,11 @@ function cardInfo(c) {
   const ri = realmInfo(c.realm);
   let t = "";
   if (c.type === "Monster") {
-    t = `Belegt ${c.cost} ${c.realm === "traum" ? "🌙 (oder 🌙+1 Reich)" : ri.emoji} · ⭐${c.points}`;
-    if (c.draw > 0) t += ` · 🃏 zieht ${c.draw}`;
+    t = `Belegt ${c.cost} ${c.realm === "traum" ? "𯌙 (oder 𯌙+1 Reich)" : ri.emoji} · ⭐${c.points}`;
+    if (c.draw > 0) t += ` · 𯃏 zieht ${c.draw}`;
     if (c.danger > 0) t += ` · ⚠️ ${c.danger}`;
   } else if (c.type === "Mitarbeiter" || c.type === "Event" || c.type === "Ziel") {
-    t = (c.type === "Mitarbeiter" ? `−${c.cost} 👑 · ` : "") + originalCardText(c); // v2.7: Originaltext auch im Drawer/Info
+    t = (c.type === "Mitarbeiter" ? `−${c.cost} 𯑑 · ` : "") + originalCardText(c); // v2.7: Originaltext auch im Drawer/Info
   }
   return t;
 }
@@ -607,7 +607,7 @@ window.toggleGoals = () => {
   goalsOpen = !goalsOpen;
   render();
 };
-// 🃏 Zieh-Schlange: über JEDE gezogene Karte wird einzeln entschieden –
+// 𯃏 Zieh-Schlange: über JEDE gezogene Karte wird einzeln entschieden –
 // ausspielen (gratis) oder einlagern. Der Zug geht erst weiter, wenn alles entschieden ist.
 window.freshPlay = (id) => send({ t: "freshDecide", cardId: id, action: "play", realm: window._freshRealm || null });
 window.freshKeep = (id) => send({ t: "freshDecide", cardId: id, action: "keep" });
@@ -618,21 +618,21 @@ window.chooseFreshRealm = (rid) => { window._freshRealm = rid; render(); };
 function turnBanner(s) {
   if (s.phase === "draft") {
     if (s.mode === "turbo") {
-      if (s.turboDiscard) return `<div class="banner your">🗑️ Lege jetzt 1 Karte OFFEN aus dem Spiel ab!</div>`;
-      // 📌 Stau-Ruf: Hält genau EIN Spieler noch Karten, warten alle anderen bei ihm
+      if (s.turboDiscard) return `<div class="banner your">𯗑️ Lege jetzt 1 Karte OFFEN aus dem Spiel ab!</div>`;
+      // 𯓌 Stau-Ruf: Hält genau EIN Spieler noch Karten, warten alle anderen bei ihm
       if (s.hand.length > 0) {
         if (s.turboStuck === s.you)
-          return `<div class="banner your">🔥 Alle stauen sich bei DIR – wähle deine Karte!${(s.incomingCount || 0) > 0 ? ` · 📌 noch ${s.incomingCount} Stapel in deiner Warteschlange` : ``}</div>`;
-        return `<div class="banner your">🚀 Du bist dran – wähle eine Karte!${(s.incomingCount || 0) > 0 ? ` · 📌 noch ${s.incomingCount} Stapel in deiner Warteschlange` : ``}</div>`;
+          return `<div class="banner your">𯔥 Alle stauen sich bei DIR – wähle deine Karte!${(s.incomingCount || 0) > 0 ? ` · 𯓌 noch ${s.incomingCount} Stapel in deiner Warteschlange` : ``}</div>`;
+        return `<div class="banner your">𯚀 Du bist dran – wähle eine Karte!${(s.incomingCount || 0) > 0 ? ` · 𯓌 noch ${s.incomingCount} Stapel in deiner Warteschlange` : ``}</div>`;
       }
       if ((s.turboStuck || 0) >= 0 && s.turboStuck !== s.you)
-        return `<div class="banner wait">📌 Es staut sich bei ${esc(s.players[s.turboStuck].name)}…</div>`;
+        return `<div class="banner wait">𯓌 Es staut sich bei ${esc(s.players[s.turboStuck].name)}…</div>`;
       const n = s.players.length;
       const dirLeft = s.season % 2 === 0;
       const pred = s.players[dirLeft ? (s.you - 1 + n) % n : (s.you + 1) % n];
       return `<div class="banner wait">⏳ ${esc(pred.name)} spielt gerade – deine neuen Karten kommen gleich…</div>`;
     }
-    // ⚡ Schnell & 🐢 Langsam: alle wählen gleichzeitig verdeckt
+    // ⚡ Schnell & 𯐢 Langsam: alle wählen gleichzeitig verdeckt
     if (s.mode === "schnell" || s.mode === "langsam") {
       // Sobald nur noch EINER wählt: „Alle warten auf …“ (Nutzer-Wunsch)
       const waiting = s.simWaiting || [];
@@ -640,16 +640,16 @@ function turnBanner(s) {
         ? `<div class="center" style="margin-top:6px;font-weight:800;color:#fcd34d">⏳ Alle warten auf ${waiting[0] === s.you ? "DICH" : esc(s.players[waiting[0]].name)}…</div>`
         : "";
       const chips = `${waitMsg}<div class="chips" style="margin-top:6px;justify-content:center">${s.players.map((p, i) => `<span class="chip">${s.simReady && s.simReady[i] ? "✅" : "⏳"} ${esc(p.name)}</span>`).join("")}</div>`;
-      // 🐢 Aufdeck-Phase: reihum deckt jeder seine Karte selbst auf
+      // 𯐢 Aufdeck-Phase: reihum deckt jeder seine Karte selbst auf
       if (s.showTurn >= 0) {
-        if (s.awaitDiscard === s.you) return `<div class="banner your">🗑️ Lege jetzt 1 Karte OFFEN aus dem Spiel ab!</div>`;
+        if (s.awaitDiscard === s.you) return `<div class="banner your">𯗑️ Lege jetzt 1 Karte OFFEN aus dem Spiel ab!</div>`;
         if (s.showTurn === s.you) {
           if ((s.freshDraw || []).some((c) => c.type !== "Ziel"))
             // v2.7: Banner ist jetzt ein KNOPF – der Zieh-Kasten lässt sich hiermit
             // jederzeit wieder öffnen (Nachbauten des „Kasten ist weg“-Dead-Ends).
-            return `<div class="banner your" style="cursor:pointer" onclick="event.stopPropagation();toggleDrawerById('dFresh')">🃏 Deine gezogenen Karten warten – hier antippen, falls der Kasten zu ist!</div>`;
-          return `<div class="banner your">🔍 Du bist dran – decke deine Karte auf!</div>
-            <div class="center" style="margin-top:6px"><button class="btn-green" onclick="revealNow()">👁️ Jetzt aufdecken!</button></div>`;
+            return `<div class="banner your" style="cursor:pointer" onclick="event.stopPropagation();toggleDrawerById('dFresh')">𯃏 Deine gezogenen Karten warten – hier antippen, falls der Kasten zu ist!</div>`;
+          return `<div class="banner your">𯔍 Du bist dran – decke deine Karte auf!</div>
+            <div class="center" style="margin-top:6px"><button class="btn-green" onclick="revealNow()">𯑁️ Jetzt aufdecken!</button></div>`;
         }
         return `<div class="banner wait">⏳ ${esc(s.players[s.showTurn].name)} deckt gerade auf…</div>`;
       }
@@ -659,7 +659,7 @@ function turnBanner(s) {
         return `<div class="banner your">✏️ Wähle einfach neu – nach deinem neuen „Fertig“-Tipp ersetzt sie die alte Wahl. Bis dahin bleibt die alte stehen.</div>${chips}`;
       if (simSel) {
         if (s.players.length === 2 && s.mode === "schnell" && s.hand.length > 1 && !simDiscard)
-          return `<div class="banner your">🗑️ Karte gewählt – tippe jetzt deine ABWURFKARTE an: Sie wird OFFEN abgelegt und alle sehen sie. Danach schließt „Fertig“ deinen Zug ab.</div>${chips}`;
+          return `<div class="banner your">𯗑️ Karte gewählt – tippe jetzt deine ABWURFKARTE an: Sie wird OFFEN abgelegt und alle sehen sie. Danach schließt „Fertig“ deinen Zug ab.</div>${chips}`;
         return `<div class="banner your">✅ Deine Wahl liegt bereit – tippe unten auf „Fertig“, dann ist dein Zug abgegeben. Mit „✏️ Ändern“ wählst du stattdessen neu.</div>${chips}`;
       }
       // v2.5: Der Hinweis „Alle wählen gleichzeitig…“ ist weg (Nutzer-Wunsch) –
@@ -667,16 +667,16 @@ function turnBanner(s) {
       return chips;
     }
     if (s.awaitDiscard >= 0) {
-      if (s.awaitDiscard === s.you) return `<div class="banner your">🗑️ Lege jetzt 1 Karte OFFEN aus dem Spiel ab!</div>`;
+      if (s.awaitDiscard === s.you) return `<div class="banner your">𯗑️ Lege jetzt 1 Karte OFFEN aus dem Spiel ab!</div>`;
       const dc = s.players[s.awaitDiscard];
       return `<div class="banner wait">⏳ ${esc(dc.name)} legt eine Karte offen ab…</div>`;
     }
-    if (s.isYourTurn) return `<div class="banner your">🎯 Du bist am Zug – wähle eine Karte!</div>`;
+    if (s.isYourTurn) return `<div class="banner your">𯎯 Du bist am Zug – wähle eine Karte!</div>`;
     const cur = s.players[s.turn];
     return `<div class="banner wait">⏳ ${esc(cur.name)} ist am Zug…${cur.connected ? "" : " (Verbindung verloren – warte auf Rückkehr)"}</div>`;
   }
   if (s.phase === "seasonEnd") {
-    if (s.isYourSeasonTurn) return `<div class="banner your">📐 Du darfst noch Eingelagertes ausspielen</div>`;
+    if (s.isYourSeasonTurn) return `<div class="banner your">𯓐 Du darfst noch Eingelagertes ausspielen</div>`;
     return `<div class="banner wait">⏳ Die anderen spielen noch…</div>`;
   }
   return "";
@@ -685,7 +685,7 @@ function turnBanner(s) {
 function logBox(s) {
   return `<div class="card-panel"><div class="label">Spielverlauf &amp; Chat</div>
     <div class="logbox">${(s.log || []).map((l) => `<div>${esc(l)}</div>`).join("") || ""}</div>
-    <div class="chatrow"><input id="chatinput" placeholder="Nachricht an alle…" maxlength="200" /><button class="btn-ghost" onclick="sendChat()">💬</button></div>
+    <div class="chatrow"><input id="chatinput" placeholder="Nachricht an alle…" maxlength="200" /><button class="btn-ghost" onclick="sendChat()">𯒬</button></div>
   </div>`;
 }
 window.sendChat = () => {
@@ -694,19 +694,19 @@ window.sendChat = () => {
   if (el) el.value = "";
 };
 window.pickPlay = () => send({ t: "pick", cardId: selected.id, action: "play", realm: window._realm });
-// 🌙 Traum-Monster: Hilfsreich selber aussuchen (Nutzer-Wunsch)
+// 𯌙 Traum-Monster: Hilfsreich selber aussuchen (Nutzer-Wunsch)
 window.pickTraum = (rid) => send({ t: "pick", cardId: selected.id, action: "play", realm: rid });
 window.freshDecideTraum = (id, rid) => send({ t: "freshDecide", cardId: id, action: "play", realm: rid });
 window.pickKeep = () => send({ t: "pick", cardId: selected.id, action: "keep" });
 window.discardOpen = () => send({ t: "discard", cardId: selected.id });
 window.setSeasons = (n) => send({ t: "setSeasons", seasons: n });
 window.setMode = (m) => send({ t: "setMode", mode: m });
-// ⚡/🐢 Wahl-Flow (v2.9, Nutzer-Wunsch): Auf „Ausspielen“/„Einlagern“ wird die
+// ⚡/𯐢 Wahl-Flow (v2.9, Nutzer-Wunsch): Auf „Ausspielen“/„Einlagern“ wird die
 // Wahl NUR GESTUFT – an derselben Stelle erscheinen dann „✅ Fertig“ und
 // „✏️ Ändern“. Erst der Tipp auf „Fertig“ schickt die Wahl ab und beendet den
 // Zug (alte v2.4-Auto-Bestätigung ist weg – sie sorgte für flackernde/
 // tote Buttons, wenn der Server die Runde blitzschnell ausführte).
-// 🚀 Turbo bleibt unverändert: dort schickt „Ausspielen“/„Einlagern“ direkt ab.
+// 𯚀 Turbo bleibt unverändert: dort schickt „Ausspielen“/„Einlagern“ direkt ab.
 window.stagePlay = () => { simSel = { cardId: selected.id, action: "play", realm: window._realm || null }; window._simSent = false; render(); };
 window.stageTraum = (rid) => { simSel = { cardId: selected.id, action: "play", realm: rid }; window._simSent = false; render(); };
 window.stageKeep = () => { simSel = { cardId: selected.id, action: "keep", realm: null }; simDiscard = null; window._simSent = false; render(); };
@@ -723,8 +723,8 @@ window.simDiscTap = (id) => { if (suppressClick) return; if (!inhand) { handModu
 window.simStagedTap = () => { if (suppressClick) return; if (!inhand) { handModus(true); return; } simEdit(); };
 window.simConfirm = () => { if (!simSel) return; window._simEditing = false; window._simSent = true; send({ t: "simPick", cardId: simSel.cardId, action: simSel.action, realm: simSel.realm, discardId: simDiscard }); render(); };
 window.simEdit = () => { simSel = null; simDiscard = null; window._simSent = false; window._simEditing = true; render(); };
-window.revealNow = () => send({ t: "reveal" }); // 🐢 Langsam: „Jetzt aufdecken!“
-// 🚨 TAMTAM für FETTE Monster (Level 4 Standard / Level 10 Traum): Vollbild-Banner
+window.revealNow = () => send({ t: "reveal" }); // 𯐢 Langsam: „Jetzt aufdecken!“
+// 𯚨 TAMTAM für FETTE Monster (Level 4 Standard / Level 10 Traum): Vollbild-Banner
 // + Dreifach-Gong, verschwindet nach 6 Sek. oder per Tipp auf das Banner.
 
 function showFanfare(f) {
@@ -733,7 +733,7 @@ function showFanfare(f) {
   const el = document.createElement("div");
   el.id = "fanfare";
   el.innerHTML = `<div class="fanbox">
-    <div class="fanbell">🔔 DING DING DING! 🔔</div>
+    <div class="fanbell">𯔔 DING DING DING! 𯔔</div>
     <div class="fantitle">${realmInfo(f.realm).emoji} ${esc(f.name)}</div>
     <div class="fansub">Ein FETTES Monster wird gespielt!</div>
     <div class="fanwho">von ${esc(f.player)} · ⭐${f.points}${f.danger ? ` · ⚠️${f.danger}` : ""}</div>
@@ -741,10 +741,10 @@ function showFanfare(f) {
   el.onclick = () => el.remove();
   document.body.appendChild(el);
   fanfareDing();
-  confettiBurst(); // 🎊 v3.10: Tamtam mit Konfetti
+  confettiBurst(); // 𯎊 v3.10: Tamtam mit Konfetti
   setTimeout(() => { if (document.getElementById("fanfare") === el) el.remove(); }, 6000);
 }
-// 🎊 v3.10: Konfetti-Hagel über dem TAMTAM-Banner (Web Animations API, kein Asset).
+// 𯎊 v3.10: Konfetti-Hagel über dem TAMTAM-Banner (Web Animations API, kein Asset).
 function confettiBurst() {
   const colors = ["#e9c766", "#f59e0b", "#dc2626", "#3f9ac2", "#7c5fb8", "#fca5a5", "#fff"];
   const n = 90;
@@ -791,13 +791,13 @@ function fanfareDing() {
 window.chooseRealm = (rid) => { window._realm = rid; renderActionBar(); };
 window.seasonDone = () => send({ t: "seasonDone" });
 window.next = () => send({ t: "next" });
-// 🎲 v3.1: Gefahrenprobe – der eine Wurf für alle kommt vom HOST
+// 𯎲 v3.1: Gefahrenprobe – der eine Wurf für alle kommt vom HOST
 // (der Knopf erscheint nur bei ihm, alle anderen sehen das Ergebnis gleichzeitig).
 window.dangerRoll = () => send({ t: "dangerRoll" });
 window.rematch = () => send({ t: "rematch" });
-// 🔄 Host: Partie abbrechen und zurück in die Lobby
+// 𯔄 Host: Partie abbrechen und zurück in die Lobby
 window.newGame = () => { if (confirm("Aktuelle Partie abbrechen und zurück in die Lobby? Alle Punkte dieser Partie gehen verloren.")) send({ t: "newGame" }); };
-// 🔎 v3.0: Weiter-blättern liegt beim SERVER – nur der Host klickt, alle springen
+// 𯔎 v3.0: Weiter-blättern liegt beim SERVER – nur der Host klickt, alle springen
 // synchron auf den nächsten Schritt (kein eigenes Tempo mehr je Spieler).
 window.revealNext = () => send({ t: "revealNext" });
 
@@ -810,7 +810,7 @@ window.selectCard = (id, from) => {
   render();
 };
 
-// 📐 Saisonende: der „Fertig“-Knopf sitzt UNTEN in der Aktionsleiste (Nutzer-Wunsch) –
+// 𯓐 Saisonende: der „Fertig“-Knopf sitzt UNTEN in der Aktionsleiste (Nutzer-Wunsch) –
 // immer am unteren Rand, wie sonst „✅ Ausspielen“.
 // v3.2: Am Saisonende ist niemand „dran“ – alle spielen GLEICHZEITIG ihr
 // Eingelagertes aus und jeder tippt für sich „Fertig“. Erst wenn alle fertig
@@ -822,7 +822,7 @@ function seasonEndButtons(s) {
 
 function renderActionBar() {
   const seTurnActive = state.phase === "seasonEnd" && state.isYourSeasonTurn;
-  // ⚡/🐢 schon bestätigt und nicht im Ändern-Modus: unten großer „Ändern“-Knopf –
+  // ⚡/𯐢 schon bestätigt und nicht im Ändern-Modus: unten großer „Ändern“-Knopf –
   // die Wahl bleibt änderbar, solange nicht alle Spieler fertig sind
   if ((state.mode === "schnell" || state.mode === "langsam") && state.phase === "draft" && state.showTurn < 0 && state.mySimPick && !window._simEditing) {
     // v2.2: IMMER sichtbar nach dem Bestätigen (wie v1.9.7). Der v2.1-Versteck-Trick
@@ -842,13 +842,13 @@ function renderActionBar() {
   // offene Ablage: 2er-Wartezustand (Langsam) oder persönlicher Turbo-Schritt
   if (state.phase === "draft" && (state.awaitDiscard === state.you || (state.mode === "turbo" && state.turboDiscard))) {
     if (state.mode === "turbo" && selectedFrom !== "hand") { actionBand(false); return; }
-    actionInner.innerHTML = `<button style="background:#ea580c;color:#fff;flex:1" onclick="discardOpen()">🗑️ „${esc(selected.name || realmInfo(selected.realm).name)}" offen aus dem Spiel ablegen</button>
+    actionInner.innerHTML = `<button style="background:#ea580c;color:#fff;flex:1" onclick="discardOpen()">𯗑️ „${esc(selected.name || realmInfo(selected.realm).name)}" offen aus dem Spiel ablegen</button>
       <div class="note">Alle sehen, was raus ist. Danach wird 1 Karte verdeckt vom Nachziehstapel auf den weiterzugebenden Stapel gelegt.</div>`;
     actionBand(true);
     return;
   }
   const me = state.players[state.you];
-  // 📐 Saisonende, keine Karte gewählt: nur der „Fertig“-Knopf unten
+  // 𯓐 Saisonende, keine Karte gewählt: nur der „Fertig“-Knopf unten
   if (seTurnActive && !selected) {
     actionInner.innerHTML = seasonEndButtons(state);
     actionBand(true);
@@ -856,18 +856,18 @@ function renderActionBar() {
   }
   let canUse;
   if (state.phase === "seasonEnd") canUse = state.isYourSeasonTurn;
-  else if (state.mode === "langsam") canUse = state.isYourTurn || state.phase === "draft"; // 🐢 verdeckte Wahl ist gleichzeitig (v1.7) – jeder darf die Leiste nutzen
-  else canUse = true; // ⚡/🚀: Eingelagertes jederzeit, Hand sobald du Karten hast
+  else if (state.mode === "langsam") canUse = state.isYourTurn || state.phase === "draft"; // 𯐢 verdeckte Wahl ist gleichzeitig (v1.7) – jeder darf die Leiste nutzen
+  else canUse = true; // ⚡/𯚀: Eingelagertes jederzeit, Hand sobald du Karten hast
   if (!canUse) { actionBand(false); return; }
-  // ⚡/🐢 Schnell & Langsam: Hand-Karten werden nur verdeckt GEWÄHLT –
-  // ⚡ führt der „Fertig“-Klick alles aus, 🐢 der eigene „Jetzt aufdecken!“-Button
-  const staging = stagingMode && selectedFrom === "hand"; // ⚡/🐢: Wahl bleibt verdeckt
+  // ⚡/𯐢 Schnell & Langsam: Hand-Karten werden nur verdeckt GEWÄHLT –
+  // ⚡ führt der „Fertig“-Klick alles aus, 𯐢 der eigene „Jetzt aufdecken!“-Button
+  const staging = stagingMode && selectedFrom === "hand"; // ⚡/𯐢: Wahl bleibt verdeckt
   const onPlay = staging ? "stagePlay()" : "pickPlay()";
   const onKeep = staging ? "stageKeep()" : "pickKeep()";
   const traumFn = staging ? "stageTraum" : "pickTraum";
   let inner = "";
   if (staging && !staged) inner = state.mode === "langsam"
-    ? `<div class="note" style="margin-bottom:6px">🐢 Deine Wahl bleibt verdeckt – wenn alle fertig sind, deckt ihr NACHEINANDER auf. Du klickst selbst „Jetzt aufdecken!“.</div>`
+    ? `<div class="note" style="margin-bottom:6px">𯐢 Deine Wahl bleibt verdeckt – wenn alle fertig sind, deckt ihr NACHEINANDER auf. Du klickst selbst „Jetzt aufdecken!“.</div>`
     : `<div class="note" style="margin-bottom:6px">⚡ Deine Wahl bleibt verdeckt – alles wird gleichzeitig ausgeführt, sobald alle fertig sind.</div>`;
   const inHand = selectedFrom === "hand";
   const isEntdecker = !!selected && selected.type === "Mitarbeiter" && selected.kind === "land";
@@ -883,7 +883,7 @@ function renderActionBar() {
       inner = `<div class="note" style="margin-bottom:6px">✅ Abgeschickt – sobald alle fertig sind, wird ausgeführt. Mit „✏️ Ändern“ kannst du noch neu wählen.</div>
         <button class="btn-indigo" onclick="simEdit()">✏️ Ändern</button>`;
     } else if (twoP && !simDiscard) {
-      inner = `<div class="note" style="margin-bottom:6px">🗑️ Und jetzt deine <b>ABWURFKARTE</b> im Kartenfächer antippen – danach wird „Fertig“ klickbar.</div>
+      inner = `<div class="note" style="margin-bottom:6px">𯗑️ Und jetzt deine <b>ABWURFKARTE</b> im Kartenfächer antippen – danach wird „Fertig“ klickbar.</div>
         <button class="btn-green" disabled onclick="simConfirm()">✅ Fertig</button>
         <button class="btn-indigo" onclick="simEdit()">✏️ Ändern</button>`;
     } else {
@@ -892,32 +892,32 @@ function renderActionBar() {
         <button class="btn-indigo" onclick="simEdit()">✏️ Ändern</button>`;
     }
   } else if (isEntdecker) {
-    inner = `<div class="note" style="margin-bottom:6px">„${esc(selected.name)}" – Typ des Landes festlegen: <b>dauerhaft!</b> (−${selected.cost} 👑)</div>`;
+    inner = `<div class="note" style="margin-bottom:6px">„${esc(selected.name)}" – Typ des Landes festlegen: <b>dauerhaft!</b> (−${selected.cost} 𯑑)</div>`;
     inner += ALL_REALMS.map((r) => `<button class="btn-indigo" onclick="chooseRealm('${r.id}')" ${staged ? "disabled" : ""}>${r.emoji} ${r.short}${window._realm === r.id ? " ✓" : ""}</button>`).join("");
     inner += `<button class="btn-green" onclick="${onPlay}" ${window._realm && !staged ? "" : "disabled"}>✅ Ausspielen</button>`;
   } else if (selected.type === "Monster" && selected.realm === "traum") {
-    // 🌙 Traum-Monster: Bezahlung selber aussuchen (Nutzer-Wunsch)
+    // 𯌙 Traum-Monster: Bezahlung selber aussuchen (Nutzer-Wunsch)
     const free = freeLandsOf(me.lands, me.seasonMonsters);
     let opts = "";
     if (free.traum >= selected.cost)
-      opts += `<button class="btn-green" style="flex:1;min-width:150px" onclick="${traumFn}(null)" ${staged ? "disabled" : ""}>✅ Nur 🌙 (${selected.cost} 🌙)</button>`;
+      opts += `<button class="btn-green" style="flex:1;min-width:150px" onclick="${traumFn}(null)" ${staged ? "disabled" : ""}>✅ Nur 𯌙 (${selected.cost} 𯌙)</button>`;
     REALMS.forEach((r) => {
       const helper = free[r.id] || 0;
       if (helper > 0 && free.traum < selected.cost && free.traum + helper >= selected.cost)
-        opts += `<button class="btn-indigo" style="flex:1;min-width:150px" onclick="${traumFn}('${r.id}')" ${staged ? "disabled" : ""}>✅ ${free.traum} 🌙 + ${selected.cost - free.traum} ${r.emoji}</button>`;
+        opts += `<button class="btn-indigo" style="flex:1;min-width:150px" onclick="${traumFn}('${r.id}')" ${staged ? "disabled" : ""}>✅ ${free.traum} 𯌙 + ${selected.cost - free.traum} ${r.emoji}</button>`;
     });
-    inner = `<div class="note" style="margin-bottom:6px">🌙 Traum-Monster – bezahlt mit Traumland und/oder GENAU EINEM Hilfsreich:</div>
+    inner = `<div class="note" style="margin-bottom:6px">𯌙 Traum-Monster – bezahlt mit Traumland und/oder GENAU EINEM Hilfsreich:</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">${opts || '<span class="muted">Passt gerade nicht – zu wenig freie Landpunkte.</span>'}</div>`;
     if (state.phase === "draft" && inHand)
-      inner += `<button class="btn-indigo" style="width:100%;margin-top:8px" onclick="${onKeep}" ${staged ? "disabled" : ""}>📥 Einlagern (−1 👑)</button>`;
+      inner += `<button class="btn-indigo" style="width:100%;margin-top:8px" onclick="${onKeep}" ${staged ? "disabled" : ""}>𯓥 Einlagern (−1 𯑑)</button>`;
   } else if (selected.type === "Ziel") {
-    inner = `<button class="btn-purple" onclick="${onKeep}" ${state.phase === "draft" && inHand && !staged ? "" : "disabled"}>📥 Als Ziel annehmen (−1 👑)</button>`;
+    inner = `<button class="btn-purple" onclick="${onKeep}" ${state.phase === "draft" && inHand && !staged ? "" : "disabled"}>𯓥 Als Ziel annehmen (−1 𯑑)</button>`;
   } else {
     const playable = cardPlayable(selected, me);
-    inner = `<button class="btn-green" onclick="${onPlay}" ${playable && !staged ? "" : "disabled"}>✅ Ausspielen${selected.type === "Mitarbeiter" ? ` (−${selected.cost} 👑)` : ""}</button>`;
+    inner = `<button class="btn-green" onclick="${onPlay}" ${playable && !staged ? "" : "disabled"}>✅ Ausspielen${selected.type === "Mitarbeiter" ? ` (−${selected.cost} 𯑑)` : ""}</button>`;
     // v2.6: Bei eingelagerten Karten ergibt „Einlagern“ keinen Sinn – nur für Handkarten.
     // v3.2 (Nutzer-Wunsch): Events und Mitarbeitende werden NICHT eingelagert – sie müssen ausgespielt werden.
-    if (inHand && selected.type !== "Event" && selected.type !== "Mitarbeiter") inner += `<button class="btn-indigo" onclick="${onKeep}" ${state.phase === "draft" && !staged ? "" : "disabled"}>📥 Einlagern (−1 👑)</button>`;
+    if (inHand && selected.type !== "Event" && selected.type !== "Mitarbeiter") inner += `<button class="btn-indigo" onclick="${onKeep}" ${state.phase === "draft" && !staged ? "" : "disabled"}>𯓥 Einlagern (−1 𯑑)</button>`;
   }
   const stCard = (!selected && staged && simSel) ? ((state.hand || []).find((c) => c.id === simSel.cardId) || null) : null;
   const nc = selected || stCard;
@@ -925,9 +925,9 @@ function renderActionBar() {
   const me2 = state.players[state.you];
   if (nc) {
     if (nc.type === "Monster" && !canPlayMonster(nc, me2))
-      note += nc.realm === "traum" ? " – braucht 🌙 bzw. 🌙+EIN Reich!" : " – zu wenig Kapazität!";
+      note += nc.realm === "traum" ? " – braucht 𯌙 bzw. 𯌙+EIN Reich!" : " – zu wenig Kapazität!";
     if (nc.type === "Land" && !canPlayLand(nc, me2)) note += " – entfernte Länder brauchen Vorbedingung";
-    if (nc.type === "Mitarbeiter" && me2.coins < nc.cost) note += " · 🏦 Kredit nötig (+3 👑, −5 SP)";
+    if (nc.type === "Mitarbeiter" && me2.coins < nc.cost) note += " · 𯏦 Kredit nötig (+3 𯑑, −5 SP)";
     if (nc.type === "Ziel") note += " · Ziele nur annehmen, nicht ausspielen";
   }
   if (seTurnActive) inner += seasonEndButtons(state);
@@ -942,10 +942,10 @@ function renderConnect() {
   if (state) return; // nur falls noch nichts geladen
   app.innerHTML = `
     <div class="start" style="min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px">
-      <div style="font-size:3.5rem">🎡</div>
+      <div style="font-size:3.5rem">𯎡</div>
       <h1>Carnival of Monsters</h1>
       <input id="name" placeholder="Dein Name" maxlength="14" style="max-width:280px" />
-      <button class="btn-amber" style="max-width:280px" onclick="createRoom()">🎪 Raum erstellen</button>
+      <button class="btn-amber" style="max-width:280px" onclick="createRoom()">𯎪 Raum erstellen</button>
       <div class="chips" style="align-items:center;gap:6px">
         <input id="code" placeholder="RAUM-CODE" maxlength="4" style="max-width:130px;text-transform:uppercase;letter-spacing:0.2em;text-align:center" />
         <button class="btn-ghost" onclick="joinRoom()">Beitreten</button>
@@ -965,7 +965,7 @@ function renderLobby(s) {
   const link = location.origin;
   app.innerHTML = `
     <div class="start" style="min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding-top:40px">
-      <h1>🏰 Raum erstellt!</h1>
+      <h1>𯏰 Raum erstellt!</h1>
       <div class="card-panel" style="max-width:420px;width:100%">
         <div class="label center">Raum-Code</div>
         <div class="bigcode">${esc(s.room)}</div>
@@ -974,10 +974,10 @@ function renderLobby(s) {
       <div class="card-panel" style="max-width:420px;width:100%">
         <div class="label">Spieler in der Lobby (${s.names.length}/5)</div>
         ${s.names.map((p) => `<div style="padding:4px 0;display:flex;align-items:center;justify-content:space-between;gap:8px">
-          <span>${p.isBot ? esc(p.name) : `${p.connected ? "👤" : "📴"} ${esc(p.name)}`}${p.isBot ? ` <span class="muted" style="font-size:0.75rem">(Bot)</span>` : ""}</span>
+          <span>${p.isBot ? esc(p.name) : `${p.connected ? "𯑤" : "𯓴"} ${esc(p.name)}`}${p.isBot ? ` <span class="muted" style="font-size:0.75rem">(Bot)</span>` : ""}</span>
           ${s.isHost && p.isBot ? `<button class="btn-ghost" style="font-size:0.7rem;padding:2px 10px" title="Bot entfernen" onclick="removeBot('${esc(p.name)}')">✖</button>` : ""}
         </div>`).join("")}
-        ${s.isHost && s.names.length < 5 ? `<button class="btn-ghost" style="width:100%;margin-top:8px;font-size:0.85rem" onclick="addBot()">🤖 Bot hinzufügen</button>` : ""}
+        ${s.isHost && s.names.length < 5 ? `<button class="btn-ghost" style="width:100%;margin-top:8px;font-size:0.85rem" onclick="addBot()">㶖 Bot hinzufügen</button>` : ""}
       </div>
       ${s.isHost ? `<div class="card-panel" style="max-width:420px;width:100%">
         <div class="label">Saisonanzahl</div>
@@ -989,22 +989,22 @@ function renderLobby(s) {
       ${s.isHost ? `<div class="card-panel" style="max-width:420px;width:100%">
         <div class="label">Spieltempo</div>
         <div style="display:flex;flex-direction:column;gap:6px">
-          <button class="${(s.mode || "langsam") === "langsam" ? "btn-amber" : "btn-ghost"}" style="font-size:0.9rem" onclick="setMode('langsam')">🐢 Langsam</button>
+          <button class="${(s.mode || "langsam") === "langsam" ? "btn-amber" : "btn-ghost"}" style="font-size:0.9rem" onclick="setMode('langsam')">𯐢 Langsam</button>
           <button class="${s.mode === "schnell" ? "btn-amber" : "btn-ghost"}" style="font-size:0.9rem" onclick="setMode('schnell')">⚡ Schnell</button>
-          <button class="${s.mode === "turbo" ? "btn-amber" : "btn-ghost"}" style="font-size:0.9rem" onclick="setMode('turbo')">🚀 Turbo</button>
+          <button class="${s.mode === "turbo" ? "btn-amber" : "btn-ghost"}" style="font-size:0.9rem" onclick="setMode('turbo')">𯚀 Turbo</button>
         </div>
-      </div>` : `<p class="muted center" style="max-width:420px">Spieltempo: ${(s.mode || "langsam") === "langsam" ? "🐢 Langsam" : s.mode === "schnell" ? "⚡ Schnell" : "🚀 Turbo"}</p>`}
+      </div>` : `<p class="muted center" style="max-width:420px">Spieltempo: ${(s.mode || "langsam") === "langsam" ? "𯐢 Langsam" : s.mode === "schnell" ? "⚡ Schnell" : "𯚀 Turbo"}</p>`}
       ${s.isHost
-        ? `<button class="btn-amber" style="max-width:420px;width:100%" ${s.names.filter((p) => p.connected).length >= 2 ? "" : "disabled"} onclick="startGame()">🚀 Partie starten (ab 2 Spielern)</button>`
+        ? `<button class="btn-amber" style="max-width:420px;width:100%" ${s.names.filter((p) => p.connected).length >= 2 ? "" : "disabled"} onclick="startGame()">𯚀 Partie starten (ab 2 Spielern)</button>`
         : `<div class="banner wait" style="width:100%;max-width:420px">Warte, bis der Host startet…</div>`}
-      <button class="btn-ghost" style="max-width:420px;width:100%;font-size:0.85rem" onclick="leaveRoom()">${s.isHost ? "🚪 Raum schließen" : "🚪 Raum verlassen"}</button>
+      <button class="btn-ghost" style="max-width:420px;width:100%;font-size:0.85rem" onclick="leaveRoom()">${s.isHost ? "𯚪 Raum schließen" : "𯚪 Raum verlassen"}</button>
     </div>`;
 }
 window.startGame = () => send({ t: "start" });
-// 🤖 Bots (nur Host, nur Lobby)
+// 㶖 Bots (nur Host, nur Lobby)
 window.addBot = () => send({ t: "addBot" });
 window.removeBot = (name) => { if (confirm(`${name} entfernen?`)) send({ t: "removeBot", name }); };
-// 🚪 Raum verlassen (Gast) bzw. für alle schließen (Host) – zurück zum Startbildschirm.
+// 𯚪 Raum verlassen (Gast) bzw. für alle schließen (Host) – zurück zum Startbildschirm.
 // Das Token wird gelöscht: Beim nächsten Öffnen landet man NICHT mehr im alten Raum.
 window.leaveRoom = () => {
   if (!state) return;
@@ -1022,37 +1022,37 @@ window.leaveRoom = () => {
   renderConnect();
 };
 
-// 🎲 v3.1: Auch die Gefahrenprobe läuft als GROSSER Kasten in der Bildschirm-Mitte
+// 𯎲 v3.1: Auch die Gefahrenprobe läuft als GROSSER Kasten in der Bildschirm-Mitte
 // (Overlay, deckend) – und nur der HOST würfelt bzw. klickt weiter: Alle sehen
 // dasselbe im selben Moment, wie bei der großen Schlusswertung.
 function renderDanger(s) {
   const d = s.dice;
-  const title = `<div class="label center" style="font-size:1rem;color:#fcd34d">🎲 Gefahrenprobe – Saison ${s.season + 1}</div>`;
+  const title = `<div class="label center" style="font-size:1rem;color:#fcd34d">𯎲 Gefahrenprobe – Saison ${s.season + 1}</div>`;
   let body = "";
   let btn = "";
   if (!d) {
     // Noch nicht gewürfelt: offene Gefahrensymbole je Spieler sichtbar für alle
     const rows = s.players.map((p, i) => {
       const dsum = (p.seasonMonsters || []).reduce((t, m) => t + (m.danger || 0), 0);
-      return `<div class="revrow ${i === s.you ? "me" : ""}"><span>👤 ${esc(p.name)}</span><span class="pts">${dsum} ⚠️</span></div>`;
+      return `<div class="revrow ${i === s.you ? "me" : ""}"><span>𯑤 ${esc(p.name)}</span><span class="pts">${dsum} ⚠️</span></div>`;
     }).join("");
     body = `<div class="center" style="color:#fde68a;margin:6px 0 10px">Ein Wurf für alle – der Host würfelt!</div>` + rows;
     btn = s.isHost
-      ? `<button class="btn-amber" style="width:100%;margin-top:10px" onclick="dangerRoll()">🎲 Jetzt würfeln!</button>`
+      ? `<button class="btn-amber" style="width:100%;margin-top:10px" onclick="dangerRoll()">𯎲 Jetzt würfeln!</button>`
       : `<div class="banner wait" style="margin-top:10px;text-align:center">Der Host würfelt für alle – bleibt dran!</div>`;
   } else {
     const rows = d.results.map((r) => {
       const idx = s.players.findIndex((p) => p.name === r.name);
       return `<div class="revrow ${idx === s.you ? "me" : ""}">
         <span>${esc(r.name)}</span>
-        <span class="pts">${r.danger}⚠️ · ${r.danger === 0 ? "alles ruhig 😌" : ""}
-          ${r.cages ? `👷 ${r.cages} · ` : ""}${r.markers ? `🏹 ${r.markers} · ` : ""}${r.payCoins ? `👑 ${r.payCoins * 3} · ` : ""}${r.newCredits ? `🏦 ${r.newCredits}` : ""}</span>
+        <span class="pts">${r.danger}⚠️ · ${r.danger === 0 ? "alles ruhig 𯘌" : ""}
+          ${r.cages ? `𯑷 ${r.cages} · ` : ""}${r.markers ? `𯏹 ${r.markers} · ` : ""}${r.payCoins ? `𯑑 ${r.payCoins * 3} · ` : ""}${r.newCredits ? `𯏦 ${r.newCredits}` : ""}</span>
       </div>`;
     }).join("");
     body = `<div class="center" style="margin:6px 0 10px">Ein Wurf für alle: <b>${d.roll.join(" + ")} = ${d.rollSum} Käfige</b></div>` + rows;
     btn = s.isHost
       ? `<button class="btn-amber" style="width:100%;margin-top:10px" onclick="next()">
-          ${s.season >= (s.totalSeasons || 4) - 1 ? "🏁 Zur großen Schlusswertung" : `▶️ Saison ${s.season + 2} starten`}
+          ${s.season >= (s.totalSeasons || 4) - 1 ? "𯏁 Zur großen Schlusswertung" : `▶️ Saison ${s.season + 2} starten`}
         </button>`
       : `<div class="banner wait" style="margin-top:10px;text-align:center">Der Host macht weiter – alle schauen gemeinsam!</div>`;
   }
@@ -1061,7 +1061,7 @@ function renderDanger(s) {
 
 function renderReveal(s) {
   const rv = s.reveal;
-  // 🔎 v3.0: Der Aufdeck-Schritt kommt vom SERVER (Host klickt für alle) –
+  // 𯔎 v3.0: Der Aufdeck-Schritt kommt vom SERVER (Host klickt für alle) –
   // die alte lokale revealStep-Variable ist weg, kein Spieler kann mehr vorpreschen.
   const revealStep = s.revealStep || 0;
   let body = "";
@@ -1070,45 +1070,45 @@ function renderReveal(s) {
     return `<div class="revrow ${!p.isBot && idx === s.you ? "me" : ""}">${fn(p)}</div>`;
   }).join("");
   if (revealStep === 0) body = `<p class="center muted" style="margin-bottom:8px">Zuerst: die Menagerien!</p>` +
-    rows(rv.players, (p) => `<span>👤 ${esc(p.name)} · ${p.monsterCount} Monster</span><span class="pts">⭐ ${p.monPts}</span>`);
+    rows(rv.players, (p) => `<span>𯑤 ${esc(p.name)} · ${p.monsterCount} Monster</span><span class="pts">⭐ ${p.monPts}</span>`);
   if (revealStep === 1) body = `<p class="center muted" style="margin-bottom:8px">Trophäen der Saisons (+3 je Trophäe)</p>` +
-    rows(rv.players, (p) => `<span>👤 ${esc(p.name)} · 🏆 ${p.trophies}</span><span class="pts">+${p.trophyPts}</span>`);
-  if (revealStep === 2) body = `<p class="center" style="color:#fde68a;margin-bottom:8px">🔮 Die geheimen Ziele werden aufgedeckt!</p>` +
+    rows(rv.players, (p) => `<span>𯑤 ${esc(p.name)} · 𯏆 ${p.trophies}</span><span class="pts">+${p.trophyPts}</span>`);
+  if (revealStep === 2) body = `<p class="center" style="color:#fde68a;margin-bottom:8px">𯔮 Die geheimen Ziele werden aufgedeckt!</p>` +
     rv.players.map((p, i) => `<div style="margin-bottom:10px">
-      <div class="label" style="margin-bottom:4px">👤 ${esc(p.name)}</div>
+      <div class="label" style="margin-bottom:4px">𯑤 ${esc(p.name)}</div>
       ${p.goalResults.length === 0 ? '<span class="muted">keine Ziele</span>' : ""}
       ${p.goalResults.map((gr) => `<div class="revrow" style="background:${gr.pts > 0 ? "rgba(124,58,237,0.25)" : "rgba(255,255,255,0.05)"};opacity:${gr.pts > 0 ? 1 : 0.65}">
         <span><b>${esc(gr.name)}</b> <span class="goal">(${esc(originalGoalText(gr))})</span></span><span class="pts">+${gr.pts}</span></div>`).join("")}
-      ${p.goalResults.length ? `<div class="revrow" style="background:rgba(245,158,11,0.2)"><span><b>🎯 Ziele gesamt</b></span><span class="pts"><b>+${p.goalResults.reduce((sum, gr) => sum + gr.pts, 0)}</b></span></div>` : ""}
+      ${p.goalResults.length ? `<div class="revrow" style="background:rgba(245,158,11,0.2)"><span><b>𯎯 Ziele gesamt</b></span><span class="pts"><b>+${p.goalResults.reduce((sum, gr) => sum + gr.pts, 0)}</b></span></div>` : ""}
       </div>`).join("");
-  if (revealStep === 3) body = `<p class="center muted" style="margin-bottom:8px">Kronen, Jäger &amp; Kredite (1 👑 = 1 SP · 1 🏹 = 1 SP · Kredit = −5 SP)</p>` +
+  if (revealStep === 3) body = `<p class="center muted" style="margin-bottom:8px">Kronen, Jäger &amp; Kredite (1 𯑑 = 1 SP · 1 𯏹 = 1 SP · Kredit = −5 SP)</p>` +
     rv.players.map((p, i) => `<div class="revrow ${i === s.you ? "me" : ""}">
-      <span>👤 ${esc(p.name)}</span>
+      <span>𯑤 ${esc(p.name)}</span>
       <span class="pts">+${p.coinsPts + p.hunterPts} ${p.creditPts ? `<span style="color:#f87171">−${-p.creditPts}</span>` : ""}
-        <span class="goal">(👑${p.coins} ×1 · 🏹${p.hunters} ×1 · 🏦${p.credits})</span></span></div>`).join("");
+        <span class="goal">(𯑑${p.coins} ×1 · 𯏹${p.hunters} ×1 · 𯏦${p.credits})</span></span></div>`).join("");
   if (revealStep >= 4) {
     body = `<p class="center" style="color:#fde68a;margin-bottom:8px">Das Endergebnis!</p>` +
       rv.ranked.map((p, i) => `<div class="revrow ${rv.players.indexOf(p) === s.you ? "me" : ""}">
-        <span><b>${i === 0 ? "🥇" : i === 1 ? "🥈" : "🥉"} ${esc(p.name)}</b></span><span class="pts">${p.total} SP</span></div>`).join("") +
-      `<div class="center" style="margin-top:12px;font-weight:800;color:#fcd34d">🎉 ${esc(rv.ranked[0].name)} wird als neues Mitglied in die Königlich Monstrologische Gesellschaft aufgenommen!</div>` +
-      (s.isHost ? `<button class="btn-amber" style="width:100%;margin-top:12px" onclick="rematch()">🔄 Neue Partie im gleichen Raum</button>`
+        <span><b>${i === 0 ? "真" : i === 1 ? "睊" : "䀹"} ${esc(p.name)}</b></span><span class="pts">${p.total} SP</span></div>`).join("") +
+      `<div class="center" style="margin-top:12px;font-weight:800;color:#fcd34d">𯎉 ${esc(rv.ranked[0].name)} wird als neues Mitglied in die Königlich Monstrologische Gesellschaft aufgenommen!</div>` +
+      (s.isHost ? `<button class="btn-amber" style="width:100%;margin-top:12px" onclick="rematch()">𯔄 Neue Partie im gleichen Raum</button>`
                 : `<div class="banner wait" style="margin-top:12px">Der Host kann eine neue Partie starten…</div>`);
   }
-  // 🔎 v3.0: Nur der HOST hat den Weiter-Knopf – alle anderen springen mit,
+  // 𯔎 v3.0: Nur der HOST hat den Weiter-Knopf – alle anderen springen mit,
   // wenn der Server den nächsten Schritt ausliefert.
   const nextBtn = revealStep < 4
     ? (s.isHost
         ? `<button class="btn-amber" style="width:100%;margin-top:10px" onclick="revealNext()">▶️ Weiter aufdecken</button>`
         : `<div class="banner wait" style="margin-top:10px;text-align:center">Der Host blättert für alle weiter – gemeinsam Schritt für Schritt!</div>`)
     : "";
-  return `<div class="revwrap" onclick="event.stopPropagation()"><div class="rev"><h2>🏁 Die große Schlusswertung</h2>${body}${nextBtn}</div></div>`;
+  return `<div class="revwrap" onclick="event.stopPropagation()"><div class="rev"><h2>𯏁 Die große Schlusswertung</h2>${body}${nextBtn}</div></div>`;
 }
 
 
 
 
 // ============================================================
-// 🎡 UI-ÜBERNAHME (v2.0): Der Tisch aus dem Prototyp –
+// 𯎡 UI-ÜBERNAHME (v2.0): Der Tisch aus dem Prototyp –
 // Reichs-Farben, Sitz-Kreis, Lampen, Pfeil-Ring, Kartenfächer,
 // runde Eck-Buttons, Aufklapper. Die ganze Spiellogik (Websocket,
 // Phasen, Aktionsleiste, Modi) bleibt unverändert.
@@ -1136,7 +1136,7 @@ let fanWinBound = false;
 // ---------------------------- Saison-Kopf -------------------------------
 function saisonHeadHTML(s) {
   const rc = realmColor(s.seasonCard);
-  const emoji = s.seasonCard === "gefahr" ? "🎲" : realmInfo(s.seasonCard).emoji;
+  const emoji = s.seasonCard === "gefahr" ? "𯎲" : realmInfo(s.seasonCard).emoji;
   // v3.2-Fix: In GERADE Saisons gehen die Karten zum LINKEN Nachbarn (Spieler
   // me+1 sitzt auf dem Bildschirm links) = im UHRZEIGERSINN um den Tisch. Der
   // Pfeil lief bisher genau verkehrt herum – jetzt zeigt er mit dem Kartenstrom.
@@ -1167,16 +1167,16 @@ function saisonHeadHTML(s) {
 // ---------------------------- Mitspieler-Panels -------------------------
 function statusFor(s, i) {
   const p = s.players[i];
-  if (!p.connected && s.phase === "draft") return "📴 Verbindung weg…";
-  if (s.phase === "danger") return "🎲 Gefahrenprobe";
-  if (s.phase === "reveal") return "🏁 Wertung";
-  if (s.phase === "seasonEnd") return (s.seDone || [])[i] ? "✅ fertig" : "📐 spielt noch";
+  if (!p.connected && s.phase === "draft") return "𯓴 Verbindung weg…";
+  if (s.phase === "danger") return "𯎲 Gefahrenprobe";
+  if (s.phase === "reveal") return "𯏁 Wertung";
+  if (s.phase === "seasonEnd") return (s.seDone || [])[i] ? "✅ fertig" : "𯓐 spielt noch";
   if (s.mode === "schnell" || s.mode === "langsam") {
-    if (s.showTurn >= 0) return s.showTurn === i ? "🔍 deckt gerade auf" : (s.simReady && s.simReady[i] ? "✅" : "⏳");
+    if (s.showTurn >= 0) return s.showTurn === i ? "𯔍 deckt gerade auf" : (s.simReady && s.simReady[i] ? "✅" : "⏳");
     return s.simReady && s.simReady[i] ? "✅ hat gewählt" : "⏳ wählt verdeckt…";
   }
-  if (s.awaitDiscard === i) return "🗑️ legt offen ab…";
-  if (s.turn === i) return "🎯 ist am Zug";
+  if (s.awaitDiscard === i) return "𯗑️ legt offen ab…";
+  if (s.turn === i) return "𯎯 ist am Zug";
   return "⏳";
 }
 
@@ -1191,22 +1191,22 @@ function spanelHTML(s, pi, links) {
     return `<div class="lrow">${dots}</div>`;
   }).join("");
   const mons = (p.seasonMonsters || []).map((m, mi) =>
-    `<div class="mini${FX && FX.newMon && FX.newMon[pi] && mi >= (p.seasonMonsters || []).length - FX.newMon[pi] ? " neu" : ""}" style="--rc:${realmColor(m.realm)}"><div class="me">${m.realm === "traum" ? "🌙" : realmInfo(m.realm).emoji}</div>${esc(m.name)}<div class="st">Lv ${m.cost} · ⭐${m.points}${m.danger ? " ⚠️" + m.danger : ""}</div></div>`).join("");
+    `<div class="mini${FX && FX.newMon && FX.newMon[pi] && mi >= (p.seasonMonsters || []).length - FX.newMon[pi] ? " neu" : ""}" style="--rc:${realmColor(m.realm)}"><div class="me">${m.realm === "traum" ? "𯌙" : realmInfo(m.realm).emoji}</div>${esc(m.name)}<div class="st">Lv ${m.cost} · ⭐${m.points}${m.danger ? " ⚠️" + m.danger : ""}</div></div>`).join("");
   const stf = (p.staff || []).map((x, xi) => `<span class="stf${FX && FX.newStf && FX.newStf[pi] && xi >= (p.staff || []).length - FX.newStf[pi] ? " neu" : ""}" onclick="event.stopPropagation();toggleStaff(${pi},'${esc(x.name)}')">${esc(x.name)}</span>`).join("");
   const detail = staffDetail && staffDetail.pi === pi ? (() => {
     const st = (p.staff || []).find((x) => x.name === staffDetail.name);
-    return st ? `<div class="stfdetail"><b>👷 ${esc(st.name)}</b> (−${st.cost} 👑): ${esc(originalCardText({ type: "Mitarbeiter", name: st.name, text: st.text }))}</div>` : "";
+    return st ? `<div class="stfdetail"><b>𯑷 ${esc(st.name)}</b> (−${st.cost} 𯑑): ${esc(originalCardText({ type: "Mitarbeiter", name: st.name, text: st.text }))}</div>` : "";
   })() : "";
-  // v2.5: Anfangsbuchstabe im Avatar – auch bei Bots: „🤖 Name“ zeigt den Buchstaben,
+  // v2.5: Anfangsbuchstabe im Avatar – auch bei Bots: „㶖 Name“ zeigt den Buchstaben,
   // nicht das Roboter-Emoji. Vorangestellte Nicht-Buchstaben (Emoji/Leerzeichen)
   // werden abgeschnitten, Array.from arbeitet danach zeichenweise surrogat-sicher.
   const avName = String(p.name || "?").trim().replace(/^[^\p{L}\p{N}]+/u, "").trim();
   const x = ((Array.from(avName)[0]) || "?").toUpperCase();
-  return `<div class="spanel${links ? "" : " rechts"}" onclick="event.stopPropagation();this.classList.toggle('auf')">
+  return `<div class="spanel${links ? "" : " rechts"}" data-pi="${pi}" onclick="event.stopPropagation();this.classList.toggle('auf')">
     <div class="kopf">
       <div class="pav" style="border-color:${AV_COLORS[pi % 5]};background:${AV_DARK[pi % 5]}">${esc(x)}</div>
-      <div class="pname">${p.connected ? "" : "📴 "}${esc(p.name)}<small>${statusFor(s, pi)}</small></div>
-      <div class="kenn"><span id="coinP${pi}"${FX && FX.coinGain[pi] ? ' class="cpop"' : ""}>👑 <b>${p.coins}</b></span><span id="huntP${pi}"${FX && FX.huntGain[pi] ? ' class="cpop"' : ""}>🏹 <b>${p.hunters}</b></span><span>💳 <b>${p.credits}</b></span>${p.trophies ? `<span>🏆 <b>${p.trophies}</b></span>` : ""}<i class="pf">▸</i></div>
+      <div class="pname">${p.connected ? "" : "𯓴 "}${esc(p.name)}<small>${statusFor(s, pi)}</small></div>
+      <div class="kenn"><span id="coinP${pi}"${FX && FX.coinGain[pi] ? ' class="cpop"' : ""}>𯑑 <b>${p.coins}</b></span><span id="huntP${pi}"${FX && FX.huntGain[pi] ? ' class="cpop"' : ""}>𯏹 <b>${p.hunters}</b></span><span>𯒳 <b>${p.credits}</b></span>${p.trophies ? `<span>𯏆 <b>${p.trophies}</b></span>` : ""}<i class="pf">▸</i></div>
     </div>
     <div class="landrows">${rows}</div>
     ${mons ? `<div class="minis">${mons}</div>` : ""}
@@ -1260,32 +1260,32 @@ function landsStripHTML(s) {
 function fanCardHTML(c, opts) {
   opts = opts || {};
   const ri = realmInfo(c.realm);
-  let art = c.realm === "traum" ? "🌙" : ri.emoji, med = "", pts = "", eff = "", zielK = false, rc = realmColor(c.realm);
+  let art = c.realm === "traum" ? "𯌙" : ri.emoji, med = "", pts = "", eff = "", zielK = false, rc = realmColor(c.realm);
   if (c.type === "Monster") {
     med = String(c.cost); pts = `⭐${c.points}`;
-    if (c.draw) eff += `🃏 zieht ${c.draw} · `;
+    if (c.draw) eff += `𯃏 zieht ${c.draw} · `;
     if (c.danger) eff += `⚠️${c.danger}`;
   } else if (c.type === "Land") {
     pts = `${c.level} P`;
     if (c.realm !== "traum" && c.level >= 2) eff = "entfernt · Land-Vorbedingung nötig";
   } else if (c.type === "Mitarbeiter") {
-    rc = "#0891b2"; art = "👷"; med = String(c.cost); pts = "👑";
+    rc = "#0891b2"; art = "𯑷"; med = String(c.cost); pts = "𯑑";
     // v2.7: Original-Kartentext als Effekt – mit Client-Fallback, falls der
     // Server (noch) keine Texte schickt.
     eff = originalCardText(c);
   } else if (c.type === "Event") {
-    rc = "#ea580c"; art = "🎪";
+    rc = "#ea580c"; art = "𯎪";
     // v2.7: Der Event-Effekt – Originaltext mit Client-Fallback.
     eff = originalCardText(c);
   } else {
-    rc = "#7c5fb8"; art = "🎯"; zielK = true;
+    rc = "#7c5fb8"; art = "𯎯"; zielK = true;
   }
   const sel = opts.selected ? " sel" : "";
   const click = opts.noClick ? "" : (opts.onClick ? ` onclick="${opts.onClick}"` : " disabled");
   const info = esc(`${cardTypeLabel(c)} · ${cardInfo(c)}`);
   return `<button class="k${sel}${zielK ? " ziel" : ""}${opts.cls ? " " + opts.cls : ""}" style="--rc:${rc}" data-fid="${c.id}" data-info="${info}"${click}>` +
     (zielK
-      ? `<span class="secret">🔒 geheim</span><div class="ztxt"><div class="big">🎯</div><b>${esc(c.name || "Ziel")}</b><span>${esc(originalCardText(c))}</span></div>`
+      ? `<span class="secret">𯔒 geheim</span><div class="ztxt"><div class="big">𯎯</div><b>${esc(c.name || "Ziel")}</b><span>${esc(originalCardText(c))}</span></div>`
       : `<div class="art">${art}</div><div class="name">${esc(c.name || ri.name)}</div>${med ? `<div class="med">${med}</div>` : ""}${eff ? `<div class="eff">${esc(eff)}</div>` : ""}${pts ? `<div class="pts">${pts}</div>` : ""}`) +
     `</button>`;
 }
@@ -1543,8 +1543,8 @@ window.toggleDrawerById = (id) => {
 
 function drawerMenHTML(s) {
   const meng = (s.menagerie || []).map((m) =>
-    `<div class="mini" style="--rc:${realmColor(m.realm)}"><div class="me">${m.realm === "traum" ? "🌙" : realmInfo(m.realm).emoji}</div>${esc(m.name)}<div class="st">⭐${m.points}${m.danger ? " ⚠️" + m.danger : ""}</div></div>`).join("");
-  return `<div class="drawer ${openDrawer === "dMen" ? "open" : ""}" id="dMen"><h4>🎭 Deine Menagerie – nur für dich sichtbar</h4>
+    `<div class="mini" style="--rc:${realmColor(m.realm)}"><div class="me">${m.realm === "traum" ? "𯌙" : realmInfo(m.realm).emoji}</div>${esc(m.name)}<div class="st">⭐${m.points}${m.danger ? " ⚠️" + m.danger : ""}</div></div>`).join("");
+  return `<div class="drawer ${openDrawer === "dMen" ? "open" : ""}" id="dMen"><h4>𯎭 Deine Menagerie – nur für dich sichtbar</h4>
     <div class="minis">${meng || '<span class="muted">Noch keine Monster in der Menagerie – am Ende jeder Saison wandern deine Saison-Monster hierher.</span>'}</div></div>`;
 }
 
@@ -1553,12 +1553,12 @@ function drawerMenHTML(s) {
 function drawerEigenHTML(s) {
   const me = s.players[s.you];
   const mons = (me.seasonMonsters || []).map((m, mi) =>
-    `<div class="mini${FX && FX.newMon && FX.newMon[s.you] && mi >= (me.seasonMonsters || []).length - FX.newMon[s.you] ? " neu" : ""}" style="--rc:${realmColor(m.realm)}"><div class="me">${m.realm === "traum" ? "🌙" : realmInfo(m.realm).emoji}</div>${esc(m.name)}<div class="st">Lv ${m.cost} · ⭐${m.points}${m.danger ? " ⚠️" + m.danger : ""}</div></div>`).join("");
+    `<div class="mini${FX && FX.newMon && FX.newMon[s.you] && mi >= (me.seasonMonsters || []).length - FX.newMon[s.you] ? " neu" : ""}" style="--rc:${realmColor(m.realm)}"><div class="me">${m.realm === "traum" ? "𯌙" : realmInfo(m.realm).emoji}</div>${esc(m.name)}<div class="st">Lv ${m.cost} · ⭐${m.points}${m.danger ? " ⚠️" + m.danger : ""}</div></div>`).join("");
   const stf = (me.staff || []).map((x, xi) => `<span class="stf${FX && FX.newStf && FX.newStf[s.you] && xi >= (me.staff || []).length - FX.newStf[s.you] ? " neu" : ""}" onclick="event.stopPropagation();toggleStaff(${s.you},'${esc(x.name)}')">${esc(x.name)}</span>`).join("");
   if (!mons && !stf) return "";
   const detail = staffDetail && staffDetail.pi === s.you ? (() => {
     const st = (me.staff || []).find((x) => x.name === staffDetail.name);
-    return st ? `<div class="stfdetail"><b>👷 ${esc(st.name)}</b> (−${st.cost} 👑): ${esc(originalCardText({ type: "Mitarbeiter", name: st.name, text: st.text }))}</div>` : "";
+    return st ? `<div class="stfdetail"><b>𯑷 ${esc(st.name)}</b> (−${st.cost} 𯑑): ${esc(originalCardText({ type: "Mitarbeiter", name: st.name, text: st.text }))}</div>` : "";
   })() : "";
   // v2.5: Keine Beschriftung – die Kacheln und Chips sprechen für sich (Nutzer-Wunsch).
   return `<div class="drawer ${openDrawer === "dEigen" ? "open" : ""}" id="dEigen">
@@ -1581,9 +1581,9 @@ function drawerLagerHTML(s) {
   })).join("");
   const goals = (s.goals || []).map((g) => cardHTML(g)).join("");
   return `<div class="drawer ${openDrawer === "dLager" ? "open" : ""}" id="dLager">
-    <h4>📥 Eingelagert (${(s.stored || []).length})${canUse && (s.stored || []).length ? ' <small class="muted">– antippen zum Ausspielen</small>' : ""}</h4>
+    <h4>𯓥 Eingelagert (${(s.stored || []).length})${canUse && (s.stored || []).length ? ' <small class="muted">– antippen zum Ausspielen</small>' : ""}</h4>
     ${(s.stored || []).length ? `<div class="grid4">${storedCards}</div>` : '<p class="muted">Noch nichts eingelagert.</p>'}
-    ${(s.goals || []).length ? `<div class="sub">🔒 Deine Ziele (${s.goals.length}) – nur für dich sichtbar</div><div class="grid4">${goals}</div>` : ""}
+    ${(s.goals || []).length ? `<div class="sub">𯔒 Deine Ziele (${s.goals.length}) – nur für dich sichtbar</div><div class="grid4">${goals}</div>` : ""}
   </div>`;
 }
 
@@ -1591,10 +1591,10 @@ function drawerFreshHTML(s) {
   if ((s.phase !== "draft" && s.phase !== "seasonEnd") || !(s.freshDraw || []).length) return "";
   const open = (s.freshDraw || []).filter((c) => c.type !== "Ziel");
   const cur = open[0];
-  // 🃏 v3.9: Aufdeck-Gedächtnis auf die aktuelle Schlange kürzen
+  // 𯃏 v3.9: Aufdeck-Gedächtnis auf die aktuelle Schlange kürzen
   const up = {}; (s.freshDraw || []).forEach((c) => { if (freshUp[c.id]) up[c.id] = true; }); freshUp = up;
   if (cur && window._freshRealmFor !== cur.id) { window._freshRealm = null; window._freshRealmFor = cur.id; }
-  let inner = `<h4>🃏 Gratis gezogen${open.length > 1 ? ` – noch ${open.length} offen` : ""}${cur && !freshUp[cur.id] ? " – umdrehen!" : " – jetzt entscheiden!"}</h4>`;
+  let inner = `<h4>𯃏 Gratis gezogen${open.length > 1 ? ` – noch ${open.length} offen` : ""}${cur && !freshUp[cur.id] ? " – umdrehen!" : " – jetzt entscheiden!"}</h4>`;
   // v2.7: Gezogene Karten GROSS im Handkarten-Format (Nutzer-Wunsch: präsenter
   // wie die Handkarten) – inklusive Effekt-Text unten auf der Karte.
   // v2.8: Aktuelle Karte ans ENDE des Fächers – so liegt sie ganz oben (spätere
@@ -1602,15 +1602,15 @@ function drawerFreshHTML(s) {
   // warten fächerig dahinter.
   const wartende = s.freshDraw.slice();
   const curPos = wartende.indexOf(cur); if (curPos >= 0) wartende.push(wartende.splice(curPos, 1)[0]);
-  // 🃏 v3.9 (Nutzer-Wunsch): Gezogene Karten liegen VERDECKT („falsch herum“)
+  // 𯃏 v3.9 (Nutzer-Wunsch): Gezogene Karten liegen VERDECKT („falsch herum“)
   // auf dem Tisch – erst ein Tipp auf die Rückseite dreht sie um. Bis dahin
   // gibt es keine Entscheidungsknöpfe. Rein kosmetisch im eigenen Client, der
   // Server entscheidet nichts mit.
   inner += `<div class="freshfan">${wartende.map((c) => (c.type !== "Ziel" && !freshUp[c.id]) ? rueckCardHTML(c, cur && c.id === cur.id) : fanCardHTML(c, { noClick: true, selected: cur && c.id === cur.id, cls: "" })).join("")}</div>`;
-  if (s.freshDraw.some((c) => c.type === "Ziel")) inner += `<p class="muted center" style="margin-top:6px">🔒 Gezogene Ziele liegen direkt bei deinen Zielen – gratis angenommen.</p>`;
+  if (s.freshDraw.some((c) => c.type === "Ziel")) inner += `<p class="muted center" style="margin-top:6px">𯔒 Gezogene Ziele liegen direkt bei deinen Zielen – gratis angenommen.</p>`;
   if (s.mode === "schnell") inner += `<p class="muted center" style="margin-top:6px">⚡ Dein neues Blatt bleibt verdeckt, bis du entschieden hast – das ist fair für alle.</p>`;
   if (cur && !freshUp[cur.id]) {
-    inner += `<p class="muted center" style="margin-top:8px">👉 Karte antippen zum Aufdecken</p>`;
+    inner += `<p class="muted center" style="margin-top:8px">𯑉 Karte antippen zum Aufdecken</p>`;
   }
   else if (cur) {
     if (cur.type === "Mitarbeiter" && cur.kind === "land") {
@@ -1618,26 +1618,26 @@ function drawerFreshHTML(s) {
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;justify-content:center">${ALL_REALMS.map((r) => `<button class="btn-indigo" style="flex:1;min-height:48px;font-size:.92rem;border:none;border-radius:10px;padding:13px 6px;font-weight:700" onclick="chooseFreshRealm('${r.id}')">${r.emoji}${window._freshRealm === r.id ? " ✓" : ""}</button>`).join("")}</div>
         <div style="display:flex;gap:8px;margin-top:8px">
           <button class="btn-green" style="flex:1;border:none;border-radius:10px;padding:11px;font-weight:800" ${window._freshRealm ? "" : "disabled"} onclick="freshPlay(${cur.id})">✅ Diese ausspielen</button>
-          <button class="btn-indigo" style="flex:1;border:none;border-radius:10px;padding:11px;font-weight:800" onclick="freshKeep(${cur.id})">📥 Diese einlagern (gratis)</button>
+          <button class="btn-indigo" style="flex:1;border:none;border-radius:10px;padding:11px;font-weight:800" onclick="freshKeep(${cur.id})">𯓥 Diese einlagern (gratis)</button>
         </div>
-        ${window._freshRealm ? "" : `<p class="muted center" style="margin-top:6px">👉 „Ausspielen“ wird erst klickbar, wenn du oben den Typ des Landes gewählt hast.</p>`}`;
+        ${window._freshRealm ? "" : `<p class="muted center" style="margin-top:6px">𯑉 „Ausspielen“ wird erst klickbar, wenn du oben den Typ des Landes gewählt hast.</p>`}`;
     } else if (cur.type === "Monster" && cur.realm === "traum") {
       const free = freeLandsOf(s.players[s.you].lands, s.players[s.you].seasonMonsters);
       let opts = "";
-      if (free.traum >= cur.cost) opts += `<button class="btn-green" style="flex:1;min-width:150px;border:none;border-radius:10px;padding:11px;font-weight:800" onclick="freshDecideTraum(${cur.id},null)">✅ Nur 🌙 (${cur.cost} 🌙)</button>`;
+      if (free.traum >= cur.cost) opts += `<button class="btn-green" style="flex:1;min-width:150px;border:none;border-radius:10px;padding:11px;font-weight:800" onclick="freshDecideTraum(${cur.id},null)">✅ Nur 𯌙 (${cur.cost} 𯌙)</button>`;
       REALMS.forEach((r) => {
         const helper = free[r.id] || 0;
         if (helper > 0 && free.traum < cur.cost && free.traum + helper >= cur.cost)
-          opts += `<button class="btn-indigo" style="flex:1;min-width:150px;border:none;border-radius:10px;padding:11px;font-weight:800" onclick="freshDecideTraum(${cur.id},'${r.id}')">✅ ${free.traum} 🌙 + ${cur.cost - free.traum} ${r.emoji}</button>`;
+          opts += `<button class="btn-indigo" style="flex:1;min-width:150px;border:none;border-radius:10px;padding:11px;font-weight:800" onclick="freshDecideTraum(${cur.id},'${r.id}')">✅ ${free.traum} 𯌙 + ${cur.cost - free.traum} ${r.emoji}</button>`;
       });
-      inner += `<p class="muted center" style="margin-top:8px">🌙 Bezahlt mit Traumland und/oder GENAU EINEM Hilfsreich:</p>
+      inner += `<p class="muted center" style="margin-top:8px">𯌙 Bezahlt mit Traumland und/oder GENAU EINEM Hilfsreich:</p>
         <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:6px">${opts || '<span class="muted">Passt gerade nicht – nur Einlagern möglich.</span>'}</div>
-        <button class="btn-indigo" style="width:100%;margin-top:8px;border:none;border-radius:10px;padding:11px;font-weight:800" onclick="freshKeep(${cur.id})">📥 Diese einlagern (gratis)</button>`;
+        <button class="btn-indigo" style="width:100%;margin-top:8px;border:none;border-radius:10px;padding:11px;font-weight:800" onclick="freshKeep(${cur.id})">𯓥 Diese einlagern (gratis)</button>`;
     } else {
       const playable = cardPlayable(cur, s.players[s.you]);
       inner += `<div style="display:flex;gap:8px;margin-top:8px">
           <button class="btn-green" style="flex:1;border:none;border-radius:10px;padding:11px;font-weight:800" ${playable ? "" : "disabled"} onclick="freshPlay(${cur.id})">✅ Diese ausspielen</button>
-          <button class="btn-indigo" style="flex:1;border:none;border-radius:10px;padding:11px;font-weight:800" onclick="freshKeep(${cur.id})">📥 Diese einlagern (gratis)</button>
+          <button class="btn-indigo" style="flex:1;border:none;border-radius:10px;padding:11px;font-weight:800" onclick="freshKeep(${cur.id})">𯓥 Diese einlagern (gratis)</button>
         </div>
         ${playable ? "" : `<p class="muted center" style="margin-top:6px">Passt gerade nicht – du kannst die Karte nur gratis einlagern.</p>`}`;
     }
@@ -1647,7 +1647,7 @@ function drawerFreshHTML(s) {
   return `<div class="drawer frisch ${openDrawer === "dFresh" ? "open" : ""}" id="dFresh">${inner}</div>`;
 }
 
-// 🃏 v3.9: Rückseiten-Karte („falsch herum“) – ein Tipp dreht sie um.
+// 𯃏 v3.9: Rückseiten-Karte („falsch herum“) – ein Tipp dreht sie um.
 function rueckCardHTML(c, istAktuell) {
   return `<button class="k rueck${istAktuell ? " sel" : ""}" style="--rc:#2b3860" data-fid="${c.id}" onclick="event.stopPropagation();freshAufdecken(${c.id})"><div class="rueckm"><div class="rc1">?</div></div></button>`;
 }
@@ -1660,20 +1660,20 @@ function freshAufdecken(id) {
 }
 
 function drawerChatHTML(s) {
-  return `<div class="drawer ${openDrawer === "dChat" ? "open" : ""}" id="dChat"><h4>💬 Spielverlauf & Chat</h4>
+  return `<div class="drawer ${openDrawer === "dChat" ? "open" : ""}" id="dChat"><h4>𯒬 Spielverlauf & Chat</h4>
     <div class="logbox">${(s.log || []).map((l) => `<div>${esc(l)}</div>`).join("")}</div>
-    <div class="chatrow"><input id="chatinput" placeholder="Nachricht an alle…" maxlength="200" /><button class="btn-ghost" onclick="sendChat()">💬</button></div></div>`;
+    <div class="chatrow"><input id="chatinput" placeholder="Nachricht an alle…" maxlength="200" /><button class="btn-ghost" onclick="sendChat()">𯒬</button></div></div>`;
 }
 
 function drawerSaisonHTML(s) {
-  const modeTxt = (s.mode || "langsam") === "langsam" ? "🐢 Langsam – alle wählen verdeckt, decken nacheinander auf"
-    : s.mode === "schnell" ? "⚡ Schnell – alle wählen gleichzeitig" : "🚀 Turbo – jeder im eigenen Tempo";
+  const modeTxt = (s.mode || "langsam") === "langsam" ? "𯐢 Langsam – alle wählen verdeckt, decken nacheinander auf"
+    : s.mode === "schnell" ? "⚡ Schnell – alle wählen gleichzeitig" : "𯚀 Turbo – jeder im eigenen Tempo";
   return `<div class="drawer ${openDrawer === "dSaison" ? "open" : ""}" id="dSaison">
-    <h4>${s.seasonCard === "gefahr" ? "🎲" : realmInfo(s.seasonCard).emoji} Saison ${s.season + 1} von ${s.totalSeasons || 4}: ${esc(s.seasonName)}</h4>
+    <h4>${s.seasonCard === "gefahr" ? "𯎲" : realmInfo(s.seasonCard).emoji} Saison ${s.season + 1} von ${s.totalSeasons || 4}: ${esc(s.seasonName)}</h4>
     <p style="font-size:.8rem;margin:0 0 8px">${esc(s.seasonHint)}</p>
     <p class="muted" style="margin:0 0 6px">Trophäe (+3 SP) für die ${s.seasonCard === "gefahr" ? "meisten ⚠️" : "meisten ⭐"} in dieser Saison · 1 übrig gebliebene Krone = 1 SP · 1 Jägermarker = 1 SP</p>
     ${s.bonusGiven ? '<p class="muted" style="margin:0 0 6px">2-Kronen-Bonus bereits kassiert.</p>' : ""}
-    ${s.players.length === 2 && s.phase === "draft" ? `<p class="muted" style="margin:0 0 6px">🗑️ 2er-Regeln: offene Ablage · Nachziehstapel: ${s.stackCount || 0} Karten verdeckt</p>` : ""}
+    ${s.players.length === 2 && s.phase === "draft" ? `<p class="muted" style="margin:0 0 6px">𯗑️ 2er-Regeln: offene Ablage · Nachziehstapel: ${s.stackCount || 0} Karten verdeckt</p>` : ""}
     <p class="muted" style="margin:0">${modeTxt}</p></div>`;
 }
 
@@ -1681,28 +1681,29 @@ function bottombarHTML(s) {
   const me = s.players[s.you];
   const lagN = (s.stored || []).length + (s.goals || []).length;
   const mengN = (s.menagerie || []).length;
-  // v2.7: Solange Gratis-Ziehungen offen sind, gibt es einen eigenen 🃏-Knopf –
-  // der Zieh-Kasten kann damit IMMER wieder geöffnet werden.
+  // v3.11: Auch reine ZIEL-Ziehungen sind jetzt sichtbar (vorher geräuschlos
+  // angenommen und nirgends angezeigt). Die Badge zählt weiter offene Nicht-Ziele.
+  const freshAll = (s.freshDraw || []).length;
   const freshN = (s.freshDraw || []).filter((c) => c.type !== "Ziel").length;
   return `<div class="bottombar">
-    <button class="corner" id="cMen" onclick="event.stopPropagation();toggleDrawerById('dMen')"><span class="emoji">🎭</span>${mengN ? `<span class="badge">${mengN}</span>` : ""}</button>
-    ${freshN ? `<button class="corner hot" id="cFresh" onclick="event.stopPropagation();toggleDrawerById('dFresh')"><span class="emoji">🃏</span><span class="badge">${freshN}</span></button>` : ""}
+    <button class="corner" id="cMen" onclick="event.stopPropagation();toggleDrawerById('dMen')"><span class="emoji">𯎭</span>${mengN ? `<span class="badge">${mengN}</span>` : ""}</button>
+    ${freshAll ? `<button class="corner hot" id="cFresh" onclick="event.stopPropagation();toggleDrawerById('dFresh')"><span class="emoji">𯃏</span>${freshN ? `<span class="badge">${freshN}</span>` : ""}</button>` : ""}
     <div class="midst" onclick="event.stopPropagation()">
-      <span id="crownMe"${FX && FX.coinGain[s.you] ? ' class="cpop"' : ""}>👑 <b>${me.coins}</b></span><span class="sep">·</span>
-      <span id="huntMe"${FX && FX.huntGain[s.you] ? ' class="cpop"' : ""}>🏹 <b>${me.hunters}</b></span><span class="sep">·</span>
-      <span>💳 <b>${me.credits}</b></span>${me.trophies ? `<span class="sep">·</span><span>🏆 <b>${me.trophies}</b></span>` : ""}
+      <span id="crownMe"${FX && FX.coinGain[s.you] ? ' class="cpop"' : ""}>𯑑 <b>${me.coins}</b></span><span class="sep">·</span>
+      <span id="huntMe"${FX && FX.huntGain[s.you] ? ' class="cpop"' : ""}>𯏹 <b>${me.hunters}</b></span><span class="sep">·</span>
+      <span>𯒳 <b>${me.credits}</b></span>${me.trophies ? `<span class="sep">·</span><span>𯏆 <b>${me.trophies}</b></span>` : ""}
     </div>
-    <button class="corner" id="cLager" onclick="event.stopPropagation();toggleDrawerById('dLager')"><span class="emoji">📥</span>${lagN ? `<span class="badge">${lagN}</span>` : ""}</button>
+    <button class="corner" id="cLager" onclick="event.stopPropagation();toggleDrawerById('dLager')"><span class="emoji">𯓥</span>${lagN ? `<span class="badge">${lagN}</span>` : ""}</button>
   </div>`;
 }
 
 function menuHTML(s) {
   return `<div class="optionen" id="optmenu">
     <button class="optitem" onclick="closeMenu();toggleDrawerById('dSaison')">ℹ️ <span>Saison-Info & Spieltempo</span></button>
-    <button class="optitem" onclick="closeMenu();toggleDrawerById('dChat')">💬 <span>Spielverlauf & Chat</span></button>
+    <button class="optitem" onclick="closeMenu();toggleDrawerById('dChat')">𯒬 <span>Spielverlauf & Chat</span></button>
     ${s.isHost && (s.phase === "draft" || s.phase === "seasonEnd" || s.phase === "danger")
-      ? `<button class="optitem" onclick="closeMenu();newGame()">🔄 <span>Neue Partie (zur Lobby)</span></button>` : ""}
-    <button class="optitem" onclick="closeMenu();leaveRoom()">🚪 <span>Raum ${s.isHost ? "schließen" : "verlassen"}</span></button>
+      ? `<button class="optitem" onclick="closeMenu();newGame()">𯔄 <span>Neue Partie (zur Lobby)</span></button>` : ""}
+    <button class="optitem" onclick="closeMenu();leaveRoom()">𯚪 <span>Raum ${s.isHost ? "schließen" : "verlassen"}</span></button>
   </div>`;
 }
 
@@ -1712,7 +1713,7 @@ function mitteHTML(s) {
   if (s.phase === "draft" && s.players.length === 2) {
     const chips = (s.openDiscards || []).map((d) =>
       `<span class="chip" style="background:rgba(249,115,22,0.18);color:#fdba74">${esc(s.players[d.by].name)}: ${esc(d.card.name)}${d.card.type === "Monster" ? " ⭐" + d.card.points : d.card.type === "Land" ? " +" + d.card.level : ""}</span>`).join("");
-    html += `<div class="card-panel"><div class="label">🗑️ Offene Ablage · Nachziehstapel: ${s.stackCount || 0} Karten verdeckt</div>
+    html += `<div class="card-panel"><div class="label">𯗑️ Offene Ablage · Nachziehstapel: ${s.stackCount || 0} Karten verdeckt</div>
       <div class="chips">${chips || '<span class="muted">Noch nichts offen abgelegt.</span>'}</div></div>`;
   }
   if (s.phase === "draft" && s.mode === "langsam" && s.players.length === 2 && !s.hand.length && s.awaitDiscard !== s.you) {
@@ -1723,7 +1724,7 @@ function mitteHTML(s) {
   if (s.phase === "draft" && s.mode === "turbo" && !s.hand.length && !s.turboDiscard) {
     html += `<div class="card-panel"><div class="label">⏳ Neue Karten kommen gleich…</div><p class="muted center">Die anderen spielen noch – sobald ein Stapel bei dir ankommt, geht es für dich weiter.</p></div>`;
   }
-  // 🪶 v3.4: Am Saisonende KEIN Extra-Kasten mehr – das Banner oben und der
+  // 𯪶 v3.4: Am Saisonende KEIN Extra-Kasten mehr – das Banner oben und der
   // „Fertig“-Knopf im Aktionsband genügen (Nutzer-Wunsch: deutlich weniger Text).
   if (s.phase === "danger") html += renderDanger(s);
   if (s.phase === "reveal") html += renderReveal(s);
@@ -1732,7 +1733,7 @@ function mitteHTML(s) {
 
 // ---------------------------- Der Spieltisch ----------------------------
 function phoneShellHTML(s) {
-  if ((s.freshDraw || []).some((c) => c.type !== "Ziel")) openDrawer = "dFresh";
+  if ((s.freshDraw || []).length) openDrawer = "dFresh"; // v3.11: auch reine Ziel-Ziehungen oeffnen den Kasten
   if (!(s.phase === "draft" && s.hand && s.hand.length)) inhand = false;
   return `<div class="phone${inhand ? " inhand" : ""}" id="phone">`
     + saisonHeadHTML(s)
@@ -1781,7 +1782,7 @@ function render() {
 }
 
 window.addEventListener("load", connect);
-// 📲 PWA (v3.5): Service-Worker registrieren – Voraussetzung für die App-
+// 𯓲 PWA (v3.5): Service-Worker registrieren – Voraussetzung für die App-
 // Installation (Chrome/Android). Der Worker cached bewusst NICHTS (siehe
 // ---------------------------- ✨ v3.8 Animationen -----------------------------
 // fxSnapshot/computeFx vergleichen den Zustand vor und nach einem Server-Update
@@ -1801,7 +1802,7 @@ function fxSnapshot(s) {
   };
 }
 function computeFx(prev, s) {
-  const fx = { myCoinGain: 0, coinGain: [], coinLoss: [], huntGain: [], landNeu: [], freshNeu: [], handAnkunft: false, newMon: [], newStf: [], myEvent: null };
+  const fx = { myCoinGain: 0, coinGain: [], coinLoss: [], huntGain: [], landNeu: [], freshNeu: [], handAnkunft: false, newMon: [], newStf: [], opFX: [] };
   fx.freshNeu = (s.freshDraw || []).filter((c) => !window._seenFresh || !window._seenFresh[c.id]).map((c) => c.id);
   if (prev && s && Array.isArray(s.players) && prev.coins.length === s.players.length && prev.you === s.you) {
     if (prev.handLen === 0 && (s.hand || []).length > 0 && s.phase === "draft") fx.handAnkunft = true;
@@ -1816,28 +1817,40 @@ function computeFx(prev, s) {
         if (ds > 0) fx.newStf[i] = ds;
       });
     }
-    // ✨ v3.10: Eigene EVENT-Plays über den Log erkennen (Events hinterlassen
-    // keine öffentliche Kartenliste). Log ist auf 40 Zeilen gedeckelt.
+    // ✨ v3.11: Mitspieler-Aktionen aus dem öffentlichen Log: Events, Einlagern,
+    // Ziele annehmen. Der Log nennt keine Kartennamen, aber die Akteure.
     if (Array.isArray(s.log) && s.log.length && prev.logHead && s.log[0] !== prev.logHead) {
-      const myName = (s.players[s.you] || {}).name;
       const stop = s.log.indexOf(prev.logHead);
       const newLines = s.log.slice(0, stop > 0 ? stop : 3);
       newLines.forEach((l) => {
-        if (myName && l.startsWith(myName + ": ")) {
-          const m = l.match(/Event „([^"]+)"/);
-          if (m && !fx.myEvent) fx.myEvent = m[1];
-        }
+        s.players.forEach((pl, i) => {
+          if (i === s.you || typeof l !== "string" || !pl.name) return;
+          if (l.startsWith(pl.name + ": ✅ Event „")) {
+            const m = l.match(/Event „([^"]+)"/);
+            if (m) pushOpFX(fx, i, { kind: "Event", name: m[1] });
+          } else if (l.startsWith("𯓥 " + pl.name + " lagert eine Karte ein")) pushOpFX(fx, i, { kind: "store" });
+          else if (l.startsWith("𯓥 " + pl.name + " nimmt ein Ziel an")) pushOpFX(fx, i, { kind: "ziel" });
+        });
       });
     }
+    // ✨ v3.11: Gespielte Monster/Mitarbeiter der Mitspieler aus den öffentlichen
+    // Arrays ( dieselben Daten wie die Kacheln in ihren Panels).
+    s.players.forEach((pl, i) => {
+      if (i === s.you) return;
+      const mons = pl.seasonMonsters || [];
+      for (let k = fx.newMon[i] || 0; k > 0; k--) pushOpFX(fx, i, { kind: "Monster", card: mons[mons.length - k] });
+      const stfs = pl.staff || [];
+      for (let k = fx.newStf[i] || 0; k > 0; k--) pushOpFX(fx, i, { kind: "Mitarbeiter", card: stfs[stfs.length - k] });
+    });
     // Münz-/Land-Effekte nur innerhalb einer Phase: Übergänge (Saison-Ende,
     // neue Runde, Aufräumen) setzen Punkte zurück, das wäre irreführendes Flackern.
     if (prev.phase === s.phase) {
       s.players.forEach((p, i) => {
         const d = (p.coins || 0) - (prev.coins[i] || 0);
         if (d > 0) { fx.coinGain[i] = d; if (i === s.you) fx.myCoinGain = d; }
-        if (d < 0) fx.coinLoss[i] = -d;    // 🪙 v3.9: Kronen-Abgang (Bezahlen)
+        if (d < 0) fx.coinLoss[i] = -d;    // 𯪙 v3.9: Kronen-Abgang (Bezahlen)
         const dh = (p.hunters || 0) - (prev.hunters[i] || 0);
-        if (dh > 0) fx.huntGain[i] = dh;   // 🏹 v3.9: Jägermarker dazu
+        if (dh > 0) fx.huntGain[i] = dh;   // 𯏹 v3.9: Jägermarker dazu
         const pl = prev.lands[i] || {};
         for (const r of ALL_REALMS) {
           if ((p.lands[r.id] || 0) > (pl[r.id] || 0)) { fx.landNeu[i] = r.id; break; }
@@ -1855,41 +1868,83 @@ function fxAfter(fx, s) {
   window._seenFresh = seen;
   if (!fx) return;
   if (fx.myCoinGain > 0) flyCoins(Math.min(fx.myCoinGain, 6));
-  // 🏹🪙 v3.9: Jägermarker-Flug für ALLE Spieler + Kronen-Abgang beim Bezahlen
+  // 𯏹𯪙 v3.9: Jägermarker-Flug für ALLE Spieler + Kronen-Abgang beim Bezahlen
   s.players.forEach((p, i) => {
     if (fx.huntGain[i]) flyMark(Math.min(fx.huntGain[i], 6), i === s.you ? "huntMe" : "huntP" + i);
     const loss = fx.coinLoss[i] || 0;
     if (loss > 0) flySpend(Math.min(loss, i === s.you ? 6 : 3), i === s.you ? "crownMe" : "coinP" + i);
   });
-  // ✨ v3.10: Die EBEN selbst gespielte Karte blitzt kurz in der Mitte auf
-  // (Land-Punkte haben schon ihr Leuchten, Ziele bleiben geheim).
-  const me = s.players[s.you] || {};
-  if (fx.newMon && fx.newMon[s.you]) {
-    const m = (me.seasonMonsters || []).slice(-1)[0];
-    if (m) showPlayFlash(Object.assign({ id: -1, type: "Monster" }, m));
-  } else if (fx.newStf && fx.newStf[s.you]) {
-    const st = (me.staff || []).slice(-1)[0];
-    if (st) showPlayFlash(Object.assign({ id: -1, type: "Mitarbeiter" }, st));
-  } else if (fx.myEvent) {
-    showPlayFlash({ id: -1, type: "Event", name: fx.myEvent });
+  // ✨ v3.11: Der eigene Spiel-Blitz ist WEG (Nutzer-Wunsch). Dafür: kleine
+  // Version der gespielten Karte im Mitspieler-Panel, und beim Einlagern /
+  // Ziel-Annehmen verschwindet eine verdeckte Karte am Bildschirmrand dort.
+  if (fx.opFX) {
+    s.players.forEach((pl, i) => {
+      const q = fx.opFX[i];
+      if (i === s.you || !q || !q.length) return;
+      q.forEach((item, k) => spawnOpFX(i, item, k));
+    });
   }
 }
 // ✨ v3.10: Eigene gespielte Karte groß in der Mitte – dreht sich rein,
 // leuchtet kurz golden auf und verblasst (nicht blockierend, pointer-events:none).
-function showPlayFlash(cardish) {
-  const old = document.getElementById("playflash");
-  if (old) old.remove();
+function pushOpFX(fx, pi, item) {
+  if (!fx.opFX) fx.opFX = [];
+  if (!fx.opFX[pi]) fx.opFX[pi] = [];
+  if (fx.opFX[pi].length < 4) fx.opFX[pi].push(item);
+}
+
+// ✨ v3.11: Mitspieler-Aktion im Panel: kleine Version der gespielten Karte
+// (Monster/Mitarbeiter/Event) - bzw. verdeckte Karte (?), die vom Bildschirmrand
+// in das Panel des Mitspielers hinein verschwindet (Einlagern / Ziel-Annehmen).
+function spawnOpFX(pi, item, k) {
+  const host = document.querySelector(`.spanel[data-pi="${pi}"]`) || document.getElementById("coinP" + pi);
+  if (!host || !host.getBoundingClientRect) return;
+  const r = host.getBoundingClientRect();
+  const vw = window.innerWidth || 400;
+  const del = k * 650;
+  if (item.kind === "store" || item.kind === "ziel") {
+    const el = document.createElement("div");
+    el.className = "opfx";
+    el.innerHTML = `<div style="--ch:110px; --cw:calc(110px*.667); --rc:#2b3860; filter:drop-shadow(0 14px 30px #000c)">
+      <div class="k rueck"><div class="rueckm"><div class="rc1">${item.kind === "ziel" ? "𯎯" : "?"}</div></div></div></div>`;
+    document.body.appendChild(el);
+    const w = 74;
+    const fromLeft = r.left + r.width / 2 > vw / 2;
+    const startX = fromLeft ? -70 : vw - w + 70;
+    const endX = Math.min(Math.max(r.left + r.width / 2 - w / 2, 8), Math.max(8, vw - w - 8));
+    const y = Math.max(64, r.top - 12);
+    const anim = el.animate([
+      { transform: `translate(${startX}px, ${y}px) rotate(${fromLeft ? 14 : -14}deg)`, opacity: 0 },
+      { transform: `translate(${endX}px, ${y}px) rotate(0deg)`, opacity: 1, offset: .45 },
+      { transform: `translate(${endX}px, ${(y + 18)}px) scale(.15)`, opacity: 0 }
+    ], { duration: 1600, delay: del, easing: "cubic-bezier(.25,.4,.5,1)", fill: "both" });
+    anim.onfinish = () => el.remove();
+    setTimeout(() => { if (el.parentNode) el.remove(); }, 1600 + del + 400);
+    return;
+  }
+  const cardish = item.kind === "Event"
+    ? { id: -1, type: "Event", name: item.name }
+    : Object.assign({ id: -1, type: item.kind }, item.card);
   const el = document.createElement("div");
-  el.className = "playflash";
-  el.id = "playflash";
-  const groesse = "min(40dvh,310px)";
-  el.innerHTML = `<div style="--ch:${groesse}; --cw:calc(${groesse}*.667); filter: drop-shadow(0 14px 30px #000c) drop-shadow(0 0 22px rgba(233,199,102,.4));">${fanCardHTML(cardish, { noClick: true })}</div>`;
+  el.className = "opfx";
+  el.innerHTML = `<div style="--ch:132px; --cw:calc(132px*.667); filter: drop-shadow(0 14px 30px #000c) drop-shadow(0 0 18px rgba(233,199,102,.4))">
+    ${fanCardHTML(cardish, { noClick: true })}</div>`;
   document.body.appendChild(el);
-  setTimeout(() => { if (document.getElementById("playflash") === el) el.remove(); }, 1350);
+  const w = 88, h = 132;
+  const x = Math.min(Math.max(r.left + r.width / 2 - w / 2, 8), Math.max(8, vw - w - 8));
+  const y = Math.max(60, r.top - 14);
+  const anim = el.animate([
+    { transform: `translate(${x}px, ${(y + 20)}px) scale(.5)`, opacity: 0 },
+    { transform: `translate(${x}px, ${y}px) scale(1)`, opacity: 1, offset: .16 },
+    { transform: `translate(${x}px, ${y}px) scale(1)`, opacity: 1, offset: .8 },
+    { transform: `translate(${x}px, ${(y - 26)}px) scale(.92)`, opacity: 0 }
+  ], { duration: 2100, delay: del, easing: "cubic-bezier(.25,.4,.5,1)", fill: "both" });
+  anim.onfinish = () => el.remove();
+  setTimeout(() => { if (el.parentNode) el.remove(); }, 2100 + del + 400);
 }
 function flyBadges(n, targetId, cls, inner, weg) {
   // ✨ v3.9: Generalisierter Effekt-Flug – Münzen hin (weg=false), Münzen weg
-  // beim Bezahlen (weg=true), Jägermarker-Flug (cls="huntfly", inner="🏹").
+  // beim Bezahlen (weg=true), Jägermarker-Flug (cls="huntfly", inner="𯏹").
   // Bewusst OHNE „prefers-reduced-motion“-Check: Der Nutzer will die Animationen
   // auch dann sehen, wenn sein Handy „Animationen reduzieren“ aktiviert hat.
   const phone = document.getElementById("phone");
@@ -1923,7 +1978,7 @@ function flyBadges(n, targetId, cls, inner, weg) {
   }
 }
 function flyCoins(n) { flyBadges(n, "crownMe", "coinfly", "", false); }
-function flyMark(n, targetId) { flyBadges(n, targetId, "huntfly", "🏹", false); }
+function flyMark(n, targetId) { flyBadges(n, targetId, "huntfly", "𯏹", false); }
 function flySpend(n, targetId) { flyBadges(n, targetId, "coinfly", "", true); }
 // sw.js): Beim App-Start kommt immer die neueste Version vom Server.
 if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));
