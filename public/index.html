@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>Carnival of Monsters – Online</title>
 <style>
-  /* ===== UI-Übernahme des Prototyps (v2.0) – dunkler Comic-Tisch · Feinschliff v3.3 ===== */
+  /* ===== UI-Übernahme des Prototyps (v2.0) – dunkler Comic-Tisch · Feinschliff v3.4 ===== */
   :root { --gold:#e9c766; --bg:#0f172a; --panel:#1e2a42; --line:#31405f; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html { height: 100%; }
@@ -630,9 +630,8 @@ function turnBanner(s) {
     return `<div class="banner wait">⏳ ${esc(cur.name)} ist am Zug…${cur.connected ? "" : " (Verbindung verloren – warte auf Rückkehr)"}</div>`;
   }
   if (s.phase === "seasonEnd") {
-    if (s.isYourSeasonTurn) return `<div class="banner your">📐 Du darfst noch Eingelagertes ausspielen!</div>`;
-    return `<div class="banner wait">⏳ Warte, bis alle tippen „Fertig“ – gleich wird gewürfelt…</div>`
-      + `<div class="chips" style="margin-top:6px;justify-content:center">${s.players.map((p, i) => `<span class="chip">${(s.seDone || [])[i] ? "✅" : "⏳"} ${esc(p.name)}</span>`).join("")}</div>`;
+    if (s.isYourSeasonTurn) return `<div class="banner your">📐 Du darfst noch Eingelagertes ausspielen</div>`;
+    return `<div class="banner wait">⏳ Die anderen spielen noch…</div>`;
   }
   return "";
 }
@@ -743,7 +742,7 @@ window.selectCard = (id, from) => {
 // Eingelagertes aus und jeder tippt für sich „Fertig“. Erst wenn alle fertig
 // sind, erscheint die Gefahrenprobe (v3.1: der Host würfelt einmal für alle).
 function seasonEndButtons(s) {
-  return `<button class="btn-amber" onclick="seasonDone()">✅ Fertig – nichts mehr ausspielen</button>`;
+  return `<button class="btn-amber" onclick="seasonDone()">Fertig</button>`;
 }
 
 
@@ -777,7 +776,7 @@ function renderActionBar() {
   const me = state.players[state.you];
   // 📐 Saisonende, keine Karte gewählt: nur der „Fertig“-Knopf unten
   if (seTurnActive && !selected) {
-    actionInner.innerHTML = seasonEndButtons(state) + `<div class="note">Du darfst vorher noch Eingelagertes ausspielen – einfach antippen.</div>`;
+    actionInner.innerHTML = seasonEndButtons(state);
     actionBand(true);
     return;
   }
@@ -1634,13 +1633,8 @@ function mitteHTML(s) {
   if (s.phase === "draft" && s.mode === "turbo" && !s.hand.length && !s.turboDiscard) {
     html += `<div class="card-panel"><div class="label">⏳ Neue Karten kommen gleich…</div><p class="muted center">Die anderen spielen noch – sobald ein Stapel bei dir ankommt, geht es für dich weiter.</p></div>`;
   }
-  if (s.phase === "seasonEnd") {
-    html += `<div class="card-panel"><div class="banner your" style="margin:0 0 8px">📐 Alle Karten gewählt!</div>
-      <p class="muted center">${s.isYourSeasonTurn
-        ? "Spiele noch Eingelagertes aus (📥 unten links) – danach tippe unten auf „✅ Fertig“. Am Ende wird <b>einmal für alle</b> gewürfelt."
-        : "Du bist fertig – die anderen spielen noch ihre eingelagerten Karten…"}</p>
-      <div class="chips" style="justify-content:center">${s.players.map((p, i) => `<span class="chip">${(s.seDone || [])[i] ? "✅" : "⏳"} ${esc(p.name)}</span>`).join("")}</div></div>`;
-  }
+  // 🪶 v3.4: Am Saisonende KEIN Extra-Kasten mehr – das Banner oben und der
+  // „Fertig“-Knopf im Aktionsband genügen (Nutzer-Wunsch: deutlich weniger Text).
   if (s.phase === "danger") html += renderDanger(s);
   if (s.phase === "reveal") html += renderReveal(s);
   return html;
