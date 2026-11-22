@@ -1,0 +1,18 @@
+{
+  "name": "Carnival of Monsters",
+  "short_name": "Carnival",
+  "description": "Online-Version von Carnival of Monsters – Partien mit Freunden und Bots, direkt im Browser oder als App.",
+  "lang": "de",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#070d1a",
+  "theme_color": "#070d1a",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
+

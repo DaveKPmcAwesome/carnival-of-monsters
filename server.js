@@ -1211,6 +1211,7 @@ function publicPlayer(p, connected) {
   };
 }
 
+
 // Persönliche Sicht: NUR eigene Hand, Aufbewahrung und Ziele!
 function viewFor(room, idx) {
   const g = room.game;
@@ -1291,6 +1292,20 @@ function broadcast(room) {
   scheduleBots(room); // 🤖 Bots handeln kurz danach von selbst
 }
 
+// ------------------------------ 📲 PWA-Dateien ------------------------------
+// v3.5: App-Manifest, Service-Worker und die App-Icons liegen im public/-Ordner.
+// Whitelist mit festem MIME-Typ statt offenem Datei-Server: kein Verzeichnis-
+// Surfen, keine Pfad-Überraschungen. Manifest + Worker bewusst OHNE Cache
+// (Startup lädt immer die neueste Version), Icons dürfen eine Woche sitzen.
+const PWA_FILES = {
+  "/manifest.webmanifest":        { file: "manifest.webmanifest",    type: "application/manifest+json" },
+  "/sw.js":                       { file: "sw.js",                   type: "application/javascript" },
+  "/icon-192.png":                { file: "icon-192.png",            type: "image/png" },
+  "/icon-512.png":                { file: "icon-512.png",            type: "image/png" },
+  "/icon-180.png":                { file: "icon-180.png",            type: "image/png" },
+  "/icon-maskable-512.png":       { file: "icon-maskable-512.png",   type: "image/png" },
+};
+
 // ------------------------------ HTTP-Server ---------------------------------
 
 const server = http.createServer((req, res) => {
@@ -1306,6 +1321,22 @@ const server = http.createServer((req, res) => {
       res.end(data);
     });
     return;
+  }
+  // 📲 PWA (v3.5): Manifest, Service-Worker und Icons ausliefern – die App-
+  // Installation braucht sie; im Browser-Betrieb interessieren sie niemanden.
+  if (req.method === "GET") {
+    const pwa = PWA_FILES[req.url.split("?")[0]];
+    if (pwa) {
+      fs.readFile(path.join(__dirname, "public", pwa.file), (err, data) => {
+        if (err) { res.writeHead(404, { "Content-Type": "text/plain" }); res.end("not found"); return; }
+        res.writeHead(200, {
+          "Content-Type": pwa.type,
+          "Cache-Control": (pwa.file.endsWith(".png") ? "public, max-age=604800" : "no-cache"),
+        });
+        res.end(data);
+      });
+      return;
+    }
   }
   if (req.method === "GET" && req.url === "/health") {
     res.writeHead(200, { "Content-Type": "text/plain" });
@@ -1600,3 +1631,4 @@ setInterval(() => {
 server.listen(PORT, () => {
   console.log(`🎡 Carnival of Monsters Server läuft auf Port ${PORT}`);
 });
+

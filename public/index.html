@@ -3,9 +3,19 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<!-- 📲 PWA (v3.5): App-Installation – Manifest, Icons (Browser-/iOS-/Android-)
+     und Farbwelt. Wer will, installiert die Seite als App: Icon auf dem
+     Homescreen, startet im Vollbild ohne Adresszeile. Im Browser-Betrieb
+     ändern diese Zeilen nichts. -->
+<link rel="manifest" href="/manifest.webmanifest" />
+<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
+<link rel="apple-touch-icon" href="/icon-180.png" />
+<meta name="theme-color" content="#070d1a" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="Carnival of Monsters" />
 <title>Carnival of Monsters – Online</title>
 <style>
-  /* ===== UI-Übernahme des Prototyps (v2.0) – dunkler Comic-Tisch · Feinschliff v3.4 ===== */
+  /* ===== UI-Übernahme des Prototyps (v2.0) – dunkler Comic-Tisch · Feinschliff v3.5 ===== */
   :root { --gold:#e9c766; --bg:#0f172a; --panel:#1e2a42; --line:#31405f; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html { height: 100%; }
@@ -910,6 +920,7 @@ function renderLobby(s) {
         <p class="muted" style="margin:6px 0 0;font-size:0.75rem">Bots spielen ganz normal mit – gut, um zu zweit eine größere Runde zu spielen!</p>` : ""}
       </div>
       ${s.isHost ? `<div class="card-panel" style="max-width:420px;width:100%">
+
         <div class="label">Saisonanzahl (gilt für alle)</div>
         <div style="display:flex;gap:8px">
           <button class="${(s.seasons || 4) === 4 ? "btn-amber" : "btn-ghost"}" style="flex:1;font-size:0.9rem" onclick="setSeasons(4)">4 Saisons</button>
@@ -1688,6 +1699,11 @@ function render() {
 }
 
 window.addEventListener("load", connect);
+// 📲 PWA (v3.5): Service-Worker registrieren – Voraussetzung für die App-
+// Installation (Chrome/Android). Der Worker cached bewusst NICHTS (siehe
+// sw.js): Beim App-Start kommt immer die neueste Version vom Server.
+if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));
 </script>
 </body>
 </html>
+
