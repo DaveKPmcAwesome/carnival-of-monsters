@@ -28,13 +28,13 @@ const PORT = process.env.PORT || 3000;
 // ---------------------------- Reiche ---------------------------------------
 
 const REALMS = [
-  { id: "wald", name: "Verwusch. Wald", short: "Wald", emoji: "𯌲" },
-  { id: "tiefsee", name: "Tiefsee", short: "Tiefsee", emoji: "𯌊" },
+  { id: "wald", name: "Verwusch. Wald", short: "Wald", emoji: "🌲" },
+  { id: "tiefsee", name: "Tiefsee", short: "Tiefsee", emoji: "🌊" },
   { id: "wolken", name: "Wolkenlande", short: "Wolken", emoji: "☁️" },
-  { id: "hoehlen", name: "Höhlenlande", short: "Höhlen", emoji: "𯕳️" },
-  { id: "dunkel", name: "Dunkellande", short: "Dunkel", emoji: "𯌑" },
+  { id: "hoehlen", name: "Höhlenlande", short: "Höhlen", emoji: "🕳️" },
+  { id: "dunkel", name: "Dunkellande", short: "Dunkel", emoji: "🌑" },
 ];
-const TRAUM = { id: "traum", name: "Traumlande", short: "Traum", emoji: "𯌙" };
+const TRAUM = { id: "traum", name: "Traumlande", short: "Traum", emoji: "🌙" };
 const ALL_REALMS = [...REALMS, TRAUM];
 const realmInfo = (id) => ALL_REALMS.find((r) => r.id === id) || TRAUM;
 
@@ -190,7 +190,7 @@ const freeLandsOf = (lands, seasonMonsters) => {
   return f;
 };
 
-// Traum-Monster: nur 𯌙 oder 𯌙 + GENAU EIN Hilfsreich (Regel der Spielrunde).
+// Traum-Monster: nur 🌙 oder 🌙 + GENAU EIN Hilfsreich (Regel der Spielrunde).
 // chosenRealm: der Spieler darf das Hilfsreich SELBER aussuchen (Nutzer-Wunsch) –
 // ohne Wahl wird automatisch das Reich mit den meisten freien Punkten genommen.
 function traumPlacement(cost, lands, seasonMonsters, chosenRealm) {
@@ -226,7 +226,7 @@ const staffCount = (p, kind, realm) => p.staff.filter((s) => s.kind === kind && 
 
 function takeCredits(p, shortfall) {
   const n = Math.ceil((shortfall - p.coins) / 3);
-  if (n > 0) { p.coins += 3 * n; p.credits += n; return `𯏦 ${n} Kredit(e) aufgenommen (+${3 * n}𯑑, je −5 SP)`; }
+  if (n > 0) { p.coins += 3 * n; p.credits += n; return `🏦 ${n} Kredit(e) aufgenommen (+${3 * n}👑, je −5 SP)`; }
   return "";
 }
 
@@ -246,9 +246,9 @@ function onMonsterPlayed(g, pIdx, card) {
   const p = g.players[pIdx];
   const msgs = [];
   const experts = staffCount(p, "realm", card.realm);
-  if (experts > 0) { p.coins += 2 * experts; msgs.push(`+${2 * experts}𯑑 (Experten)`); }
+  if (experts > 0) { p.coins += 2 * experts; msgs.push(`+${2 * experts}👑 (Experten)`); }
   const baendiger = staffCount(p, "dangerCoin");
-  if (baendiger > 0 && card.danger > 0) { p.coins += baendiger * card.danger; msgs.push(`+${baendiger * card.danger}𯑑 (Bändiger)`); }
+  if (baendiger > 0 && card.danger > 0) { p.coins += baendiger * card.danger; msgs.push(`+${baendiger * card.danger}👑 (Bändiger)`); }
   if (card.draw > 0 && g.deckIdx < g.deck.length) {
     const drawnCards = [];
     for (let i = 0; i < card.draw && g.deckIdx < g.deck.length; i++) {
@@ -260,7 +260,7 @@ function onMonsterPlayed(g, pIdx, card) {
     if (drawnCards.length) {
       // Zieh-Schlange: neue Karten hinten an – noch offene Entscheidungen bleiben vorne.
       p.freshDraw = [...(p.freshDraw || []), ...drawnCards];
-      msgs.push(`𯃏 ${card.draw} Karte(n) gezogen – entscheidet in Ruhe!`); // keine Kartennamen: was gezogen wurde, weiß nur der Besitzer
+      msgs.push(`🃏 ${card.draw} Karte(n) gezogen – entscheidet in Ruhe!`); // keine Kartennamen: was gezogen wurde, weiß nur der Besitzer
     }
   }
   const bonus = applySeasonBonus(g, pIdx, card);
@@ -276,7 +276,7 @@ function onEvent(p, card) {
   else if (card.kind === "summer") { const c = 2 * p.staff.length; p.coins += c; msg = `+${c} Kronen (Sommerfest)`; }
   else if (card.kind === "show") { const c = p.stored.filter((x) => x.type === "Monster").length; p.coins += c; msg = `+${c} Kronen (Monster gezeigt)`; }
   const martini = staffCount(p, "eventCoin");
-  if (martini > 0) { p.coins += martini; msg += ` +${martini}𯑑 (P. T. Martini)`; }
+  if (martini > 0) { p.coins += martini; msg += ` +${martini}👑 (P. T. Martini)`; }
   return msg;
 }
 
@@ -289,7 +289,7 @@ function playIntoPlayer(g, pIdx, card, chosenRealm) {
       p.seasonMonsters.push({ ...card, ...pl });
       bigFanfare(g, pIdx, card);
       const extra = onMonsterPlayed(g, pIdx, card);
-      return { ok: true, msg: [`✅ „${card.name}": ${pl.paidTraum} 𯌙${pl.helperRealm ? ` + ${pl.helperCount} ${realmInfo(pl.helperRealm).emoji} (Hilfsreich)` : ""}.`, ...extra].join(" ") };
+      return { ok: true, msg: [`✅ „${card.name}": ${pl.paidTraum} 🌙${pl.helperRealm ? ` + ${pl.helperCount} ${realmInfo(pl.helperRealm).emoji} (Hilfsreich)` : ""}.`, ...extra].join(" ") };
     }
     if (!canPlayMonster(card, p)) return null;
     p.seasonMonsters.push(card);
@@ -310,7 +310,7 @@ function playIntoPlayer(g, pIdx, card, chosenRealm) {
           m.helperCount -= shift; m.paidTraum += shift; freed += shift;
         }
       });
-      if (freed > 0) return { ok: true, msg: `✅ +${card.level} 𯌙 Traumland – ${freed} Hilfs-Punkt(e) wieder frei!` };
+      if (freed > 0) return { ok: true, msg: `✅ +${card.level} 🌙 Traumland – ${freed} Hilfs-Punkt(e) wieder frei!` };
     }
     return { ok: true, msg: `✅ +${card.level} ${realmInfo(card.realm).emoji} Landpunkte.` };
   }
@@ -318,15 +318,15 @@ function playIntoPlayer(g, pIdx, card, chosenRealm) {
     if (card.kind === "land" && !chosenRealm) return { needRealm: true };
     const cMsg = p.coins < card.cost ? takeCredits(p, card.cost) : "";
     p.coins -= card.cost;
-    // 𯐛 Auch als Landpunkt gespielte Mitarbeiter ("Unbekanntes Land") bleiben
+    // 🐛 Auch als Landpunkt gespielte Mitarbeiter ("Unbekanntes Land") bleiben
     // Mitarbeiter – sie zählen z. B. für „Arbeitgeber des Jahres“ (3 SP je Mitarbeiter)
     // und fürs Sommerfest (+2 Kronen je Mitarbeiter) mit.
     p.staff.push(card);
     if (card.kind === "land") {
       p.lands[chosenRealm] = (p.lands[chosenRealm] || 0) + 1;
-      return { ok: true, msg: `✅ ${card.name} als Landpunkt ${realmInfo(chosenRealm).emoji} festgelegt (−${card.cost} 𯑑)${cMsg}.` };
+      return { ok: true, msg: `✅ ${card.name} als Landpunkt ${realmInfo(chosenRealm).emoji} festgelegt (−${card.cost} 👑)${cMsg}.` };
     }
-    return { ok: true, msg: `✅ ${card.name} angestellt (−${card.cost} 𯑑)${cMsg}.` };
+    return { ok: true, msg: `✅ ${card.name} angestellt (−${card.cost} 👑)${cMsg}.` };
   }
   if (card.type === "Event") return { ok: true, msg: `✅ Event „${card.name}": ${onEvent(p, card)}.` };
   return null; // Ziele sind nicht spielbar
@@ -356,7 +356,7 @@ function mkPlayerState(name, startLands) {
   };
 }
 
-// 𯚨 TAMTAM (Nutzer-Wunsch): Ein FETTES Monster – Level 4 aus den Standard-Reichen
+// 🚨 TAMTAM (Nutzer-Wunsch): Ein FETTES Monster – Level 4 aus den Standard-Reichen
 // oder das Level-10-Monster aus den Traumlanden – löst bei ALLEN eine große
 // Fanfare aus: Vollbild-Banner mit Name + Spieler + Dreifach-Gong im Client.
 let gameIdCounter = 0;
@@ -365,7 +365,7 @@ function bigFanfare(g, pIdx, card) {
   if (!isBigMonster(card)) return;
   g.fanfareId = (g.fanfareId || 0) + 1;
   g.fanfare = { id: g.fanfareId, name: card.name, realm: card.realm, points: card.points || 0, danger: card.danger || 0, player: g.players[pIdx].name };
-  g.log.unshift(`𯚨 TAMTAM: ${g.players[pIdx].name} spielt „${card.name}" – ein FETTES Monster!`);
+  g.log.unshift(`🚨 TAMTAM: ${g.players[pIdx].name} spielt „${card.name}" – ein FETTES Monster!`);
 }
 
 function mkGame(playerNames, totalSeasons, mode) {
@@ -389,7 +389,7 @@ function mkGame(playerNames, totalSeasons, mode) {
     log: [],
   };
   dealSeason(g, 0);
-  g.log.unshift(`𯎡 Saison 1: ${SEASON_NAMES[g.seasonCard]}! ${seasonHint(g.seasonCard)}`);
+  g.log.unshift(`🎡 Saison 1: ${SEASON_NAMES[g.seasonCard]}! ${seasonHint(g.seasonCard)}`);
   return g;
 }
 
@@ -415,16 +415,16 @@ function dealSeason(g, season) {
   g.openDiscards = [];
   g.awaitDiscard = null;
   g.awaitFresh = null;
-  g.show = null; // 𯐢 Langsam: Aufdeck-Runde (wer ist gerade dran)
+  g.show = null; // 🐢 Langsam: Aufdeck-Runde (wer ist gerade dran)
   g.sim = mkSimState(g); // ⚡ Schnell: verdeckte Wahlen der laufenden Runde
-  g.incoming = g.players.map(() => []); // 𯚀 Turbo: FIFO-Warteschlange, JEDER Eintrag = EIN kompletter Stapel
-  g.turboDiscard = g.players.map(() => false); // 𯚀 Turbo: 2er-Ablage-Schritt je Spieler
+  g.incoming = g.players.map(() => []); // 🚀 Turbo: FIFO-Warteschlange, JEDER Eintrag = EIN kompletter Stapel
+  g.turboDiscard = g.players.map(() => false); // 🚀 Turbo: 2er-Ablage-Schritt je Spieler
   g.passed = g.players.map(() => false); // 2er: Stapel bereits weitergegeben?
   g.players.forEach((p) => { p.freshDraw = null; });
   if (g.players.length === 2) {
     for (let i = 0; i < 14 && g.deckIdx < g.deck.length; i++) g.stack.push(g.deck[g.deckIdx++]);
   }
-  if (season > 0) g.log.unshift(`𯎡 Saison ${season + 1}: ${SEASON_NAMES[g.seasonCard]}! ${seasonHint(g.seasonCard)}`);
+  if (season > 0) g.log.unshift(`🎡 Saison ${season + 1}: ${SEASON_NAMES[g.seasonCard]}! ${seasonHint(g.seasonCard)}`);
 }
 
 // Zug weitergeben – 2-Spieler-Variante: Rotation erst nach ABLAGE + Nachziehen,
@@ -439,7 +439,7 @@ function advanceDuo(g) {
   }
   g.log = g.log.slice(0, 40);
   if (g.hands.every((h) => h.length === 0)) {
-    g.log.unshift("𯓐 Alle Karten gewählt – jetzt darf JEDER noch GLEICHZEITIG Eingelagertes ausspielen, dann wird gewürfelt!");
+    g.log.unshift("📐 Alle Karten gewählt – jetzt darf JEDER noch GLEICHZEITIG Eingelagertes ausspielen, dann wird gewürfelt!");
     g.seDone = g.players.map(() => false);
     g.seTurn = 0;
     g.phase = "seasonEnd";
@@ -460,19 +460,19 @@ function applyDuoDiscard(g, pIdx, cardId) {
       level: card.level, cost: card.cost, points: card.points, danger: card.danger || 0,
     },
   });
-  g.log.unshift(`𯗑️ ${g.players[pIdx].name} legt „${card.name || realmInfo(card.realm).name}" offen aus dem Spiel.`);
+  g.log.unshift(`🗑️ ${g.players[pIdx].name} legt „${card.name || realmInfo(card.realm).name}" offen aus dem Spiel.`);
   if (g.stack.length > 0) g.hands[pIdx].push(g.stack.pop());
   return { ok: true };
 }
 
 function handleDiscard(g, pIdx, msg) {
-  // 𯚀 Turbo: Ablegen ist ein persönlicher Schritt, kein globaler Wartezustand
+  // 🚀 Turbo: Ablegen ist ein persönlicher Schritt, kein globaler Wartezustand
   if (g.mode === "turbo") return handleTurboDiscard(g, pIdx, msg);
   if (g.phase !== "draft" || g.awaitDiscard !== pIdx) return { err: "Du bist gerade nicht am offenen Ablegen." };
   const res = applyDuoDiscard(g, pIdx, msg.cardId);
   if (res && res.err) return res;
   g.awaitDiscard = null;
-  // 𯐢 Langsam: Die offene Ablage gehört zum eigenen Aufdecken – danach ist der Nächste dran.
+  // 🐢 Langsam: Die offene Ablage gehört zum eigenen Aufdecken – danach ist der Nächste dran.
   if (g.show) {
     if ((g.players[pIdx].freshDraw || []).some((c) => c.type !== "Ziel")) return { ok: true };
     showStep(g);
@@ -483,7 +483,7 @@ function handleDiscard(g, pIdx, msg) {
   return { ok: true };
 }
 
-// ⚡ Schnell-Modus & 𯐢 Langsam-Modus: verdeckte Wahl eines Spielers für die laufende Runde.
+// ⚡ Schnell-Modus & 🐢 Langsam-Modus: verdeckte Wahl eines Spielers für die laufende Runde.
 // Schnell: alles wird gleichzeitig ausgeführt. Langsam (2er): die Karte für die OFFENE
 // Ablage kommt erst NACH dem eigenen Aufdecken (siehe handleReveal/handleDiscard).
 function handleSimPick(g, pIdx, msg) {
@@ -508,7 +508,7 @@ function handleSimPick(g, pIdx, msg) {
     if (card.type === "Mitarbeiter" && card.kind === "land" && !pick.realm)
       return { err: "Bitte ein Reich wählen." };
   }
-  // ⚡ Schnell (2er): Abwurfkarte gleich mitwählen. 𯐢 Langsam (2er): erst beim eigenen Aufdecken.
+  // ⚡ Schnell (2er): Abwurfkarte gleich mitwählen. 🐢 Langsam (2er): erst beim eigenen Aufdecken.
   if (g.mode === "schnell" && g.players.length === 2 && g.hands[pIdx].length > 1) {
     const d = g.hands[pIdx].find((c) => c.id === msg.discardId);
     if (!d || d.id === card.id) return { err: "Wähle auch 1 Karte für die offene Ablage." };
@@ -549,7 +549,7 @@ function executeSimRound(g) {
   g.log.unshift("⚡ Alle haben gleichzeitig aufgedeckt!");
   g.sim = mkSimState(g);
   if (g.hands.every((h) => h.length === 0)) {
-    g.log.unshift("𯓐 Alle Karten gewählt – jetzt darf JEDER noch GLEICHZEITIG Eingelagertes ausspielen, dann wird gewürfelt!");
+    g.log.unshift("📐 Alle Karten gewählt – jetzt darf JEDER noch GLEICHZEITIG Eingelagertes ausspielen, dann wird gewürfelt!");
     g.seDone = g.players.map(() => false);
     g.seTurn = 0;
     g.phase = "seasonEnd";
@@ -557,13 +557,13 @@ function executeSimRound(g) {
   g.log = g.log.slice(0, 40);
 }
 
-// 𯐢 Langsam wie am Tisch: alle haben VERDECKT gewählt – jetzt deckt jeder
+// 🐢 Langsam wie am Tisch: alle haben VERDECKT gewählt – jetzt deckt jeder
 // NACHEINANDER seine Karte selbst auf („Jetzt aufdecken!"). Reihenfolge = Sitzfolge,
 // Start wechselt fair je Runde. Der Spielverlauf oben moderiert mit.
 function startShow(g) {
   const n = g.players.length;
   g.show = { cur: g.roundNo % n, done: 0 };
-  g.log.unshift("𯔍 Alle haben verdeckt gewählt – jetzt wird nacheinander aufgedeckt!");
+  g.log.unshift("🔍 Alle haben verdeckt gewählt – jetzt wird nacheinander aufgedeckt!");
   showStep(g);
   g.log = g.log.slice(0, 40);
 }
@@ -584,15 +584,15 @@ function endShowRound(g) {
   g.show = null;
   g.roundNo += 1;
   if (g.hands.every((h) => h.length === 0)) {
-    g.log.unshift("𯓐 Alle Karten gewählt – jetzt darf JEDER noch GLEICHZEITIG Eingelagertes ausspielen, dann wird gewürfelt!");
+    g.log.unshift("📐 Alle Karten gewählt – jetzt darf JEDER noch GLEICHZEITIG Eingelagertes ausspielen, dann wird gewürfelt!");
     g.seDone = g.players.map(() => false);
     g.seTurn = 0;
     g.phase = "seasonEnd";
-  } else g.log.unshift("𯔄 Neue Wahlrunde – alle wählen wieder verdeckt!");
+  } else g.log.unshift("🔄 Neue Wahlrunde – alle wählen wieder verdeckt!");
   g.log = g.log.slice(0, 40);
 }
 
-// 𯐢 „Jetzt aufdecken!": die verdeckte Wahl wird ausgeführt und für alle sichtbar.
+// 🐢 „Jetzt aufdecken!": die verdeckte Wahl wird ausgeführt und für alle sichtbar.
 // Gezogene Karten („zieht X") entscheidet der Aufdeckende sofort – erst dann ist der
 // Nächste dran. Bei 2 Spielern folgt danach noch die offene Ablage (außer letzte Karte).
 function handleReveal(g, pIdx) {
@@ -601,12 +601,12 @@ function handleReveal(g, pIdx) {
   if ((p.freshDraw || []).some((c) => c.type !== "Ziel")) return { err: "Entscheide erst über deine gezogenen Karten – dann geht es weiter!" };
   const pick = g.sim.picks[pIdx];
   if (!pick) { showStep(g); return { ok: true }; }
-  g.log.unshift(`𯔍 ${p.name} deckt auf!`);
+  g.log.unshift(`🔍 ${p.name} deckt auf!`);
   const res = applyHandPick(g, pIdx, pick);
   if (res && res.err) g.log.unshift(`⚠️ ${p.name}: ${res.err}`);
   g.sim.picks[pIdx] = null;
   g.log = g.log.slice(0, 40);
-  // 𯃏 Zieh-Karten: erst entscheiden (wie bisherige Reihenfolge), dann Ablage/Weiter
+  // 🃏 Zieh-Karten: erst entscheiden (wie bisherige Reihenfolge), dann Ablage/Weiter
   if ((p.freshDraw || []).some((c) => c.type !== "Ziel")) return { ok: true };
   if (g.players.length === 2 && g.hands[pIdx].length > 0) {
     g.awaitDiscard = pIdx; // offene Ablage – der Aufdeckende klickt seine Abwurfkarte an
@@ -616,18 +616,18 @@ function handleReveal(g, pIdx) {
   return { ok: true };
 }
 
-// 𯚀 Turbo: Reststapel an den Nachbarn weitergeben (Richtung wie im langsamen
+// 🚀 Turbo: Reststapel an den Nachbarn weitergeben (Richtung wie im langsamen
 // Modus, wechselt je Saison), selbst weitermachen, sobald neue Karten da sind.
 function turboAdvance(g, pIdx) {
   const n = g.players.length;
   if (g.hands[pIdx].length > 0) {
     const dirLeft = g.season % 2 === 0;
     const next = dirLeft ? (pIdx + 1) % n : (pIdx - 1 + n) % n;
-    // 𯚀 Der Stapel wandert als EIGENER Eintrag in die Warteschlange – mehrere
+    // 🚀 Der Stapel wandert als EIGENER Eintrag in die Warteschlange – mehrere
     // wartende Stapel werden NIE verschmolzen, sondern einzeln nacheinander geliefert.
     g.incoming[next].push(g.hands[pIdx]);
     g.hands[pIdx] = [];
-    g.log.unshift(`𯓤 ${g.players[pIdx].name} gibt den Stapel weiter.`);
+    g.log.unshift(`📤 ${g.players[pIdx].name} gibt den Stapel weiter.`);
     // Empfänger mit leerer Hand bekommt sofort den ÄLTESTEN wartenden Stapel (sonst Stau ohne eigene Aktion)
     if (g.hands[next].length === 0) {
       g.hands[next] = g.incoming[next].shift();
@@ -640,7 +640,7 @@ function turboAdvance(g, pIdx) {
   }
   // Saisonende erst, wenn wirklich niemand mehr Karten hat (auch keine wartenden)
   if (g.phase === "draft" && g.hands.every((h) => h.length === 0) && g.incoming.every((a) => a.length === 0)) {
-    g.log.unshift("𯓐 Alle Karten gewählt – jetzt darf JEDER noch GLEICHZEITIG Eingelagertes ausspielen, dann wird gewürfelt!");
+    g.log.unshift("📐 Alle Karten gewählt – jetzt darf JEDER noch GLEICHZEITIG Eingelagertes ausspielen, dann wird gewürfelt!");
     g.seDone = g.players.map(() => false);
     g.seTurn = 0;
     g.phase = "seasonEnd";
@@ -648,7 +648,7 @@ function turboAdvance(g, pIdx) {
   g.log = g.log.slice(0, 40);
 }
 
-// 𯚀 Turbo nach einem Hand-Zug: bei 2 Spielern erst offen ablegen + nachziehen,
+// 🚀 Turbo nach einem Hand-Zug: bei 2 Spielern erst offen ablegen + nachziehen,
 // dann erst weitergeben. Sonst geht der Reststapel sofort zum Nachbarn.
 function afterTurboPick(g, pIdx) {
   if (g.players.length === 2 && g.hands[pIdx].length > 0) {
@@ -677,11 +677,11 @@ function applyHandPick(g, pIdx, pick) {
     return { err: "Events und Mitarbeitende werden nicht eingelagert – spiel die Karte aus!" };
   if (pick.action === "keep") {
     let cMsg = "";
-    if (p.coins < 1) { p.coins += 3; p.credits += 1; cMsg = " · 𯏦 Kredit (+3𯑑, −5 SP)"; }
+    if (p.coins < 1) { p.coins += 3; p.credits += 1; cMsg = " · 🏦 Kredit (+3👑, −5 SP)"; }
     p.coins -= 1;
     // Datenschutz: Eingelagertes und Ziele sind GEHEIM – der Log ist für alle sichtbar, also OHNE Kartennamen!
-    if (card.type === "Ziel") { p.goals.push(card); g.log.unshift(`𯓥 ${p.name} nimmt ein Ziel an (−1𯑑)${cMsg}.`); }
-    else { p.stored.push(card); g.log.unshift(`𯓥 ${p.name} lagert eine Karte ein (−1𯑑)${cMsg}.`); }
+    if (card.type === "Ziel") { p.goals.push(card); g.log.unshift(`📥 ${p.name} nimmt ein Ziel an (−1👑)${cMsg}.`); }
+    else { p.stored.push(card); g.log.unshift(`📥 ${p.name} lagert eine Karte ein (−1👑)${cMsg}.`); }
     g.hands[pIdx] = g.hands[pIdx].filter((c) => c.id !== card.id);
     return { ok: true };
   }
@@ -694,14 +694,14 @@ function applyHandPick(g, pIdx, pick) {
 }
 
 // Ein Zug: Karte wählen (aus Hand oder Aufbewahrung)
-// 𯐢 Langsam: klassisch nacheinander (g.turn) ·
-// 𯚀 Turbo: Hand-Karten jederzeit, solange du welche hast ·
+// 🐢 Langsam: klassisch nacheinander (g.turn) ·
+// 🚀 Turbo: Hand-Karten jederzeit, solange du welche hast ·
 // ⚡ Schnell: Hand-Wahl läuft über simPick – hier nur Eingelagertes (jederzeit spielbar).
 function handlePick(g, pIdx, msg) {
   const phase = g.phase;
   const p = g.players[pIdx];
   if (g.awaitDiscard !== null && g.awaitDiscard !== undefined) return { err: "Lege erst deine Karte offen ab!" };
-  // 𯃏 Zieh-Schlange: nur im langsamen Modus blockiert sie den Zug
+  // 🃏 Zieh-Schlange: nur im langsamen Modus blockiert sie den Zug
   if (g.mode === "langsam" && (p.freshDraw || []).some((c) => c.type !== "Ziel")) return { err: "Entscheide erst über deine gratis gezogenen Karten!" };
 
   const inHand = g.hands[pIdx].some((c) => c.id === msg.cardId);
@@ -710,8 +710,8 @@ function handlePick(g, pIdx, msg) {
 
   if (phase === "draft") {
     if (inHand) {
-      // ⚡/𯐢: Handkarten werden oben VERDECKT gewählt – ausgeführt wird bei ⚡ automatisch,
-      // bei 𯐢 über den „Jetzt aufdecken!“-Button des Spielers.
+      // ⚡/🐢: Handkarten werden oben VERDECKT gewählt – ausgeführt wird bei ⚡ automatisch,
+      // bei 🐢 über den „Jetzt aufdecken!“-Button des Spielers.
       if (g.mode === "langsam" || g.mode === "schnell") return { err: "Wähle deine Handkarte oben verdeckt und bestätige mit „Fertig“." };
       if (g.turboDiscard[pIdx]) return { err: "Lege erst deine Karte offen ab!" };
       if (g.hands[pIdx].length === 0) return { err: "Du hast gerade keine Karten." };
@@ -722,11 +722,11 @@ function handlePick(g, pIdx, msg) {
   } else return { err: "Gerade nicht möglich." };
 
   if (!inHand) { // aus der Aufbewahrung (Draft ODER Saisonende)
-    // 𯃏 Zieh-Schlange: Noch nicht entschiedene Gratis-Karten laufen NUR über den
+    // 🃏 Zieh-Schlange: Noch nicht entschiedene Gratis-Karten laufen NUR über den
     // Zieh-Bereich – sonst würde die Karte doppelt landen (gespielt + Geister-Eintrag
     // in der Schlange, der danach nur noch „unsinniges Einlagern“ anbietet).
     if ((p.freshDraw || []).some((c) => c.id === card.id))
-      return { err: "𯃏 Diese Karte wartet noch auf deine Entscheidung im Zieh-Bereich!" };
+      return { err: "🃏 Diese Karte wartet noch auf deine Entscheidung im Zieh-Bereich!" };
     if (msg.action === "keep") return { err: "Eingelagerte Karten kannst du nur ausspielen." };
     p.stored = p.stored.filter((c) => c.id !== card.id);
     const res = playIntoPlayer(g, pIdx, card, msg.realm);
@@ -746,7 +746,7 @@ function handlePick(g, pIdx, msg) {
 
   if (g.mode === "turbo") { afterTurboPick(g, pIdx); return { ok: true }; }
 
-  // 𯃏 Zieh-Schlange: erst wenn ALLE gezogenen Nicht-Ziel-Karten entschieden sind,
+  // 🃏 Zieh-Schlange: erst wenn ALLE gezogenen Nicht-Ziel-Karten entschieden sind,
   // geht der Zug weiter – so kann jeder in Ruhe ausspielen/einlagern (Wunsch der Spielrunde).
   if ((p.freshDraw || []).some((c) => c.type !== "Ziel")) {
     g.awaitFresh = pIdx;
@@ -783,7 +783,7 @@ function finishPick(g, pIdx) {
 
   // Saisonende erst, wenn ALLE Hände leer sind
   if (g.hands.every((h) => h.length === 0)) {
-    g.log.unshift("𯓐 Alle Karten gewählt – jetzt darf JEDER noch GLEICHZEITIG Eingelagertes ausspielen, dann wird gewürfelt!");
+    g.log.unshift("📐 Alle Karten gewählt – jetzt darf JEDER noch GLEICHZEITIG Eingelagertes ausspielen, dann wird gewürfelt!");
     g.seDone = g.players.map(() => false);
     g.seTurn = 0;
     g.phase = "seasonEnd";
@@ -792,7 +792,7 @@ function finishPick(g, pIdx) {
   g.turn = (g.turn + 1) % g.players.length;
 }
 
-// 𯃏 Zieh-Schlange: über JEDE gezogene Nicht-Ziel-Karte wird EINZELN entschieden –
+// 🃏 Zieh-Schlange: über JEDE gezogene Nicht-Ziel-Karte wird EINZELN entschieden –
 // ausspielen (gratis) oder einlagern. Erst wenn die Schlange leer ist, geht der Zug weiter.
 function handleFreshDecide(g, pIdx, msg) {
   const p = g.players[pIdx];
@@ -815,7 +815,7 @@ function handleFreshDecide(g, pIdx, msg) {
   // Zug erst weitergeben, wenn die Schlange leer ist (verkettete Züge: neue Karten kommen hinten dran)
   if (!(p.freshDraw || []).some((c) => c.type !== "Ziel")) {
     if (g.awaitFresh === pIdx) { g.awaitFresh = null; finishPick(g, pIdx); }
-    // 𯐢 Langsam: Zieh-Karten beim eigenen Aufdecken entschieden → 2er-Ablage oder Nächster
+    // 🐢 Langsam: Zieh-Karten beim eigenen Aufdecken entschieden → 2er-Ablage oder Nächster
     else if (g.show && g.show.cur === pIdx) {
       if (g.players.length === 2 && g.hands[pIdx].length > 0) g.awaitDiscard = pIdx;
       else showStep(g);
@@ -833,23 +833,23 @@ function handleFreshDecide(g, pIdx, msg) {
 // Gefahrenprobe, wo der Host den einen Wurf für alle macht (v3.1, unverändert).
 function handleSeasonDone(g, pIdx) {
   if (g.phase !== "seasonEnd") return { err: "Du bist gerade nicht dran." };
-  // 𯐛 v3.11: "Fertig" erst, wenn die Zieh-Schlange leer ist – vorher wanderten
+  // 🐛 v3.11: "Fertig" erst, wenn die Zieh-Schlange leer ist – vorher wanderten
   // offene Gratis-Ziehungen beim Saisonwechsel still ins Lager (nie entschieden).
   if ((g.players[pIdx].freshDraw || []).some((c) => c.type !== "Ziel"))
-    return { err: "𯃏 Entscheide erst über deine gezogenen Karten – danach erst „Fertig“!" };
+    return { err: "🃏 Entscheide erst über deine gezogenen Karten – danach erst „Fertig“!" };
   if (g.seDone[pIdx]) return { err: "Du bist mit dem Saisonende schon fertig." };
   g.seDone[pIdx] = true;
   g.log.unshift(`✅ ${g.players[pIdx].name} ist fertig.`);
   if (g.seDone.every(Boolean)) {
     g.phase = "danger";
     g.dice = null;
-    g.log.unshift("𯎲 Alle sind bereit – der Host würfelt die Gefahrenprobe für alle!");
+    g.log.unshift("🎲 Alle sind bereit – der Host würfelt die Gefahrenprobe für alle!");
   }
   g.log = g.log.slice(0, 40);
   return { ok: true };
 }
 
-// 𯎲 Gefahrenprobe (v3.1): Der HOST würfelt den EINEN Wurf für alle – jeder
+// 🎲 Gefahrenprobe (v3.1): Der HOST würfelt den EINEN Wurf für alle – jeder
 // Bildschirm zeigt dasselbe im selben Moment, niemand würfelt im eigenen Tempo.
 function handleDangerRoll(g, pIdx) {
   if (g.phase !== "danger") return { err: "Ungültiger Zeitpunkt." };
@@ -870,8 +870,8 @@ function endSeason(g) {
     const markers = Math.min(rest, p.hunters); p.hunters -= markers; rest -= markers;
     const payCoins = Math.min(rest, Math.floor(p.coins / 3)); p.coins -= payCoins * 3; rest -= payCoins;
     // Erst mit 3 Kronen je offenes Symbol zahlen (oben) – und nur wenn das Geld
-    // nicht reicht: ganz normal 1 Kredit je Rest-Symbol (+3 𯑑, −5 SP). Das
-    // Kreditgeld (+3 𯑑) fließt direkt in die Bezahlung (−3 𯑑 je Symbol),
+    // nicht reicht: ganz normal 1 Kredit je Rest-Symbol (+3 👑, −5 SP). Das
+    // Kreditgeld (+3 👑) fließt direkt in die Bezahlung (−3 👑 je Symbol),
     // die restlichen Kronen bleiben unverändert.
     const newCredits = rest; p.credits += newCredits;
     const snapshot = [...p.seasonMonsters];
@@ -883,17 +883,17 @@ function endSeason(g) {
   const metric = (ms) => sc === "gefahr" ? dangerSum(ms) : ms.filter((m) => m.realm === sc).reduce((s, m) => s + m.points, 0);
   const scores = results.map((r) => metric(r.snapshot));
   const max = Math.max(...scores);
-  const lines = [`𯎲 Ein Wurf für alle: ${roll.join(" + ")} = ${rollSum} Käfige.`];
+  const lines = [`🎲 Ein Wurf für alle: ${roll.join(" + ")} = ${rollSum} Käfige.`];
   // Nutzer-Regel (13.11.2026): Trophäe NUR für den ALLEINIGEN Sieger – bei Gleichstand bekommt sie NIEMAND.
   const winners = scores.map((s, i) => [s, i]).filter((x) => x[0] === max);
   if (max > 0 && winners.length === 1) {
     const wi = winners[0][1];
     g.players[wi].trophies += 1;
-    lines.push(`𯏆 ${g.players[wi].name} gewinnt die ${SEASON_NAMES[sc]}-Karte (+3 SP)!`);
+    lines.push(`🏆 ${g.players[wi].name} gewinnt die ${SEASON_NAMES[sc]}-Karte (+3 SP)!`);
   } else if (max > 0) {
-    lines.push(`𤉣 Gleichstand bei der ${SEASON_NAMES[sc]}-Karte – die Trophäe verfällt, niemand bekommt sie!`);
-  } else lines.push("𯏆 Saisonkarte verfällt (niemand hat gepunktet).");
-  lines.push("𯏁 Saison beendet – Länder wieder frei.");
+    lines.push(`🤝 Gleichstand bei der ${SEASON_NAMES[sc]}-Karte – die Trophäe verfällt, niemand bekommt sie!`);
+  } else lines.push("🏆 Saisonkarte verfällt (niemand hat gepunktet).");
+  lines.push("🏁 Saison beendet – Länder wieder frei.");
   g.dice = { roll, rollSum, results: results.map((r) => ({ name: r.name, danger: r.danger, cages: r.cages, markers: r.markers, payCoins: r.payCoins, newCredits: r.newCredits })) };
   g.log = [...lines.slice().reverse(), ...g.log].slice(0, 40);
   g.phase = "danger";
@@ -908,8 +908,8 @@ function handleNext(g, pIdx) {
   if (g.season >= (g.totalSeasons || 4) - 1) {
     g.reveal = computeReveal(g);
     g.phase = "reveal";
-    g.revealStep = 0; // 𯔎 Schlusswertung: Aufdeck-Schritt für alle gemeinsam (Host steuert, v3.0)
-    g.log.unshift("𯏁 Schlusswertung – die Ziele werden aufgedeckt!");
+    g.revealStep = 0; // 🔎 Schlusswertung: Aufdeck-Schritt für alle gemeinsam (Host steuert, v3.0)
+    g.log.unshift("🏁 Schlusswertung – die Ziele werden aufgedeckt!");
   } else {
     dealSeason(g, g.season + 1);
     g.phase = "draft";
@@ -918,7 +918,7 @@ function handleNext(g, pIdx) {
   return { ok: true };
 }
 
-// 𯔎 Schlusswertung (v3.0): WEITER-AUFDECKEN nur durch den Host –
+// 🔎 Schlusswertung (v3.0): WEITER-AUFDECKEN nur durch den Host –
 // g.revealStep wird im State an ALLE ausgeliefert, damit jeder Bildschirm
 // denselben Schritt zeigt. Alle gucken sich die Wertung gemeinsam an.
 function handleRevealNext(g, pIdx) {
@@ -963,21 +963,21 @@ function computeReveal(g) {
   return { players: result, ranked };
 }
 
-// ------------------------------ 㶖 Bots --------------------------------------
+// ------------------------------ 🤖 Bots --------------------------------------
 // Bots sind echte Mitspieler im Raum (connected: true, ohne WebSocket). Der Host
 // fügt sie in der Lobby hinzu/entfernt sie – so könnt ihr zu zweit (oder sogar
 // allein) trotzdem eine 3er-, 4er- oder 5er-Runde spielen. botApply() macht genau
 // EINEN Bot-Zug; der Server plant ihn mit kleiner Pause, damit es lebendig wirkt.
 
-// 㶖 Bot-Namen (Nutzer-Wunsch): zufällige Wahl aus den FREIEN Namen – ist einer davon
+// 🤖 Bot-Namen (Nutzer-Wunsch): zufällige Wahl aus den FREIEN Namen – ist einer davon
 // schon als echter Spieler im Raum (Groß-/Kleinschreibung egal), bleibt er tabu.
 const BOT_NAMES = ["Robbie", "Dave", "Caro", "Jojo", "Momo", "Nina", "Friedrich", "Leo", "Marie", "Jan"];
 
 function nextBotName(room) {
-  const taken = new Set(room.players.map((p) => p.name.replace(/^㶖\s*/, "").trim().toLowerCase()));
+  const taken = new Set(room.players.map((p) => p.name.replace(/^🤖\s*/, "").trim().toLowerCase()));
   const free = BOT_NAMES.filter((n) => !taken.has(n.toLowerCase()));
-  if (!free.length) return `㶖 Bot ${room.players.length}`; // Fallback, falls alle 10 Namen belegt sind
-  return `㶖 ${free[Math.floor(Math.random() * free.length)]}`; // 㶖 bleibt dran: im Spielverlauf & in Bannern sofort als Bot erkennbar
+  if (!free.length) return `🤖 Bot ${room.players.length}`; // Fallback, falls alle 10 Namen belegt sind
+  return `🤖 ${free[Math.floor(Math.random() * free.length)]}`; // 🤖 bleibt dran: im Spielverlauf & in Bannern sofort als Bot erkennbar
 }
 
 function addBotToRoom(room) {
@@ -995,7 +995,7 @@ function removeBotFromRoom(room, name) {
   return null;
 }
 
-// 𯐛 Wiederverbindung: den Sitzplatz über das TOKEN suchen – NIEMALS über einen
+// 🐛 Wiederverbindung: den Sitzplatz über das TOKEN suchen – NIEMALS über einen
 // gespeicherten Index! Beim Entfernen eines Bots rücken alle späteren Plätze um 1 auf
 // (splice); ein alter Index würde dann auf den FALSCHEN Spieler zeigen (Name und
 // Karten vertauscht – der Spieler „wäre“ plötzlich der Bot).
@@ -1233,7 +1233,7 @@ function viewFor(room, idx) {
   };
   if (!g || g.phase === "lobby") return base;
   const p = g.players[idx];
-  // 𯚀 Turbo-Stau: Der EINZIGE Spieler, der noch Karten hält, während alle
+  // 🚀 Turbo-Stau: Der EINZIGE Spieler, der noch Karten hält, während alle
   // anderen mit leeren Händen auf den nächsten Stapel warten = Engpass.
   const turboHolders = (g.mode === "turbo" && g.phase === "draft")
     ? g.players.map((_, i) => i).filter((i) => (g.hands[i] || []).length > 0)
@@ -1250,19 +1250,19 @@ function viewFor(room, idx) {
     awaitDiscard: g.awaitDiscard === null || g.awaitDiscard === undefined ? -1 : g.awaitDiscard,
     stackCount: (g.stack || []).length,
     openDiscards: g.openDiscards || [],
-    // ⚡ Schnell & 𯐢 Langsam: wer hat schon bestätigt? (nur ja/nein, keine Kartendetails)
+    // ⚡ Schnell & 🐢 Langsam: wer hat schon bestätigt? (nur ja/nein, keine Kartendetails)
     simReady: (g.mode === "schnell" || g.mode === "langsam") ? g.sim.ready.slice() : null,
-    // ⚡/𯐢: wer muss noch wählen? (für „Alle warten auf …“, sobald nur noch EINER überlegt)
+    // ⚡/🐢: wer muss noch wählen? (für „Alle warten auf …“, sobald nur noch EINER überlegt)
     simWaiting: ((g.mode === "schnell" || g.mode === "langsam") && g.phase === "draft" && !g.show)
       ? g.players.map((_, i) => i).filter((i) => (g.hands[i] || []).length > 0 && !g.sim.ready[i])
       : [],
     mySimPick: (g.mode === "schnell" || g.mode === "langsam") ? g.sim.picks[idx] : null,
-    // 𯐢 Langsam: wer deckt gerade auf? (-1 = es wird noch verdeckt gewählt)
+    // 🐢 Langsam: wer deckt gerade auf? (-1 = es wird noch verdeckt gewählt)
     showTurn: (g.mode === "langsam" && g.show) ? g.show.cur : -1,
-    // 𯚀 Turbo: persönlicher Ablage-Schritt + Anzahl wartender STAPEL (Warteschlange, nicht Karten)
+    // 🚀 Turbo: persönlicher Ablage-Schritt + Anzahl wartender STAPEL (Warteschlange, nicht Karten)
     turboDiscard: g.mode === "turbo" ? !!g.turboDiscard[idx] : false,
     incomingCount: g.mode === "turbo" ? (g.incoming[idx] || []).length : 0,
-    // 𯚀 Bei wem staut es sich gerade? (-1 = niemand / mehrere spielen noch)
+    // 🚀 Bei wem staut es sich gerade? (-1 = niemand / mehrere spielen noch)
     turboStuck: turboHolders.length === 1 ? turboHolders[0] : -1,
     players: g.players.map((pp, i) => publicPlayer(pp, room.players[i].connected)),
     // 2er-Regeln: Nach dem Weitergeben sieht man seinen alten Stapel NICHT mehr
@@ -1292,10 +1292,10 @@ function sendTo(ws, obj) {
 
 function broadcast(room) {
   room.players.forEach((p, i) => sendTo(p.ws, viewFor(room, i)));
-  scheduleBots(room); // 㶖 Bots handeln kurz danach von selbst
+  scheduleBots(room); // 🤖 Bots handeln kurz danach von selbst
 }
 
-// ------------------------------ 𯓲 PWA-Dateien ------------------------------
+// ------------------------------ 📲 PWA-Dateien ------------------------------
 // v3.5: App-Manifest, Service-Worker und die App-Icons liegen im public/-Ordner.
 // Whitelist mit festem MIME-Typ statt offenem Datei-Server: kein Verzeichnis-
 // Surfen, keine Pfad-Überraschungen. Manifest + Worker bewusst OHNE Cache
@@ -1327,7 +1327,7 @@ const server = http.createServer((req, res) => {
     });
     return;
   }
-  // 𯓲 PWA (v3.5): Manifest, Service-Worker und Icons ausliefern – die App-
+  // 📲 PWA (v3.5): Manifest, Service-Worker und Icons ausliefern – die App-
   // Installation braucht sie; im Browser-Betrieb interessieren sie niemanden.
   if (req.method === "GET") {
     const pwa = PWA_FILES[req.url.split("?")[0]];
@@ -1368,7 +1368,7 @@ wss.on("connection", (ws) => {
     try { msg = JSON.parse(raw.toString()); } catch { return; }
     const room = joined ? joined.room : (msg.room ? rooms.get(String(msg.room).toUpperCase()) : null);
     if (joined && room) room.lastActivity = Date.now();
-    // 𯐛 Sitzplatz der Verbindung NEU auflösen: Nach splice (Bot entfernen /
+    // 🐛 Sitzplatz der Verbindung NEU auflösen: Nach splice (Bot entfernen /
     // Spieler verlassen in der Lobby) kann der gespeicherte joined.idx veraltet
     // sein. Die Verbindung gehört aber eindeutig zu genau einem Platz (p.ws).
     if (joined && room) {
@@ -1409,7 +1409,7 @@ wss.on("connection", (ws) => {
           const info = tokenMap.get(String(msg.token || ""));
           if (!info || !rooms.has(info.code)) return reply({ t: "error", msg: "Partie nicht mehr gefunden." });
           const r = rooms.get(info.code);
-          // 𯐛 Sitzplatz über das Token suchen – der alte Index in tokenMap kann
+          // 🐛 Sitzplatz über das Token suchen – der alte Index in tokenMap kann
           // veraltet sein (z. B. nach dem Entfernen eines Bots in der Lobby).
           const k = resumePlayerIdx(r, msg.token);
           if (k < 0 || r.players[k].isBot) return reply({ t: "error", msg: "Dein Sitzplatz wurde nicht gefunden – tritt dem Raum bitte neu bei." });
@@ -1426,7 +1426,7 @@ wss.on("connection", (ws) => {
           const active = room.players.filter((p) => p.connected).length;
           if (active < 2) return reply({ t: "error", msg: "Es müssen mindestens 2 Spieler verbunden sein." });
           room.game = mkGame(room.players.map((p) => p.name), room.seasons || 4, room.mode || "langsam");
-          addLog(room.game, [`𯚀 Partie gestartet: ${room.players.map((p) => p.name).join(", ")} · ${room.seasons || 4} Saisons`]);
+          addLog(room.game, [`🚀 Partie gestartet: ${room.players.map((p) => p.name).join(", ")} · ${room.seasons || 4} Saisons`]);
           broadcast(room);
           break;
         }
@@ -1443,7 +1443,7 @@ wss.on("connection", (ws) => {
           broadcast(room);
           break;
         }
-        // 㶖 Bot hinzufügen / entfernen (nur Host, nur in der Lobby)
+        // 🤖 Bot hinzufügen / entfernen (nur Host, nur in der Lobby)
         case "addBot": {
           if (!room || !joined || joined.idx !== 0) return;
           const err = addBotToRoom(room);
@@ -1466,7 +1466,7 @@ wss.on("connection", (ws) => {
           else broadcast(room);
           break;
         }
-        // 𯐢 Langsam: die eigene verdeckte Wahl selbst aufdecken (nacheinander, wie am Tisch)
+        // 🐢 Langsam: die eigene verdeckte Wahl selbst aufdecken (nacheinander, wie am Tisch)
         case "reveal": {
           if (!room || !room.game || !joined) return;
           const res = handleReveal(room.game, joined.idx);
@@ -1488,7 +1488,7 @@ wss.on("connection", (ws) => {
           else broadcast(room);
           break;
         }
-        // 𯃏 Zieh-Schlange: einzeln über jede gezogene Karte entscheiden
+        // 🃏 Zieh-Schlange: einzeln über jede gezogene Karte entscheiden
         case "freshDecide": {
           if (!room || !room.game || !joined) return;
           const res = handleFreshDecide(room.game, joined.idx, msg);
@@ -1511,7 +1511,7 @@ wss.on("connection", (ws) => {
           else broadcast(room);
           break;
         }
-        // 𯓡 v3.2 VERBINDUNGS-PULS: Die Antwort ist IMMER der frische Gesamt-
+        // 📡 v3.2 VERBINDUNGS-PULS: Die Antwort ist IMMER der frische Gesamt-
         // zustand. Fängt stille Verbindungen ab (Handy war im Hintergrund): Der
         // Client pulst alle paar Sekunden – bleibt die Antwort aus, verbindet er
         // sich neu und holt den Spielstand über resume.
@@ -1527,7 +1527,7 @@ wss.on("connection", (ws) => {
           else broadcast(room);
           break;
         }
-        // 𯎲 Gefahrenprobe (v3.1): NUR der Host würfelt den einen Wurf für alle
+        // 🎲 Gefahrenprobe (v3.1): NUR der Host würfelt den einen Wurf für alle
         case "dangerRoll": {
           if (!room || !room.game || !joined) return;
           const res = handleDangerRoll(room.game, joined.idx);
@@ -1535,7 +1535,7 @@ wss.on("connection", (ws) => {
           else broadcast(room);
           break;
         }
-        // 𯔎 Schlusswertung (v3.0): NUR der Host blättert für alle weiter
+        // 🔎 Schlusswertung (v3.0): NUR der Host blättert für alle weiter
         case "revealNext": {
           if (!room || !room.game || !joined) return;
           const res = handleRevealNext(room.game, joined.idx);
@@ -1543,7 +1543,7 @@ wss.on("connection", (ws) => {
           else broadcast(room);
           break;
         }
-        // 𯔄 Host: laufende Partie abbrechen und zurück in die Lobby (ohne sie zu Ende zu spielen)
+        // 🔄 Host: laufende Partie abbrechen und zurück in die Lobby (ohne sie zu Ende zu spielen)
         case "newGame": {
           if (!room || !joined || joined.idx !== 0 || !room.game) return;
           if (room.game.phase === "lobby") return;
@@ -1558,7 +1558,7 @@ wss.on("connection", (ws) => {
           broadcast(room);
           break;
         }
-        // 𯚪 Raum verlassen: Gast in der Lobby gibt seinen Platz frei,
+        // 🚪 Raum verlassen: Gast in der Lobby gibt seinen Platz frei,
         // Gast in der Partie wird zum abwesenden Platz (Token ungültig),
         // HOST schließt den Raum komplett – alle landen wieder am Start.
         case "leave": {
@@ -1566,7 +1566,7 @@ wss.on("connection", (ws) => {
           const i = joined.idx;
           const me = room.players[i];
           if (i === 0) {
-            const bye = { t: "closed", msg: `𯚪 ${me.name} hat den Raum geschlossen.` };
+            const bye = { t: "closed", msg: `🚪 ${me.name} hat den Raum geschlossen.` };
             room.players.forEach((p) => sendTo(p.ws, bye));
             if (room.botTimer) clearTimeout(room.botTimer);
             room.players.forEach((p) => p.token && tokenMap.delete(p.token));
@@ -1576,7 +1576,7 @@ wss.on("connection", (ws) => {
             me.connected = false;
             me.ws = null;
             tokenMap.delete(me.token);
-            addLog(room.game, [`𯚪 ${me.name} hat den Raum verlassen.`]);
+            addLog(room.game, [`🚪 ${me.name} hat den Raum verlassen.`]);
             joined = null;
             broadcast(room);
           } else {
@@ -1591,7 +1591,7 @@ wss.on("connection", (ws) => {
           if (!room || !joined) return;
           const text = String(msg.text || "").slice(0, 200);
           if (!text.trim() || !room.game) return;
-          addLog(room.game, [`𯒬 ${room.players[joined.idx].name}: ${text}`]);
+          addLog(room.game, [`💬 ${room.players[joined.idx].name}: ${text}`]);
           broadcast(room);
           break;
         }
@@ -1634,5 +1634,5 @@ setInterval(() => {
 }, 5 * 60 * 1000);
 
 server.listen(PORT, () => {
-  console.log(`𯎡 Carnival of Monsters Server läuft auf Port ${PORT}`);
+  console.log(`🎡 Carnival of Monsters Server läuft auf Port ${PORT}`);
 });
