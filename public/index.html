@@ -5,12 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>Carnival of Monsters – Online</title>
 <style>
-  /* ===== UI-Übernahme des Prototyps (v2.0) – dunkler Comic-Tisch · Feinschliff v3.2 ===== */
+  /* ===== UI-Übernahme des Prototyps (v2.0) – dunkler Comic-Tisch · Feinschliff v3.3 ===== */
   :root { --gold:#e9c766; --bg:#0f172a; --panel:#1e2a42; --line:#31405f; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html { height: 100%; }
   body { min-height: 100dvh; background:#070d1a; color:#e2e8f0; font-family:system-ui,-apple-system,sans-serif; overscroll-behavior:none; }
-  button { font-family: inherit; cursor: pointer; }
+  /* v3.3: Karten sind <button>s – ohne eigenes color setzten Android/PC die
+     Browser-Standardfarbe (schwarz) an, nur iOS erbt das Blau des Bodys.
+     color:inherit gleicht alle Geräte an den iOS-Look an. */
+  button { font-family: inherit; color: inherit; cursor: pointer; }
   input { font-family: inherit; }
   button:disabled { opacity: .5; cursor: default; }
 
@@ -126,7 +129,7 @@
   .handin { display:flex; align-items:flex-end; height:100%; }
   .endcap { flex:0 0 calc(50% - var(--cw)/2); height:1px; transition:width .35s; }
   .k { position:relative; flex:0 0 auto; height:var(--ch); width:var(--cw);
-       margin-right:calc(var(--cw)*-.45); border-radius:12px; border:4px solid var(--rc,#888); background:#101b2e; overflow:hidden; cursor:pointer; pointer-events:auto;
+       margin-right:calc(var(--cw)*-.45); border-radius:12px; border:4px solid var(--rc,#888); background:#101b2e; color:#e2e8f0; overflow:hidden; cursor:pointer; pointer-events:auto;
        container-type:size; transition:width .35s ease, height .35s ease, margin-right .35s ease;
        touch-action:none; -webkit-user-select:none; user-select:none; }
   .k:disabled { opacity:.45; }
