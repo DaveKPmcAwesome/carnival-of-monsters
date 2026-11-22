@@ -1295,7 +1295,9 @@ function broadcast(room) {
 // v3.5: App-Manifest, Service-Worker und die App-Icons liegen im public/-Ordner.
 // Whitelist mit festem MIME-Typ statt offenem Datei-Server: kein Verzeichnis-
 // Surfen, keine Pfad-Überraschungen. Manifest + Worker bewusst OHNE Cache
-// (Startup lädt immer die neueste Version), Icons dürfen eine Woche sitzen.
+// (Startup lädt immer die neueste Version); Icons nur 5 Minuten cachen, damit
+// Icon-Updates schnell auf allen Geräten ankommen (Lessons von Nov 2026: 7 Tage
+// waren zu lang - Handys behielten ein altes App-Icon auch nach Neuinstallation).
 const PWA_FILES = {
   "/manifest.webmanifest":        { file: "manifest.webmanifest",    type: "application/manifest+json" },
   "/sw.js":                       { file: "sw.js",                   type: "application/javascript" },
@@ -1330,7 +1332,7 @@ const server = http.createServer((req, res) => {
         if (err) { res.writeHead(404, { "Content-Type": "text/plain" }); res.end("not found"); return; }
         res.writeHead(200, {
           "Content-Type": pwa.type,
-          "Cache-Control": (pwa.file.endsWith(".png") ? "public, max-age=604800" : "no-cache"),
+          "Cache-Control": (pwa.file.endsWith(".png") ? "public, max-age=300" : "no-cache"),
         });
         res.end(data);
       });
