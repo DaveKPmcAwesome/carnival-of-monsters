@@ -9,6 +9,10 @@
 //   - Jeder Spieler erhält nur seine eigenen verdeckten Karten.
 //   - Gefahrenprobe: EIN Wurf mit 3 Würfeln, gilt für ALLE gleich
 //     (v3.1: den wirft der HOST für alle, als großer Kasten in der Mitte).
+//   - Saisonende (v3.2): Eingelagertes spielen jetzt ALLE GLEICHZEITIG – jeder
+//     tippt für sich „Fertig“, danach würfelt der Host wie gehabt für alle.
+//   - Verbindung (v3.2): Ein Client-Puls („ping“) bekommt IMMER den frischen
+//     Zustand zurück – stille Handy-Verbindungen bleiben nie auf altem Stand.
 //   - Schlusswertung (v3.0): der HOST blättert die Aufdeck-Schritte für ALLE
 //     gemeinsam weiter (g.revealStep) – niemand hängt im eigenen Tempo vor.
 // ============================================================================
@@ -379,7 +383,7 @@ function mkGame(playerNames, totalSeasons, mode) {
     totalSeasons,
     stack: [], openDiscards: [], awaitDiscard: null, awaitFresh: null,
     hands: [], seasonCard: null, bonusGiven: [],
-    turn: 0, roundIdx: 0, roundNo: 0, seTurn: 0,
+    turn: 0, roundIdx: 0, roundNo: 0, seTurn: 0, seDone: [],
     season: -1, phase: "draft", dice: null, reveal: null, show: null, revealStep: 0,
     gameId: ++gameIdCounter, fanfareId: 0, fanfare: null,
     log: [],
@@ -398,6 +402,7 @@ function dealSeason(g, season) {
   g.bonusGiven = g.players.map(() => false);
   g.turn = 0;
   g.seTurn = 0;
+  g.seDone = g.players.map(() => false);
   g.dice = null;
   g.players.forEach((p) => (p.seasonMonsters = []));
   g.players.forEach((_, pi) => {
@@ -434,7 +439,8 @@ function advanceDuo(g) {
   }
   g.log = g.log.slice(0, 40);
   if (g.hands.every((h) => h.length === 0)) {
-    g.log.unshift("📐 Alle Karten gewählt – jetzt darf noch Eingelagertes ausgespielt werden, dann wird gewürfelt!");
+    g.log.unshift("📐 Alle Karten gewählt – jetzt darf JEDER noch GLEICHZEITIG Eingelagertes ausspielen, dann wird gewürfelt!");
+    g.seDone = g.players.map(() => false);
     g.seTurn = 0;
     g.phase = "seasonEnd";
     return;
@@ -490,6 +496,10 @@ function handleSimPick(g, pIdx, msg) {
   if (!card) return { err: "Karte nicht gefunden." };
   if (g.hands[pIdx].length === 0) return { err: "Du hast keine Karten mehr." };
   const pick = { cardId: card.id, action: msg.action === "keep" ? "keep" : "play", realm: msg.realm || null, discardId: null };
+  // v3.2 (Nutzer-Wunsch): Events und Mitarbeitende werden NICHT eingelagert –
+  // sie müssen ausgespielt werden (Mitarbeiter notfalls per Kredit, immer möglich).
+  if (pick.action === "keep" && (card.type === "Event" || card.type === "Mitarbeiter"))
+    return { err: "Events und Mitarbeitende werden nicht eingelagert – spiel die Karte aus!" };
   // Spielbarkeit schon BEIM Wählen prüfen (verdeckte Wahl darf nicht ins Leere laufen)
   if (pick.action === "play") {
     if (card.type === "Ziel") return { err: "Ziele kannst du nur annehmen (einlagern), nicht ausspielen." };
@@ -539,7 +549,8 @@ function executeSimRound(g) {
   g.log.unshift("⚡ Alle haben gleichzeitig aufgedeckt!");
   g.sim = mkSimState(g);
   if (g.hands.every((h) => h.length === 0)) {
-    g.log.unshift("📐 Alle Karten gewählt – jetzt darf noch Eingelagertes ausgespielt werden, dann wird gewürfelt!");
+    g.log.unshift("📐 Alle Karten gewählt – jetzt darf JEDER noch GLEICHZEITIG Eingelagertes ausspielen, dann wird gewürfelt!");
+    g.seDone = g.players.map(() => false);
     g.seTurn = 0;
     g.phase = "seasonEnd";
   }
@@ -573,7 +584,8 @@ function endShowRound(g) {
   g.show = null;
   g.roundNo += 1;
   if (g.hands.every((h) => h.length === 0)) {
-    g.log.unshift("📐 Alle Karten gewählt – jetzt darf noch Eingelagertes ausgespielt werden, dann wird gewürfelt!");
+    g.log.unshift("📐 Alle Karten gewählt – jetzt darf JEDER noch GLEICHZEITIG Eingelagertes ausspielen, dann wird gewürfelt!");
+    g.seDone = g.players.map(() => false);
     g.seTurn = 0;
     g.phase = "seasonEnd";
   } else g.log.unshift("🔄 Neue Wahlrunde – alle wählen wieder verdeckt!");
@@ -628,7 +640,8 @@ function turboAdvance(g, pIdx) {
   }
   // Saisonende erst, wenn wirklich niemand mehr Karten hat (auch keine wartenden)
   if (g.phase === "draft" && g.hands.every((h) => h.length === 0) && g.incoming.every((a) => a.length === 0)) {
-    g.log.unshift("📐 Alle Karten gewählt – jetzt darf noch Eingelagertes ausgespielt werden, dann wird gewürfelt!");
+    g.log.unshift("📐 Alle Karten gewählt – jetzt darf JEDER noch GLEICHZEITIG Eingelagertes ausspielen, dann wird gewürfelt!");
+    g.seDone = g.players.map(() => false);
     g.seTurn = 0;
     g.phase = "seasonEnd";
   }
@@ -660,6 +673,8 @@ function applyHandPick(g, pIdx, pick) {
   const p = g.players[pIdx];
   const card = g.hands[pIdx].find((c) => c.id === pick.cardId);
   if (!card) return { err: "Karte nicht gefunden." };
+  if (pick.action === "keep" && (card.type === "Event" || card.type === "Mitarbeiter"))
+    return { err: "Events und Mitarbeitende werden nicht eingelagert – spiel die Karte aus!" };
   if (pick.action === "keep") {
     let cMsg = "";
     if (p.coins < 1) { p.coins += 3; p.credits += 1; cMsg = " · 🏦 Kredit (+3👑, −5 SP)"; }
@@ -703,7 +718,7 @@ function handlePick(g, pIdx, msg) {
     }
     // Eingelagertes darf jederzeit gespielt werden – in allen Tempos
   } else if (phase === "seasonEnd") {
-    if (g.seTurn !== pIdx) return { err: "Du bist gerade nicht dran." };
+    if (g.seDone[pIdx]) return { err: "Du bist mit dem Saisonende schon fertig – warte auf die anderen." };
   } else return { err: "Gerade nicht möglich." };
 
   if (!inHand) { // aus der Aufbewahrung (Draft ODER Saisonende)
@@ -768,7 +783,8 @@ function finishPick(g, pIdx) {
 
   // Saisonende erst, wenn ALLE Hände leer sind
   if (g.hands.every((h) => h.length === 0)) {
-    g.log.unshift("📐 Alle Karten gewählt – jetzt darf noch Eingelagertes ausgespielt werden, dann wird gewürfelt!");
+    g.log.unshift("📐 Alle Karten gewählt – jetzt darf JEDER noch GLEICHZEITIG Eingelagertes ausspielen, dann wird gewürfelt!");
+    g.seDone = g.players.map(() => false);
     g.seTurn = 0;
     g.phase = "seasonEnd";
     return;
@@ -811,15 +827,21 @@ function handleFreshDecide(g, pIdx, msg) {
 // „Fertig" im Saisonende → nächster Spieler; der LETZTE beendet die Runde.
 // v3.1: Der Wurf läuft jetzt NICHT mehr automatisch hier – alle landen auf dem
 // Gefahren-Schirm und der HOST würfelt den einen Wurf für alle (s.u.).
+// v3.2 (Nutzer-Wunsch): Das Ausspielen von Eingelagertem läuft am Saisonende
+// SIMULTAN – JEDER Spieler darf unabhängig von den anderen ausspielen und tippt
+// für sich „Fertig“. Erst wenn ALLE fertig sind, geht es gemeinsam weiter zur
+// Gefahrenprobe, wo der Host den einen Wurf für alle macht (v3.1, unverändert).
 function handleSeasonDone(g, pIdx) {
-  if (g.phase !== "seasonEnd" || g.seTurn !== pIdx) return { err: "Du bist gerade nicht dran." };
-  if (g.seTurn + 1 < g.players.length) {
-    g.seTurn += 1;
-    return { ok: true };
+  if (g.phase !== "seasonEnd") return { err: "Du bist gerade nicht dran." };
+  if (g.seDone[pIdx]) return { err: "Du bist mit dem Saisonende schon fertig." };
+  g.seDone[pIdx] = true;
+  g.log.unshift(`✅ ${g.players[pIdx].name} ist fertig.`);
+  if (g.seDone.every(Boolean)) {
+    g.phase = "danger";
+    g.dice = null;
+    g.log.unshift("🎲 Alle sind bereit – der Host würfelt die Gefahrenprobe für alle!");
   }
-  g.phase = "danger";
-  g.dice = null;
-  g.log.unshift("🎲 Alle sind bereit – der Host würfelt die Gefahrenprobe für alle!");
+  g.log = g.log.slice(0, 40);
   return { ok: true };
 }
 
@@ -1031,9 +1053,9 @@ function botPickFrom(g, i, cards, needDiscard) {
   let pick = null;
   if (ziel && (!bestPlay || sc(bestPlay) < 14)) pick = { card: ziel, action: "keep" };      // Ziel annehmen
   else if (bestPlay && sc(bestPlay) >= 10) pick = { card: bestPlay, action: "play" };        // gern ausspielen
-  else if (bestCard && sc(bestCard) >= 18 && cards.length > 1) pick = { card: bestCard, action: "keep" }; // Fettes für später einlagern
+  else if (bestCard && sc(bestCard) >= 18 && cards.length > 1 && bestCard.type !== "Event" && bestCard.type !== "Mitarbeiter") pick = { card: bestCard, action: "keep" }; // Fettes für später einlagern
   else if (bestPlay) pick = { card: bestPlay, action: "play" };
-  else pick = { card: bestCard, action: "keep" };                                           // muss ja eine Karte nehmen
+  else pick = bestCard.type === "Event" || bestCard.type === "Mitarbeiter" ? { card: bestCard, action: "play" } : { card: bestCard, action: "keep" }; // v3.2: Events/Mitarbeiter immer ausspielen                                           // muss ja eine Karte nehmen
   const realm = pick.card.type === "Mitarbeiter" && pick.card.kind === "land" ? botLandRealm(g, p) : null;
   const msg = { cardId: pick.card.id, action: pick.action, realm, discardId: null };
   if (needDiscard) {
@@ -1079,7 +1101,7 @@ function botPendingAction(room) {
     // 1) Zieh-Schlange zuerst: gezogene Karten entscheiden, sonst geht nichts weiter
     if ((p.freshDraw || []).some((c) => c.type !== "Ziel") && (g.phase === "draft" || g.phase === "seasonEnd")) return { i, kind: "fresh" };
     // 2) Saisonende: erst Aufbewahrung ausspielen, dann „Fertig“
-    if (g.phase === "seasonEnd" && g.seTurn === i) return { i, kind: "seasonEnd" };
+    if (g.phase === "seasonEnd" && !g.seDone[i]) return { i, kind: "seasonEnd" };
     if (g.phase !== "draft") continue;
     // 3) Draft je nach Modus
     if (g.mode === "turbo") {
@@ -1218,9 +1240,9 @@ function viewFor(room, idx) {
     seasonPool: g.seasonPool,
     seasonName: SEASON_NAMES[g.seasonCard], seasonHint: seasonHint(g.seasonCard),
     bonusGiven: g.bonusGiven[idx],
-    turn: g.turn, seTurn: g.seTurn,
+    turn: g.turn, seDone: (g.seDone || []).slice(),
     isYourTurn: g.phase === "draft" && g.turn === idx && me.connected,
-    isYourSeasonTurn: g.phase === "seasonEnd" && g.seTurn === idx,
+    isYourSeasonTurn: g.phase === "seasonEnd" && !(g.seDone || [])[idx],
     awaitDiscard: g.awaitDiscard === null || g.awaitDiscard === undefined ? -1 : g.awaitDiscard,
     stackCount: (g.stack || []).length,
     openDiscards: g.openDiscards || [],
@@ -1451,6 +1473,15 @@ wss.on("connection", (ws) => {
           const res = handleSeasonDone(room.game, joined.idx);
           if (res && res.err) reply({ t: "error", msg: res.err });
           else broadcast(room);
+          break;
+        }
+        // 📡 v3.2 VERBINDUNGS-PULS: Die Antwort ist IMMER der frische Gesamt-
+        // zustand. Fängt stille Verbindungen ab (Handy war im Hintergrund): Der
+        // Client pulst alle paar Sekunden – bleibt die Antwort aus, verbindet er
+        // sich neu und holt den Spielstand über resume.
+        case "ping": {
+          if (!room || !joined) { reply({ t: "pong" }); break; }
+          sendTo(ws, viewFor(room, joined.idx));
           break;
         }
         case "next": {
