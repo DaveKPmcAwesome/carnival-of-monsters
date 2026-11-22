@@ -1211,7 +1211,6 @@ function publicPlayer(p, connected) {
   };
 }
 
-
 // Persönliche Sicht: NUR eigene Hand, Aufbewahrung und Ziele!
 function viewFor(room, idx) {
   const g = room.game;
@@ -1631,4 +1630,3 @@ setInterval(() => {
 server.listen(PORT, () => {
   console.log(`🎡 Carnival of Monsters Server läuft auf Port ${PORT}`);
 });
-

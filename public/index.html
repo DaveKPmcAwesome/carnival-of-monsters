@@ -920,7 +920,6 @@ function renderLobby(s) {
         <p class="muted" style="margin:6px 0 0;font-size:0.75rem">Bots spielen ganz normal mit – gut, um zu zweit eine größere Runde zu spielen!</p>` : ""}
       </div>
       ${s.isHost ? `<div class="card-panel" style="max-width:420px;width:100%">
-
         <div class="label">Saisonanzahl (gilt für alle)</div>
         <div style="display:flex;gap:8px">
           <button class="${(s.seasons || 4) === 4 ? "btn-amber" : "btn-ghost"}" style="flex:1;font-size:0.9rem" onclick="setSeasons(4)">4 Saisons</button>
@@ -1706,4 +1705,3 @@ if ("serviceWorker" in navigator) window.addEventListener("load", () => navigato
 </script>
 </body>
 </html>
-

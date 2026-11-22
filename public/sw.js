@@ -11,4 +11,3 @@ self.addEventListener("activate", (e) => e.waitUntil(self.clients.claim()));
 self.addEventListener("fetch", (e) => {
   /* absichtlich leer: kein respondWith, kein Cache – reine Passstrecke */
 });
-
