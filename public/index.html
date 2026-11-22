@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>Carnival of Monsters – Online</title>
 <style>
-  /* ===== UI-Übernahme des Prototyps (v2.0) – dunkler Comic-Tisch · Feinschliff v3.1 ===== */
+  /* ===== UI-Übernahme des Prototyps (v2.0) – dunkler Comic-Tisch · Feinschliff v3.2 ===== */
   :root { --gold:#e9c766; --bg:#0f172a; --panel:#1e2a42; --line:#31405f; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html { height: 100%; }
@@ -308,6 +308,7 @@ let selectedFrom = null;    // "hand" | "stored"
 let staffDetail = null;    // {pi, name}
 let myName = "";
 let manualClose = false;
+let lastMsg = 0;              // 📡 v3.2: letzter Empfangszeitpunkt (Watchdog gegen stille Verbindungen)
 let menagerieOpen = false;  // eigene Menagerie aufgeklappt? (nur für dich sichtbar)
 let goalsOpen = false;      // eigene Ziele aufgeklappt?
 let simSel = null;          // ⚡ Schnell: verdeckte Wahl {cardId, action, realm}
@@ -328,6 +329,7 @@ function connect() {
   const proto = location.protocol === "https:" ? "wss://" : "ws://";
   ws = new WebSocket(proto + location.host);
   ws.onopen = () => {
+    lastMsg = Date.now();
     statusEl.style.display = "none";
     const token = localStorage.getItem("com-token");
     if (token) send({ t: "resume", token });
@@ -335,6 +337,7 @@ function connect() {
   };
   ws.onmessage = (ev) => {
     let msg; try { msg = JSON.parse(ev.data); } catch { return; }
+    lastMsg = Date.now();
     if (msg.t === "state") {
       state = msg;
       // 🚨 Fanfare: neues FETTES Monster → großes TAMTAM (jede Fanfare nur 1× zeigen)
@@ -368,6 +371,26 @@ function connect() {
     if (!manualClose) setTimeout(connect, 2000);
   };
 }
+
+// 📡 v3.2 VERBINDUNGS-PULS: Manche Handys frieren die WebSocket im Hintergrund
+// still ein – die Seite zeigte dann einen veralteten Stand und „aktualisiert
+// nicht automatisch“, erst ein Neuladen half. Jetzt pulst der Client alle paar
+// Sekunden und bekommt als Antwort immer den frischen Spielstand. Bleibt die
+// Antwort länger aus, wird die Verbindung kraftgeschlossen und automatisch neu
+// aufgebaut (resume holt den Stand). Beim Zurückkehren in die App (Tab wieder
+// sichtbar / Handy entsperrt) wird sofort gepulst oder neu verbunden.
+setInterval(() => {
+  if (!ws || ws.readyState !== 1) return;
+  if (lastMsg && Date.now() - lastMsg > 25000) { try { ws.close(); } catch (e) {} return; }
+  send({ t: "ping" });
+}, 8000);
+const onVisibleAgain = () => {
+  if (!ws || ws.readyState !== 1) { connect(); return; }
+  if (lastMsg && Date.now() - lastMsg > 30000) { try { ws.close(); } catch (e) {} return; }
+  send({ t: "ping" });
+};
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") onVisibleAgain(); });
+window.addEventListener("pageshow", (ev) => { if (ev.persisted) onVisibleAgain(); });
 
 // ---------------------------- Bausteine -------------------------------------
 
@@ -605,8 +628,8 @@ function turnBanner(s) {
   }
   if (s.phase === "seasonEnd") {
     if (s.isYourSeasonTurn) return `<div class="banner your">📐 Du darfst noch Eingelagertes ausspielen!</div>`;
-    const cur = s.players[s.seTurn];
-    return `<div class="banner wait">⏳ ${esc(cur.name)} spielt noch Eingelagertes…</div>`;
+    return `<div class="banner wait">⏳ Warte, bis alle tippen „Fertig“ – gleich wird gewürfelt…</div>`
+      + `<div class="chips" style="margin-top:6px;justify-content:center">${s.players.map((p, i) => `<span class="chip">${(s.seDone || [])[i] ? "✅" : "⏳"} ${esc(p.name)}</span>`).join("")}</div>`;
   }
   return "";
 }
@@ -713,9 +736,11 @@ window.selectCard = (id, from) => {
 
 // 📐 Saisonende: der „Fertig“-Knopf sitzt UNTEN in der Aktionsleiste (Nutzer-Wunsch) –
 // immer am unteren Rand, wie sonst „✅ Ausspielen“.
+// v3.2: Am Saisonende ist niemand „dran“ – alle spielen GLEICHZEITIG ihr
+// Eingelagertes aus und jeder tippt für sich „Fertig“. Erst wenn alle fertig
+// sind, erscheint die Gefahrenprobe (v3.1: der Host würfelt einmal für alle).
 function seasonEndButtons(s) {
-  return `<button class="${s.seTurn + 1 < s.players.length ? "btn-amber" : "btn-red"}" onclick="seasonDone()">
-    ${s.seTurn + 1 < s.players.length ? `✅ Fertig – weiter an ${esc(s.players[s.seTurn + 1].name)}` : "🎲 Jetzt einmal für alle würfeln!"}</button>`;
+  return `<button class="btn-amber" onclick="seasonDone()">✅ Fertig – nichts mehr ausspielen</button>`;
 }
 
 
@@ -815,7 +840,8 @@ function renderActionBar() {
     const playable = cardPlayable(selected, me);
     inner = `<button class="btn-green" onclick="${onPlay}" ${playable && !staged ? "" : "disabled"}>✅ Ausspielen${selected.type === "Mitarbeiter" ? ` (−${selected.cost} 👑)` : ""}</button>`;
     // v2.6: Bei eingelagerten Karten ergibt „Einlagern“ keinen Sinn – nur für Handkarten.
-    if (inHand) inner += `<button class="btn-indigo" onclick="${onKeep}" ${state.phase === "draft" && !staged ? "" : "disabled"}>📥 Einlagern (−1 👑)</button>`;
+    // v3.2 (Nutzer-Wunsch): Events und Mitarbeitende werden NICHT eingelagert – sie müssen ausgespielt werden.
+    if (inHand && selected.type !== "Event" && selected.type !== "Mitarbeiter") inner += `<button class="btn-indigo" onclick="${onKeep}" ${state.phase === "draft" && !staged ? "" : "disabled"}>📥 Einlagern (−1 👑)</button>`;
   }
   const stCard = (!selected && staged && simSel) ? ((state.hand || []).find((c) => c.id === simSel.cardId) || null) : null;
   const nc = selected || stCard;
@@ -1041,7 +1067,10 @@ let fanWinBound = false;
 function saisonHeadHTML(s) {
   const rc = realmColor(s.seasonCard);
   const emoji = s.seasonCard === "gefahr" ? "🎲" : realmInfo(s.seasonCard).emoji;
-  const ccw = s.season % 2 === 0; // Richtung wechselt je Saison (wie im Server)
+  // v3.2-Fix: In GERADE Saisons gehen die Karten zum LINKEN Nachbarn (Spieler
+  // me+1 sitzt auf dem Bildschirm links) = im UHRZEIGERSINN um den Tisch. Der
+  // Pfeil lief bisher genau verkehrt herum – jetzt zeigt er mit dem Kartenstrom.
+  const ccw = s.season % 2 === 1;
   const pool = s.seasonPool || [];
   const reihen = pool.length ? pool : [];
   let lamps = "";
@@ -1071,7 +1100,7 @@ function statusFor(s, i) {
   if (!p.connected && s.phase === "draft") return "📴 Verbindung weg…";
   if (s.phase === "danger") return "🎲 Gefahrenprobe";
   if (s.phase === "reveal") return "🏁 Wertung";
-  if (s.phase === "seasonEnd") return s.seTurn === i ? "📐 spielt Eingelagertes" : "✅ fertig";
+  if (s.phase === "seasonEnd") return (s.seDone || [])[i] ? "✅ fertig" : "📐 spielt noch";
   if (s.mode === "schnell" || s.mode === "langsam") {
     if (s.showTurn >= 0) return s.showTurn === i ? "🔍 deckt gerade auf" : (s.simReady && s.simReady[i] ? "✅" : "⏳");
     return s.simReady && s.simReady[i] ? "✅ hat gewählt" : "⏳ wählt verdeckt…";
@@ -1606,7 +1635,8 @@ function mitteHTML(s) {
     html += `<div class="card-panel"><div class="banner your" style="margin:0 0 8px">📐 Alle Karten gewählt!</div>
       <p class="muted center">${s.isYourSeasonTurn
         ? "Spiele noch Eingelagertes aus (📥 unten links) – danach tippe unten auf „✅ Fertig“. Am Ende wird <b>einmal für alle</b> gewürfelt."
-        : "Warte kurz, bis alle fertig sind…"}</p></div>`;
+        : "Du bist fertig – die anderen spielen noch ihre eingelagerten Karten…"}</p>
+      <div class="chips" style="justify-content:center">${s.players.map((p, i) => `<span class="chip">${(s.seDone || [])[i] ? "✅" : "⏳"} ${esc(p.name)}</span>`).join("")}</div></div>`;
   }
   if (s.phase === "danger") html += renderDanger(s);
   if (s.phase === "reveal") html += renderReveal(s);
