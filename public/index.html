@@ -15,7 +15,7 @@
 <meta name="apple-mobile-web-app-title" content="Carnival of Monsters" />
 <title>Carnival of Monsters – Online</title>
 <style>
-  /* ===== UI-Übernahme des Prototyps (v2.0) – dunkler Comic-Tisch · Feinschliff v3.9 ===== */
+  /* ===== UI-Übernahme des Prototyps (v2.0) – dunkler Comic-Tisch · Feinschliff v3.10 ===== */
   :root { --gold:#e9c766; --bg:#0f172a; --panel:#1e2a42; --line:#31405f; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html { height: 100%; }
@@ -51,7 +51,9 @@
   /* ✨ v3.8 Animationen: Karten-Einsprung-Flip, Land-Leuchten, Kronen-Pop, Münzflug
      ✨ v3.9: Jägermarker-Flug + Kronen-Abgang (Bezahlen) + Zieh-Karten liegen erst
      VERDECKT („falsch herum“) und werden per Tipp umgedreht. Die Handy-Einstellung
-     „Animationen reduzieren“ wird absichtlich IGNORIERT (Nutzer-Wunsch). */
+     „Animationen reduzieren“ wird absichtlich IGNORIERT (Nutzer-Wunsch).
+     ✨ v3.10: Aufdeck-Flip langsamer (.95s), Rückseite = Fragezeichen, TAMTAM-Konfetti,
+     Spiel-Flash (eigene gespielte Karte kurz in der MITTE) + Pop-in im Mitspieler-Panel. */
   @keyframes fx-flip { 0% { transform: rotateY(90deg) translateY(16px); opacity: 0; } 65% { transform: rotateY(-10deg); opacity: 1; } 100% { transform: none; opacity: 1; } }
   .k.flipneu { animation: fx-flip .55s cubic-bezier(.2,.7,.25,1); }
   @keyframes fx-landneu { 0% { transform: scale(.3); box-shadow: 0 0 0 0 rgba(233,199,102,0); } 30% { transform: scale(1.85); box-shadow: 0 0 16px 4px rgba(233,199,102,.95); } 100% { transform: scale(1); box-shadow: 0 0 8px 0 rgba(233,199,102,0); } }
@@ -64,8 +66,20 @@
   /* 🃏 v3.9: Rückseite der verdeckt gezogenen Karten */
   .k.rueck { background: linear-gradient(165deg, #232649 0%, #161a35 55%, #0d1026 100%); }
   .k.rueck .rueckm { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: calc(var(--ch)*.06); }
-  .k.rueck .rueckm .rc1 { font-size: calc(var(--ch)*.30); }
-  .k.rueck .rueckm .rc2 { font-size: clamp(9px, calc(var(--ch)*.075), 13px); font-weight: 800; letter-spacing: .14em; color: var(--gold); opacity: .75; }
+  /* v3.10: Rückseite = großes Fragezeichen (Nutzer-Wunsch) */
+  .k.rueck .rueckm .rc1 { font-size: calc(var(--ch)*.52); font-weight: 900; color: var(--gold); line-height: 1; text-shadow: 0 0 18px rgba(233,199,102,.55), 0 2px 4px #0009; }
+  /* v3.10: Aufdeck-Flip – bewusst LANGSAM (Nutzer-Wunsch) mit sanftem Überschwingen */
+  @keyframes fx-deckflip { 0% { transform: rotateY(90deg) translateY(10px) scale(.92); opacity: 0; } 70% { transform: rotateY(-12deg) scale(1.04); opacity: 1; } 100% { transform: none; opacity: 1; } }
+  .k.flipdeck { animation: fx-deckflip .95s cubic-bezier(.2,.75,.3,1.05); }
+  /* v3.10: Frisch gespielte Karten ploppen auf (Mitspieler-Panels + eigener Drawer) */
+  @keyframes fx-pop { 0% { transform: scale(.2); opacity: 0; } 55% { transform: scale(1.22); opacity: 1; box-shadow: 0 0 14px 3px rgba(233,199,102,.85); } 100% { transform: scale(1); opacity: 1; } }
+  .mini.neu, .stf.neu { animation: fx-pop .7s cubic-bezier(.2,.7,.3,1); }
+  /* v3.10: Eigene gespielte Karte blitzt kurz groß in der Mitte auf */
+  .playflash { position: fixed; inset: 0; z-index: 150; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+  .playflash .k { animation: fx-playin 1.15s ease forwards; }
+  @keyframes fx-playin { 0% { transform: scale(.35) rotateY(70deg); opacity: 0; } 18% { transform: scale(1.05) rotateY(0deg); opacity: 1; } 72% { transform: scale(1); opacity: 1; } 100% { transform: scale(.92); opacity: 0; } }
+  /* v3.10: Konfetti für das TAMTAM */
+  .confetti { position: fixed; top: -20px; z-index: 240; pointer-events: none; border-radius: 2px; opacity: .95; }
   .menu { width:36px; height:36px; border-radius:50%; background:var(--panel); display:flex; align-items:center; justify-content:center; color:#94a3b8; font-size:1.15rem; flex:0 0 36px; cursor:pointer; }
 
   /* ---- Drei-Punkte-Optionen ---- */
@@ -286,7 +300,8 @@
 
   /* ---- TAMTAM-Fanfare für FETTE Monster ---- */
   #fanfare { position:fixed; inset:0; z-index:200; background:rgba(15,23,42,.72); display:flex; align-items:center; justify-content:center; }
-  #fanfare .fanbox { background:linear-gradient(160deg,#7c2d12,#b91c1c); color:#fff; text-align:center; padding:22px 30px; border-radius:18px; box-shadow:0 20px 60px #000d; }
+  #fanfare .fanbox { background:linear-gradient(160deg,#7c2d12,#b91c1c); color:#fff; text-align:center; padding:22px 30px; border-radius:18px; box-shadow:0 20px 60px #000d, 0 0 46px rgba(233,199,102,.35); border:2px solid #e9c766; animation: fx-fanpulse 1.1s ease-in-out infinite alternate; }
+  @keyframes fx-fanpulse { from { transform: scale(1); } to { transform: scale(1.045); } }
   #fanfare .fanbell { font-size:1.15rem; font-weight:700; letter-spacing:2px; color:#fde68a; }
   #fanfare .fantitle { font-size:2rem; font-weight:800; margin:10px 0 4px; }
   #fanfare .fansub { font-size:1rem; }
@@ -726,7 +741,35 @@ function showFanfare(f) {
   el.onclick = () => el.remove();
   document.body.appendChild(el);
   fanfareDing();
+  confettiBurst(); // 🎊 v3.10: Tamtam mit Konfetti
   setTimeout(() => { if (document.getElementById("fanfare") === el) el.remove(); }, 6000);
+}
+// 🎊 v3.10: Konfetti-Hagel über dem TAMTAM-Banner (Web Animations API, kein Asset).
+function confettiBurst() {
+  const colors = ["#e9c766", "#f59e0b", "#dc2626", "#3f9ac2", "#7c5fb8", "#fca5a5", "#fff"];
+  const n = 90;
+  for (let j = 0; j < n; j++) {
+    const c = document.createElement("div");
+    c.className = "confetti";
+    c.style.width = (5 + Math.random() * 5) + "px";
+    c.style.height = (8 + Math.random() * 8) + "px";
+    c.style.left = (Math.random() * 100) + "vw";
+    c.style.background = colors[j % colors.length];
+    document.body.appendChild(c);
+    const drift = (Math.random() - 0.5) * 160;
+    const spin = (Math.random() - 0.5) * 900;
+    const iv = 1500 + Math.random() * 1600;
+    const anim = c.animate(
+      [
+        { transform: "translate(0,-20px) rotate(0deg)", opacity: 1 },
+        { transform: "translate(" + drift + "px, 55vh) rotate(" + (spin * 0.55) + "deg)", opacity: 1, offset: 0.55 },
+        { transform: "translate(" + (drift * 1.35) + "px, 108vh) rotate(" + spin + "deg)", opacity: 0.75 },
+      ],
+      { duration: iv, delay: Math.random() * 350, easing: "cubic-bezier(.25,.4,.5,1)" }
+    );
+    anim.onfinish = () => { if (c.parentNode) c.parentNode.removeChild(c); };
+    setTimeout(() => { if (c.parentNode) c.parentNode.removeChild(c); }, iv + 700);
+  }
 }
 function fanfareDing() {
   try {
@@ -1147,9 +1190,9 @@ function spanelHTML(s, pi, links) {
     for (let k = 0; k < occ; k++) dots += `<i class="dot off" style="background:${realmOffColor(r.id)}"></i>`;
     return `<div class="lrow">${dots}</div>`;
   }).join("");
-  const mons = (p.seasonMonsters || []).map((m) =>
-    `<div class="mini" style="--rc:${realmColor(m.realm)}"><div class="me">${m.realm === "traum" ? "🌙" : realmInfo(m.realm).emoji}</div>${esc(m.name)}<div class="st">Lv ${m.cost} · ⭐${m.points}${m.danger ? " ⚠️" + m.danger : ""}</div></div>`).join("");
-  const stf = (p.staff || []).map((x) => `<span class="stf" onclick="event.stopPropagation();toggleStaff(${pi},'${esc(x.name)}')">${esc(x.name)}</span>`).join("");
+  const mons = (p.seasonMonsters || []).map((m, mi) =>
+    `<div class="mini${FX && FX.newMon && FX.newMon[pi] && mi >= (p.seasonMonsters || []).length - FX.newMon[pi] ? " neu" : ""}" style="--rc:${realmColor(m.realm)}"><div class="me">${m.realm === "traum" ? "🌙" : realmInfo(m.realm).emoji}</div>${esc(m.name)}<div class="st">Lv ${m.cost} · ⭐${m.points}${m.danger ? " ⚠️" + m.danger : ""}</div></div>`).join("");
+  const stf = (p.staff || []).map((x, xi) => `<span class="stf${FX && FX.newStf && FX.newStf[pi] && xi >= (p.staff || []).length - FX.newStf[pi] ? " neu" : ""}" onclick="event.stopPropagation();toggleStaff(${pi},'${esc(x.name)}')">${esc(x.name)}</span>`).join("");
   const detail = staffDetail && staffDetail.pi === pi ? (() => {
     const st = (p.staff || []).find((x) => x.name === staffDetail.name);
     return st ? `<div class="stfdetail"><b>👷 ${esc(st.name)}</b> (−${st.cost} 👑): ${esc(originalCardText({ type: "Mitarbeiter", name: st.name, text: st.text }))}</div>` : "";
@@ -1509,9 +1552,9 @@ function drawerMenHTML(s) {
 // aufklappbar. Exakt dieselben Kacheln/Chips wie in den Mitspieler-Panels.
 function drawerEigenHTML(s) {
   const me = s.players[s.you];
-  const mons = (me.seasonMonsters || []).map((m) =>
-    `<div class="mini" style="--rc:${realmColor(m.realm)}"><div class="me">${m.realm === "traum" ? "🌙" : realmInfo(m.realm).emoji}</div>${esc(m.name)}<div class="st">Lv ${m.cost} · ⭐${m.points}${m.danger ? " ⚠️" + m.danger : ""}</div></div>`).join("");
-  const stf = (me.staff || []).map((x) => `<span class="stf" onclick="event.stopPropagation();toggleStaff(${s.you},'${esc(x.name)}')">${esc(x.name)}</span>`).join("");
+  const mons = (me.seasonMonsters || []).map((m, mi) =>
+    `<div class="mini${FX && FX.newMon && FX.newMon[s.you] && mi >= (me.seasonMonsters || []).length - FX.newMon[s.you] ? " neu" : ""}" style="--rc:${realmColor(m.realm)}"><div class="me">${m.realm === "traum" ? "🌙" : realmInfo(m.realm).emoji}</div>${esc(m.name)}<div class="st">Lv ${m.cost} · ⭐${m.points}${m.danger ? " ⚠️" + m.danger : ""}</div></div>`).join("");
+  const stf = (me.staff || []).map((x, xi) => `<span class="stf${FX && FX.newStf && FX.newStf[s.you] && xi >= (me.staff || []).length - FX.newStf[s.you] ? " neu" : ""}" onclick="event.stopPropagation();toggleStaff(${s.you},'${esc(x.name)}')">${esc(x.name)}</span>`).join("");
   if (!mons && !stf) return "";
   const detail = staffDetail && staffDetail.pi === s.you ? (() => {
     const st = (me.staff || []).find((x) => x.name === staffDetail.name);
@@ -1606,14 +1649,14 @@ function drawerFreshHTML(s) {
 
 // 🃏 v3.9: Rückseiten-Karte („falsch herum“) – ein Tipp dreht sie um.
 function rueckCardHTML(c, istAktuell) {
-  return `<button class="k rueck${istAktuell ? " sel" : ""}" style="--rc:#2b3860" data-fid="${c.id}" onclick="event.stopPropagation();freshAufdecken(${c.id})"><div class="rueckm"><div class="rc1">🎪</div><div class="rc2">CARNIVAL</div></div></button>`;
+  return `<button class="k rueck${istAktuell ? " sel" : ""}" style="--rc:#2b3860" data-fid="${c.id}" onclick="event.stopPropagation();freshAufdecken(${c.id})"><div class="rueckm"><div class="rc1">?</div></div></button>`;
 }
 function freshAufdecken(id) {
   if (!freshUp[id]) freshUp[id] = true;
   render();
   // Umdreh-Animation: die frisch aufgedeckte Karte flippt einmal ins Bild.
   const el = document.querySelector(`#dFresh .k[data-fid="${id}"]`);
-  if (el) el.classList.add("flipneu");
+  if (el) el.classList.add("flipdeck"); // v3.10: der LANGSAME Aufdeck-Flip
 }
 
 function drawerChatHTML(s) {
@@ -1751,14 +1794,41 @@ function fxSnapshot(s) {
     coins: s.players.map((p) => p.coins || 0),
     hunters: s.players.map((p) => p.hunters || 0),
     lands: s.players.map((p) => Object.assign({}, p.lands)),
+    monN: s.players.map((p) => (p.seasonMonsters || []).length),
+    stfN: s.players.map((p) => (p.staff || []).length),
+    logHead: (s.log && s.log[0]) || "",
     handLen: (s.hand || []).length,
   };
 }
 function computeFx(prev, s) {
-  const fx = { myCoinGain: 0, coinGain: [], coinLoss: [], huntGain: [], landNeu: [], freshNeu: [], handAnkunft: false };
+  const fx = { myCoinGain: 0, coinGain: [], coinLoss: [], huntGain: [], landNeu: [], freshNeu: [], handAnkunft: false, newMon: [], newStf: [], myEvent: null };
   fx.freshNeu = (s.freshDraw || []).filter((c) => !window._seenFresh || !window._seenFresh[c.id]).map((c) => c.id);
   if (prev && s && Array.isArray(s.players) && prev.coins.length === s.players.length && prev.you === s.you) {
     if (prev.handLen === 0 && (s.hand || []).length > 0 && s.phase === "draft") fx.handAnkunft = true;
+    // ✨ v3.10: Gespielte Monster/Mitarbeiter – auch über den draft→seasonEnd-
+    // Übergang (dort darf noch Eingelagertes gespielt werden). Beim Saison-Reset
+    // schrumpfen die Arrays, Deltas sind negativ → kein Fehl-Alarm.
+    if (prev.phase === s.phase || (prev.phase === "draft" && s.phase === "seasonEnd")) {
+      s.players.forEach((p, i) => {
+        const dm = (p.seasonMonsters || []).length - (prev.monN[i] || 0);
+        const ds = (p.staff || []).length - (prev.stfN[i] || 0);
+        if (dm > 0) fx.newMon[i] = dm;
+        if (ds > 0) fx.newStf[i] = ds;
+      });
+    }
+    // ✨ v3.10: Eigene EVENT-Plays über den Log erkennen (Events hinterlassen
+    // keine öffentliche Kartenliste). Log ist auf 40 Zeilen gedeckelt.
+    if (Array.isArray(s.log) && s.log.length && prev.logHead && s.log[0] !== prev.logHead) {
+      const myName = (s.players[s.you] || {}).name;
+      const stop = s.log.indexOf(prev.logHead);
+      const newLines = s.log.slice(0, stop > 0 ? stop : 3);
+      newLines.forEach((l) => {
+        if (myName && l.startsWith(myName + ": ")) {
+          const m = l.match(/Event „([^"]+)"/);
+          if (m && !fx.myEvent) fx.myEvent = m[1];
+        }
+      });
+    }
     // Münz-/Land-Effekte nur innerhalb einer Phase: Übergänge (Saison-Ende,
     // neue Runde, Aufräumen) setzen Punkte zurück, das wäre irreführendes Flackern.
     if (prev.phase === s.phase) {
@@ -1791,6 +1861,31 @@ function fxAfter(fx, s) {
     const loss = fx.coinLoss[i] || 0;
     if (loss > 0) flySpend(Math.min(loss, i === s.you ? 6 : 3), i === s.you ? "crownMe" : "coinP" + i);
   });
+  // ✨ v3.10: Die EBEN selbst gespielte Karte blitzt kurz in der Mitte auf
+  // (Land-Punkte haben schon ihr Leuchten, Ziele bleiben geheim).
+  const me = s.players[s.you] || {};
+  if (fx.newMon && fx.newMon[s.you]) {
+    const m = (me.seasonMonsters || []).slice(-1)[0];
+    if (m) showPlayFlash(Object.assign({ id: -1, type: "Monster" }, m));
+  } else if (fx.newStf && fx.newStf[s.you]) {
+    const st = (me.staff || []).slice(-1)[0];
+    if (st) showPlayFlash(Object.assign({ id: -1, type: "Mitarbeiter" }, st));
+  } else if (fx.myEvent) {
+    showPlayFlash({ id: -1, type: "Event", name: fx.myEvent });
+  }
+}
+// ✨ v3.10: Eigene gespielte Karte groß in der Mitte – dreht sich rein,
+// leuchtet kurz golden auf und verblasst (nicht blockierend, pointer-events:none).
+function showPlayFlash(cardish) {
+  const old = document.getElementById("playflash");
+  if (old) old.remove();
+  const el = document.createElement("div");
+  el.className = "playflash";
+  el.id = "playflash";
+  const groesse = "min(40dvh,310px)";
+  el.innerHTML = `<div style="--ch:${groesse}; --cw:calc(${groesse}*.667); filter: drop-shadow(0 14px 30px #000c) drop-shadow(0 0 22px rgba(233,199,102,.4));">${fanCardHTML(cardish, { noClick: true })}</div>`;
+  document.body.appendChild(el);
+  setTimeout(() => { if (document.getElementById("playflash") === el) el.remove(); }, 1350);
 }
 function flyBadges(n, targetId, cls, inner, weg) {
   // ✨ v3.9: Generalisierter Effekt-Flug – Münzen hin (weg=false), Münzen weg
