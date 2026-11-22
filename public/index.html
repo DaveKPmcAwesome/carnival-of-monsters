@@ -48,6 +48,14 @@
   .lamp.on { background:var(--lc,#e9c766); border-color:transparent; box-shadow:0 0 6px #0008; }
   .lamp.cur { background:var(--lc,#e9c766); border-color:#fff8; box-shadow:0 0 11px var(--lc,#e9c766); animation:cm-pulse 1.5s infinite; }
   @keyframes cm-pulse { 50% { box-shadow:0 0 4px var(--lc,#e9c766); } }
+  /* ✨ v3.8 Animationen: Karten-Einsprung-Flip, Land-Leuchten, Kronen-Pop, Münzflug */
+  @keyframes fx-flip { 0% { transform: rotateY(90deg) translateY(16px); opacity: 0; } 65% { transform: rotateY(-10deg); opacity: 1; } 100% { transform: none; opacity: 1; } }
+  .k.flipneu { animation: fx-flip .55s cubic-bezier(.2,.7,.25,1); }
+  @keyframes fx-landneu { 0% { transform: scale(.3); box-shadow: 0 0 0 0 rgba(233,199,102,0); } 30% { transform: scale(1.85); box-shadow: 0 0 16px 4px rgba(233,199,102,.95); } 100% { transform: scale(1); box-shadow: 0 0 8px 0 rgba(233,199,102,0); } }
+  .dot.neu { animation: fx-landneu 1.4s ease-out; }
+  @keyframes fx-coinpop { 0% { transform: scale(1); } 40% { transform: scale(1.45); color:#fcd34d; } 100% { transform: scale(1); } }
+  .kenn span.cpop { animation: fx-coinpop .9s ease; }
+  .coinfly { position: fixed; z-index: 280; width: 20px; height: 20px; border-radius: 50%; background: radial-gradient(circle at 32% 30%, #fde68a 0%, #e9c766 55%, #92400e 100%); box-shadow: 0 2px 6px #000a; pointer-events: none; opacity: 0; }
   .menu { width:36px; height:36px; border-radius:50%; background:var(--panel); display:flex; align-items:center; justify-content:center; color:#94a3b8; font-size:1.15rem; flex:0 0 36px; cursor:pointer; }
 
   /* ---- Drei-Punkte-Optionen ---- */
@@ -326,6 +334,8 @@ let menagerieOpen = false;  // eigene Menagerie aufgeklappt? (nur für dich sich
 let goalsOpen = false;      // eigene Ziele aufgeklappt?
 let simSel = null;          // ⚡ Schnell: verdeckte Wahl {cardId, action, realm}
 let simDiscard = null;      // ⚡ Schnell (2er): Karte für die offene Ablage
+let FX = null;              // ✨ v3.8: Animations-Deltas des aktuellen render()
+let fxPrev = null;          // ✨ v3.8: Zustands-Schnappschuss des letzten render()
 window._simEditing = false; // ⚡ „Ändern“-Modus nach dem Bestätigen
 window._simSent = false;    // v2.9: „✅ Fertig“ wurde getippt (Wahl ist raus)
 
@@ -1122,7 +1132,7 @@ function spanelHTML(s, pi, links) {
   const rows = ALL_REALMS.filter((r) => (p.lands[r.id] || 0) > 0).map((r) => {
     const total = p.lands[r.id], occ = total - free[r.id];
     let dots = "";
-    for (let k = 0; k < free[r.id]; k++) dots += `<i class="dot on" style="background:${realmColor(r.id)}"></i>`;
+    for (let k = 0; k < free[r.id]; k++) dots += `<i class="dot on${FX && FX.landNeu[pi] === r.id && k === free[r.id] - 1 ? " neu" : ""}" style="background:${realmColor(r.id)}"></i>`;
     for (let k = 0; k < occ; k++) dots += `<i class="dot off" style="background:${realmOffColor(r.id)}"></i>`;
     return `<div class="lrow">${dots}</div>`;
   }).join("");
@@ -1142,7 +1152,7 @@ function spanelHTML(s, pi, links) {
     <div class="kopf">
       <div class="pav" style="border-color:${AV_COLORS[pi % 5]};background:${AV_DARK[pi % 5]}">${esc(x)}</div>
       <div class="pname">${p.connected ? "" : "📴 "}${esc(p.name)}<small>${statusFor(s, pi)}</small></div>
-      <div class="kenn"><span>👑 <b>${p.coins}</b></span><span>🏹 <b>${p.hunters}</b></span><span>💳 <b>${p.credits}</b></span>${p.trophies ? `<span>🏆 <b>${p.trophies}</b></span>` : ""}<i class="pf">▸</i></div>
+      <div class="kenn"><span${FX && FX.coinGain[pi] ? ' class="cpop"' : ""}>👑 <b>${p.coins}</b></span><span>🏹 <b>${p.hunters}</b></span><span>💳 <b>${p.credits}</b></span>${p.trophies ? `<span>🏆 <b>${p.trophies}</b></span>` : ""}<i class="pf">▸</i></div>
     </div>
     <div class="landrows">${rows}</div>
     ${mons ? `<div class="minis">${mons}</div>` : ""}
@@ -1182,10 +1192,11 @@ function landsStripHTML(s) {
   return `<div class="landleiste"${hat ? ` onclick="event.stopPropagation();toggleDrawerById('dEigen')"` : ""}>` + ALL_REALMS.filter((r) => (me.lands[r.id] || 0) > 0).map((r) => {
     const total = me.lands[r.id], occ = total - free[r.id];
     const dots = [];
-    for (let k = 0; k < free[r.id]; k++) dots.push(true);
-    for (let k = 0; k < occ; k++) dots.push(false);
-    const hr = (arr) => `<div class="hrow">` + arr.map((f) => `<i class="dot ${f ? "on" : "off"}" style="background:${f ? realmColor(r.id) : realmOffColor(r.id)}"></i>`).join("") + `</div>`;
-    if (dots.length <= 2) return `<div class="lcol"><div class="dots">${dots.map((f) => `<i class="dot ${f ? "on" : "off"}" style="background:${f ? realmColor(r.id) : realmOffColor(r.id)}"></i>`).join("")}</div></div>`;
+    for (let k = 0; k < free[r.id]; k++) dots.push({ f: true, neu: FX && FX.landNeu[s.you] === r.id && k === free[r.id] - 1 });
+    for (let k = 0; k < occ; k++) dots.push({ f: false, neu: false });
+    const di = (d) => `<i class="dot ${d.f ? "on" : "off"}${d.neu ? " neu" : ""}" style="background:${d.f ? realmColor(r.id) : realmOffColor(r.id)}"></i>`;
+    const hr = (arr) => `<div class="hrow">` + arr.map(di).join("") + `</div>`;
+    if (dots.length <= 2) return `<div class="lcol"><div class="dots">${dots.map(di).join("")}</div></div>`;
     const unten = Math.ceil(dots.length / 2);
     return `<div class="lcol"><div class="dots">${hr(dots.slice(0, unten))}${hr(dots.slice(unten))}</div></div>`;
   }).join("") + `</div>`;
@@ -1218,7 +1229,7 @@ function fanCardHTML(c, opts) {
   const sel = opts.selected ? " sel" : "";
   const click = opts.noClick ? "" : (opts.onClick ? ` onclick="${opts.onClick}"` : " disabled");
   const info = esc(`${cardTypeLabel(c)} · ${cardInfo(c)}`);
-  return `<button class="k${sel}${zielK ? " ziel" : ""}" style="--rc:${rc}" data-fid="${c.id}" data-info="${info}"${click}>` +
+  return `<button class="k${sel}${zielK ? " ziel" : ""}${opts.cls ? " " + opts.cls : ""}" style="--rc:${rc}" data-fid="${c.id}" data-info="${info}"${click}>` +
     (zielK
       ? `<span class="secret">🔒 geheim</span><div class="ztxt"><div class="big">🎯</div><b>${esc(c.name || "Ziel")}</b><span>${esc(originalCardText(c))}</span></div>`
       : `<div class="art">${art}</div><div class="name">${esc(c.name || ri.name)}</div>${med ? `<div class="med">${med}</div>` : ""}${eff ? `<div class="eff">${esc(eff)}</div>` : ""}${pts ? `<div class="pts">${pts}</div>` : ""}`) +
@@ -1239,7 +1250,7 @@ function handwrapHTML(s) {
       onClick = canPickHand ? ((simSel && c.id === simSel.cardId) ? "simStagedTap()" : `fanSel(${c.id})`) : null;
     else onClick = canPickHand ? `fanSel(${c.id})` : null;
     const isSel = (selected && selected.id === c.id) || (simSel && c.id === simSel.cardId) || (!!simDiscard && c.id === simDiscard);
-    return fanCardHTML(c, { onClick, selected: isSel });
+    return fanCardHTML(c, { onClick, selected: isSel, cls: FX && FX.handAnkunft ? "flipneu" : "" });
   }).join("");
   return `<div class="handwrap" id="wrap"><div class="hand" id="hand"><div class="handin" id="handin"><div class="endcap"></div>${ks}<div class="endcap"></div></div></div></div>`;
 }
@@ -1535,7 +1546,7 @@ function drawerFreshHTML(s) {
   // warten fächerig dahinter.
   const wartende = s.freshDraw.slice();
   const curPos = wartende.indexOf(cur); if (curPos >= 0) wartende.push(wartende.splice(curPos, 1)[0]);
-  inner += `<div class="freshfan">${wartende.map((c) => fanCardHTML(c, { noClick: true, selected: cur && c.id === cur.id })).join("")}</div>`;
+  inner += `<div class="freshfan">${wartende.map((c) => fanCardHTML(c, { noClick: true, selected: cur && c.id === cur.id, cls: FX && FX.freshNeu.indexOf(c.id) >= 0 ? "flipneu" : "" })).join("")}</div>`;
   if (s.freshDraw.some((c) => c.type === "Ziel")) inner += `<p class="muted center" style="margin-top:6px">🔒 Gezogene Ziele liegen direkt bei deinen Zielen – gratis angenommen.</p>`;
   if (s.mode === "schnell") inner += `<p class="muted center" style="margin-top:6px">⚡ Dein neues Blatt bleibt verdeckt, bis du entschieden hast – das ist fair für alle.</p>`;
   if (cur) {
@@ -1602,7 +1613,7 @@ function bottombarHTML(s) {
     <button class="corner" id="cMen" onclick="event.stopPropagation();toggleDrawerById('dMen')"><span class="emoji">🎭</span>${mengN ? `<span class="badge">${mengN}</span>` : ""}</button>
     ${freshN ? `<button class="corner hot" id="cFresh" onclick="event.stopPropagation();toggleDrawerById('dFresh')"><span class="emoji">🃏</span><span class="badge">${freshN}</span></button>` : ""}
     <div class="midst" onclick="event.stopPropagation()">
-      <span>👑 <b>${me.coins}</b></span><span class="sep">·</span>
+      <span id="crownMe">👑 <b>${me.coins}</b></span><span class="sep">·</span>
       <span>🏹 <b>${me.hunters}</b></span><span class="sep">·</span>
       <span>💳 <b>${me.credits}</b></span>${me.trophies ? `<span class="sep">·</span><span>🏆 <b>${me.trophies}</b></span>` : ""}
     </div>
@@ -1685,15 +1696,87 @@ function render() {
       selected = null; selectedFrom = null; window._realm = null;
     }
   }
+  FX = computeFx(fxPrev, state); // ✨ v3.8: Animations-Deltas
   app.innerHTML = phoneShellHTML(state);
   renderActionBar();
   bindFan();
+  fxAfter(FX, state);  // ✨ v3.8: Münzflug + Gedächtnis
+  fxPrev = fxSnapshot(state);
   if (state.phase !== "draft" && state.phase !== "seasonEnd") { selected = null; }
 }
 
 window.addEventListener("load", connect);
 // 📲 PWA (v3.5): Service-Worker registrieren – Voraussetzung für die App-
 // Installation (Chrome/Android). Der Worker cached bewusst NICHTS (siehe
+// ---------------------------- ✨ v3.8 Animationen -----------------------------
+// fxSnapshot/computeFx vergleichen den Zustand vor und nach einem Server-Update
+// und leiten daraus ab, was animiert werden soll. fxAfter startet die Effekte
+// (Münzflug) und aktualisiert das Gedächtnis der schon gezeigten Zieh-Karten.
+function fxSnapshot(s) {
+  return {
+    you: s.you,
+    phase: s.phase,
+    coins: s.players.map((p) => p.coins || 0),
+    lands: s.players.map((p) => Object.assign({}, p.lands)),
+    handLen: (s.hand || []).length,
+  };
+}
+function computeFx(prev, s) {
+  const fx = { myCoinGain: 0, coinGain: [], landNeu: [], freshNeu: [], handAnkunft: false };
+  fx.freshNeu = (s.freshDraw || []).filter((c) => !window._seenFresh || !window._seenFresh[c.id]).map((c) => c.id);
+  if (prev && s && Array.isArray(s.players) && prev.coins.length === s.players.length && prev.you === s.you) {
+    if (prev.handLen === 0 && (s.hand || []).length > 0 && s.phase === "draft") fx.handAnkunft = true;
+    // Münz-/Land-Effekte nur innerhalb einer Phase: Übergänge (Saison-Ende,
+    // neue Runde, Aufräumen) setzen Punkte zurück, das wäre irreführendes Flackern.
+    if (prev.phase === s.phase) {
+      s.players.forEach((p, i) => {
+        const d = (p.coins || 0) - (prev.coins[i] || 0);
+        if (d > 0) { fx.coinGain[i] = d; if (i === s.you) fx.myCoinGain = d; }
+        const pl = prev.lands[i] || {};
+        for (const r of ALL_REALMS) {
+          if ((p.lands[r.id] || 0) > (pl[r.id] || 0)) { fx.landNeu[i] = r.id; break; }
+        }
+      });
+    }
+  }
+  return fx;
+}
+function fxAfter(fx, s) {
+  // Gedächtnis: merken, welche Zieh-Karten schon einmal geflippt wurden
+  // (der gleiche Kartenstapel wird bei jedem render() neu gezeichnet).
+  const seen = {};
+  (s.freshDraw || []).forEach((c) => { seen[c.id] = true; });
+  window._seenFresh = seen;
+  if (fx && fx.myCoinGain > 0) flyCoins(Math.min(fx.myCoinGain, 6));
+}
+function flyCoins(n) {
+  const phone = document.getElementById("phone");
+  const crown = document.getElementById("crownMe");
+  if (!phone || !crown) return;
+  try { if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return; } catch (e) {}
+  const pr = phone.getBoundingClientRect(), cr = crown.getBoundingClientRect();
+  if (!pr || !cr || !pr.width) return;
+  const sx = pr.left + pr.width / 2, sy = pr.top + pr.height * 0.45;
+  const tx = cr.left + cr.width / 2, ty = cr.top + cr.height / 2;
+  const dx = tx - sx, dy = ty - sy;
+  for (let j = 0; j < n; j++) {
+    const c = document.createElement("div");
+    c.className = "coinfly";
+    c.style.left = (sx - 10) + "px";
+    c.style.top = (sy - 10) + "px";
+    document.body.appendChild(c);
+    const anim = c.animate(
+      [
+        { transform: "translate(0,0) scale(.4)", opacity: 0 },
+        { transform: "translate(" + (dx * 0.18 - 26) + "px," + (dy * 0.25 - 34) + "px) scale(1)", opacity: 1, offset: 0.45 },
+        { transform: "translate(" + dx + "px," + dy + "px) scale(.55)", opacity: 0.9 },
+      ],
+      { duration: 620, delay: j * 90, easing: "cubic-bezier(.35,.6,.4,1)" }
+    );
+    anim.onfinish = () => { if (c.parentNode) c.parentNode.removeChild(c); };
+    setTimeout(() => { if (c.parentNode) c.parentNode.removeChild(c); }, 900 + n * 90);
+  }
+}
 // sw.js): Beim App-Start kommt immer die neueste Version vom Server.
 if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));
 </script>
