@@ -75,7 +75,8 @@
   @keyframes fx-pop { 0% { transform: scale(.2); opacity: 0; } 55% { transform: scale(1.22); opacity: 1; box-shadow: 0 0 14px 3px rgba(233,199,102,.85); } 100% { transform: scale(1); opacity: 1; } }
   .mini.neu, .stf.neu { animation: fx-pop .7s cubic-bezier(.2,.7,.3,1); }
   /* v3.10: Eigene gespielte Karte blitzt kurz groß in der Mitte auf */
-  /* v3.11: Mitspieler-Aktionen - kleine Karte im Panel, verdeckte Karte am Rand */
+  /* v3.11: Mitspieler-Aktionen - kleine Karte im Panel, verdeckte Karte */
+  /* v3.12: verdeckte ?-Karte fliegt aus der TISCHMITTE ins Panel (wie Münzen) */
   .opfx { position: fixed; left: 0; top: 0; z-index: 160; pointer-events: none; }
   .opfx .k { pointer-events: none; cursor: default; margin-right: 0; }
   /* v3.10: Konfetti für das TAMTAM */
@@ -159,6 +160,12 @@
   .btn-purple { background:#7c3aed; color:#fff; }
   .btn-indigo { background:#4f46e5; color:#fff; }
   .btn-ghost { background:rgba(255,255,255,.08); color:#f1f5f9; font-weight:400; }
+  /* v3.12: Basis-Maße für die FARB-Buttons ÜBERALL (bisher bekamen nur #actionbar
+     und .start Maße/Rundung – außerhalb blieben solche Knöpfe winzig und eckig,
+     z. B. 🐢 „Jetzt aufdecken!“). Inline-Styles und die stärkeren Selektoren von
+     #actionbar/.start überschreiben das weiterhin. */
+  .btn-green, .btn-red, .btn-purple, .btn-indigo { border:none; border-radius:12px;
+               padding:12px 16px; font-size:.95rem; font-weight:800; }
 
   /* ---- Der Kartenfächer ---- */
   .handwrap { position:absolute; left:0; right:0; bottom:64px; height:calc(var(--ch) + 16px); z-index:6;
@@ -649,7 +656,7 @@ function turnBanner(s) {
             // jederzeit wieder öffnen (Nachbauten des „Kasten ist weg“-Dead-Ends).
             return `<div class="banner your" style="cursor:pointer" onclick="event.stopPropagation();toggleDrawerById('dFresh')">🃏 Deine gezogenen Karten warten – hier antippen, falls der Kasten zu ist!</div>`;
           return `<div class="banner your">🔍 Du bist dran – decke deine Karte auf!</div>
-            <div class="center" style="margin-top:6px"><button class="btn-green" onclick="revealNow()">👁️ Jetzt aufdecken!</button></div>`;
+            <div class="center" style="margin-top:8px"><button class="btn-green" style="min-width:220px;min-height:52px;padding:15px 20px;font-size:1.05rem;border-radius:16px;border:none" onclick="revealNow()">👁️ Jetzt aufdecken!</button></div>`;
         }
         return `<div class="banner wait">⏳ ${esc(s.players[s.showTurn].name)} deckt gerade auf…</div>`;
       }
@@ -1894,8 +1901,12 @@ function pushOpFX(fx, pi, item) {
 }
 
 // ✨ v3.11: Mitspieler-Aktion im Panel: kleine Version der gespielten Karte
-// (Monster/Mitarbeiter/Event) - bzw. verdeckte Karte (?), die vom Bildschirmrand
-// in das Panel des Mitspielers hinein verschwindet (Einlagern / Ziel-Annehmen).
+// (Monster/Mitarbeiter/Event) - bzw. verdeckte ?-Karte, die in das Panel des
+// Mitspielers hinein verschwindet (Einlagern / Ziel-Annehmen).
+// ✨ v3.12 (Nutzer-Wunsch): Beide sehen IDENTISCH aus (immer ?-Rückseite, nie 🎯 –
+// im Original weiß niemand, was da eingelagert wurde) und der Flug startet in
+// der TISCHMITTE wie bei Münzen & Jägermarkern – vom Bildschirmrand sah es im
+// 3er-Modus nämlich aus wie ein Kartentausch zwischen Mitspielern.
 function spawnOpFX(pi, item, k) {
   const host = document.querySelector(`.spanel[data-pi="${pi}"]`) || document.getElementById("coinP" + pi);
   if (!host || !host.getBoundingClientRect) return;
@@ -1906,17 +1917,22 @@ function spawnOpFX(pi, item, k) {
     const el = document.createElement("div");
     el.className = "opfx";
     el.innerHTML = `<div style="--ch:110px; --cw:calc(110px*.667); --rc:#2b3860; filter:drop-shadow(0 14px 30px #000c)">
-      <div class="k rueck"><div class="rueckm"><div class="rc1">${item.kind === "ziel" ? "🎯" : "?"}</div></div></div></div>`;
+      <div class="k rueck"><div class="rueckm"><div class="rc1">?</div></div></div></div>`;
     document.body.appendChild(el);
-    const w = 74;
-    const fromLeft = r.left + r.width / 2 > vw / 2;
-    const startX = fromLeft ? -70 : vw - w + 70;
+    const w = 74, h = 110;
+    // v3.12: Start in der Tischmitte (Zentrum des Spielfelds bei 45 % Höhe,
+    // exakt wie flyBadges für Münzen/Jägermarker) – nicht mehr am Rand.
+    const ph = document.getElementById("phone");
+    const pr = (ph && ph.getBoundingClientRect) ? ph.getBoundingClientRect() : null;
+    const cx = (pr && pr.width) ? pr.left + pr.width / 2 : vw / 2;
+    const cy = (pr && pr.width) ? pr.top + pr.height * 0.45 : (window.innerHeight || 760) * 0.45;
     const endX = Math.min(Math.max(r.left + r.width / 2 - w / 2, 8), Math.max(8, vw - w - 8));
-    const y = Math.max(64, r.top - 12);
+    const endY = Math.max(64, r.top - 12);
     const anim = el.animate([
-      { transform: `translate(${startX}px, ${y}px) rotate(${fromLeft ? 14 : -14}deg)`, opacity: 0 },
-      { transform: `translate(${endX}px, ${y}px) rotate(0deg)`, opacity: 1, offset: .45 },
-      { transform: `translate(${endX}px, ${(y + 18)}px) scale(.15)`, opacity: 0 }
+      { transform: `translate(${cx - w / 2}px, ${cy - h / 2}px) scale(.4) rotate(14deg)`, opacity: 0 },
+      { transform: `translate(${cx * 0.35 + endX * 0.65 - 26}px, ${cy * 0.3 + endY * 0.7 - 34}px) scale(1) rotate(5deg)`, opacity: 1, offset: .45 },
+      { transform: `translate(${endX}px, ${endY}px) scale(1) rotate(0deg)`, opacity: 1, offset: .8 },
+      { transform: `translate(${endX}px, ${(endY + 18)}px) scale(.15)`, opacity: 0 }
     ], { duration: 1600, delay: del, easing: "cubic-bezier(.25,.4,.5,1)", fill: "both" });
     anim.onfinish = () => el.remove();
     setTimeout(() => { if (el.parentNode) el.remove(); }, 1600 + del + 400);
