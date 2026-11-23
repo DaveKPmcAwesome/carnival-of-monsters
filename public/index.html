@@ -61,6 +61,10 @@
   @keyframes fx-coinpop { 0% { transform: scale(1); } 40% { transform: scale(1.45); color:#fcd34d; } 100% { transform: scale(1); } }
   .kenn span.cpop { animation: fx-coinpop .9s ease; }
   .coinfly { position: fixed; z-index: 280; width: 20px; height: 20px; border-radius: 50%; background: radial-gradient(circle at 32% 30%, #fde68a 0%, #e9c766 55%, #92400e 100%); box-shadow: 0 2px 6px #000a; pointer-events: none; opacity: 0; }
+  /* 🪙 v3.17: Goldene Münze als CSS-Element (MZ) – das 🪙-Emoji war auf manchen
+     Handys SILBER und passte nicht zu den goldenen Flug-Münzen (.coinfly).
+     Gleicher Gold-Verlauf wie die fliegenden Münzen. */
+  .coin { display:inline-block; width:.82em; height:.82em; border-radius:50%; background: radial-gradient(circle at 32% 30%, #fde68a 0%, #e9c766 55%, #92400e 100%); box-shadow: 0 1px 2px #0008; vertical-align:-.08em; margin:0 .07em; }
   .huntfly { position: fixed; z-index: 280; width: 22px; height: 22px; border-radius: 50%; background: #1f3d2b; border: 2px solid #86a896; color: #eaf5ee; font-size: 12px; line-height: 1; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px #000a; pointer-events: none; opacity: 0; }
   .midst span.cpop { animation: fx-coinpop .9s ease; }
   /* 🃏 v3.9: Rückseite der verdeckt gezogenen Karten */
@@ -392,6 +396,8 @@ const toastEl = document.getElementById("toast");
 
 let ws = null;
 let state = null;
+const MZ = '<i class="coin"></i>';  // 🪙 v3.17: goldene Münze (CSS) statt Emoji
+const MZM = "\uE9C3";               // 🪙 v3.17: Marker für Text-Transport (cardInfo/data-info)
 let selected = null;       // aktuell gewählte Karte (aus Hand oder Aufbewahrung)
 let selectedFrom = null;    // "hand" | "stored"
 let staffDetail = null;    // {pi, name}
@@ -409,7 +415,7 @@ window._simEditing = false; // ⚡ „Ändern“-Modus nach dem Bestätigen
 window._simSent = false;    // v2.9: „✅ Fertig“ wurde getippt (Wahl ist raus)
 
 function toast(msg) {
-  toastEl.textContent = msg;
+  toastEl.innerHTML = esc(msg).replace(/🪙|\uE9C3/g, MZ); // 🪙 v3.17: goldene Münze statt Emoji
   toastEl.style.display = "block";
   clearTimeout(toast._t);
   toast._t = setTimeout(() => (toastEl.style.display = "none"), 3500);
@@ -613,7 +619,7 @@ function cardInfo(c) {
     if (c.draw > 0) t += ` · 🃏 zieht ${c.draw}`;
     if (c.danger > 0) t += ` · ⚠️ ${c.danger}`;
   } else if (c.type === "Mitarbeiter" || c.type === "Event" || c.type === "Ziel") {
-    t = (c.type === "Mitarbeiter" ? `−${c.cost} 🪙 · ` : "") + originalCardText(c); // v2.7: Originaltext auch im Drawer/Info
+    t = (c.type === "Mitarbeiter" ? `−${c.cost} ${MZM} · ` : "") + originalCardText(c); // v2.7: Originaltext auch im Drawer/Info
   }
   return t;
 }
@@ -627,7 +633,7 @@ function cardHTML(c, opts) {
   return `<button class="card${sel}${blocked}" style="border-color:${border}" ${onclick}>
     <div class="type" style="color:${border}">${cardTypeLabel(c)}</div>
     <div class="name">${esc(c.name || realmInfo(c.realm).name)}</div>
-    <div class="info">${esc(cardInfo(c))}</div>
+    <div class="info">${esc(cardInfo(c)).replace(/\uE9C3/g, MZ)}</div>
     ${badge}</button>`;
 }
 function freeLandsOf(lands, seasonMonsters) {
@@ -752,7 +758,7 @@ function turnBanner(s) {
 
 function logBox(s) {
   return `<div class="card-panel"><div class="label">Spielverlauf &amp; Chat</div>
-    <div class="logbox">${(s.log || []).map((l) => `<div>${esc(l)}</div>`).join("") || ""}</div>
+    <div class="logbox">${(s.log || []).map((l) => `<div>${esc(l).replace(/🪙|\uE9C3/g, MZ)}</div>`).join("") || ""}</div>
     <div class="chatrow"><input id="chatinput" placeholder="Nachricht an alle…" maxlength="200" /><button class="btn-ghost" onclick="sendChat()">💬</button></div>
   </div>`;
 }
@@ -972,7 +978,7 @@ function renderActionBar() {
         <button class="btn-indigo" onclick="simEdit()">✏️ Ändern</button>`;
     }
   } else if (isEntdecker) {
-    inner = `<div class="note" style="margin-bottom:6px">„${esc(selected.name)}" – Typ des Landes festlegen: <b>dauerhaft!</b> (−${selected.cost} 🪙)</div>`;
+    inner = `<div class="note" style="margin-bottom:6px">„${esc(selected.name)}" – Typ des Landes festlegen: <b>dauerhaft!</b> (−${selected.cost} ${MZ})</div>`;
     inner += ALL_REALMS.map((r) => `<button class="btn-indigo" onclick="chooseRealm('${r.id}')" ${staged ? "disabled" : ""}>${r.emoji} ${r.short}${window._realm === r.id ? " ✓" : ""}</button>`).join("");
     inner += `<button class="btn-green" onclick="${onPlay}" ${window._realm && !staged ? "" : "disabled"}>✅ Ausspielen</button>`;
   } else if (selected.type === "Monster" && selected.realm === "traum") {
@@ -989,15 +995,15 @@ function renderActionBar() {
     inner = `<div class="note" style="margin-bottom:6px">🌙 Traum-Monster – bezahlt mit Traumland und/oder GENAU EINEM Hilfsreich:</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">${opts || '<span class="muted">Passt gerade nicht – zu wenig freie Landpunkte.</span>'}</div>`;
     if (state.phase === "draft" && inHand)
-      inner += `<button class="btn-indigo" style="width:100%;margin-top:8px" onclick="${onKeep}" ${staged ? "disabled" : ""}>📥 Einlagern (−1 🪙)</button>`;
+      inner += `<button class="btn-indigo" style="width:100%;margin-top:8px" onclick="${onKeep}" ${staged ? "disabled" : ""}>📥 Einlagern (−1 ${MZ})</button>`;
   } else if (selected.type === "Ziel") {
-    inner = `<button class="btn-purple" onclick="${onKeep}" ${state.phase === "draft" && inHand && !staged ? "" : "disabled"}>📥 Als Ziel annehmen (−1 🪙)</button>`;
+    inner = `<button class="btn-purple" onclick="${onKeep}" ${state.phase === "draft" && inHand && !staged ? "" : "disabled"}>📥 Als Ziel annehmen (−1 ${MZ})</button>`;
   } else {
     const playable = cardPlayable(selected, me);
-    inner = `<button class="btn-green" onclick="${onPlay}" ${playable && !staged ? "" : "disabled"}>✅ Ausspielen${selected.type === "Mitarbeiter" ? ` (−${selected.cost} 🪙)` : ""}</button>`;
+    inner = `<button class="btn-green" onclick="${onPlay}" ${playable && !staged ? "" : "disabled"}>✅ Ausspielen${selected.type === "Mitarbeiter" ? ` (−${selected.cost} ${MZ})` : ""}</button>`;
     // v2.6: Bei eingelagerten Karten ergibt „Einlagern“ keinen Sinn – nur für Handkarten.
     // v3.2 (Nutzer-Wunsch): Events und Mitarbeitende werden NICHT eingelagert – sie müssen ausgespielt werden.
-    if (inHand && selected.type !== "Event" && selected.type !== "Mitarbeiter") inner += `<button class="btn-indigo" onclick="${onKeep}" ${state.phase === "draft" && !staged ? "" : "disabled"}>📥 Einlagern (−1 🪙)</button>`;
+    if (inHand && selected.type !== "Event" && selected.type !== "Mitarbeiter") inner += `<button class="btn-indigo" onclick="${onKeep}" ${state.phase === "draft" && !staged ? "" : "disabled"}>📥 Einlagern (−1 ${MZ})</button>`;
   }
   const stCard = (!selected && staged && simSel) ? ((state.hand || []).find((c) => c.id === simSel.cardId) || null) : null;
   const nc = selected || stCard;
@@ -1007,7 +1013,7 @@ function renderActionBar() {
     if (nc.type === "Monster" && !canPlayMonster(nc, me2))
       note += nc.realm === "traum" ? " – braucht 🌙 bzw. 🌙+EIN Reich!" : " – zu wenig Kapazität!";
     if (nc.type === "Land" && !canPlayLand(nc, me2)) note += " – entfernte Länder brauchen Vorbedingung";
-    if (nc.type === "Mitarbeiter" && me2.coins < nc.cost) note += " · 🏦 Kredit nötig (+3 🪙, −5 SP)";
+    if (nc.type === "Mitarbeiter" && me2.coins < nc.cost) note += " · 🏦 Kredit nötig (+3 " + MZ + ", −5 SP)";
     if (nc.type === "Ziel") note += " · Ziele nur annehmen, nicht ausspielen";
   }
   if (seTurnActive) inner += seasonEndButtons(state);
@@ -1126,7 +1132,7 @@ function renderDanger(s) {
       return `<div class="revrow ${idx === s.you ? "me" : ""}">
         <span>${esc(r.name)}</span>
         <span class="pts">${r.danger}⚠️ · ${r.danger === 0 ? "alles ruhig 😌" : ""}
-          ${r.cages ? `👷 ${r.cages} · ` : ""}${r.markers ? `🏹 ${r.markers} · ` : ""}${r.payCoins ? `🪙 ${r.payCoins * 3} · ` : ""}${r.newCredits ? `🏦 ${r.newCredits}` : ""}</span>
+          ${r.cages ? `👷 ${r.cages} · ` : ""}${r.markers ? `🏹 ${r.markers} · ` : ""}${r.payCoins ? `${MZ} ${r.payCoins * 3} · ` : ""}${r.newCredits ? `🏦 ${r.newCredits}` : ""}</span>
       </div>`;
     }).join("");
     body = `<div class="center" style="margin:6px 0 10px">Ein Wurf für alle: <b>${d.roll.join(" + ")} = ${d.rollSum} Käfige</b></div>` + rows;
@@ -1161,11 +1167,11 @@ function renderReveal(s) {
         <span><b>${esc(gr.name)}</b> <span class="goal">(${esc(originalGoalText(gr))})</span></span><span class="pts">+${gr.pts}</span></div>`).join("")}
       ${p.goalResults.length ? `<div class="revrow" style="background:rgba(245,158,11,0.2)"><span><b>🎯 Ziele gesamt</b></span><span class="pts"><b>+${p.goalResults.reduce((sum, gr) => sum + gr.pts, 0)}</b></span></div>` : ""}
       </div>`).join("");
-  if (revealStep === 3) body = `<p class="center muted" style="margin-bottom:8px">Kronen, Jäger &amp; Kredite (1 🪙 = 1 SP · 1 🏹 = 1 SP · Kredit = −5 SP)</p>` +
+  if (revealStep === 3) body = `<p class="center muted" style="margin-bottom:8px">Kronen, Jäger &amp; Kredite (1 ${MZ} = 1 SP · 1 🏹 = 1 SP · Kredit = −5 SP)</p>` +
     rv.players.map((p, i) => `<div class="revrow ${i === s.you ? "me" : ""}">
       <span>👤 ${esc(p.name)}</span>
       <span class="pts">+${p.coinsPts + p.hunterPts} ${p.creditPts ? `<span style="color:#f87171">−${-p.creditPts}</span>` : ""}
-        <span class="goal">(🪙${p.coins} ×1 · 🏹${p.hunters} ×1 · 🏦${p.credits})</span></span></div>`).join("");
+        <span class="goal">(${MZ}${p.coins} ×1 · 🏹${p.hunters} ×1 · 🏦${p.credits})</span></span></div>`).join("");
   if (revealStep >= 4) {
     body = `<p class="center" style="color:#fde68a;margin-bottom:8px">Das Endergebnis!</p>` +
       rv.ranked.map((p, i) => `<div class="revrow ${rv.players.indexOf(p) === s.you ? "me" : ""}">
@@ -1275,7 +1281,7 @@ function spanelHTML(s, pi, links) {
   const stf = (p.staff || []).map((x, xi) => `<span class="stf${FX && FX.newStf && FX.newStf[pi] && xi >= (p.staff || []).length - FX.newStf[pi] ? " neu" : ""}" onclick="event.stopPropagation();toggleStaff(${pi},'${esc(x.name)}')">${esc(x.name)}</span>`).join("");
   const detail = staffDetail && staffDetail.pi === pi ? (() => {
     const st = (p.staff || []).find((x) => x.name === staffDetail.name);
-    return st ? `<div class="stfdetail"><b>👷 ${esc(st.name)}</b> (−${st.cost} 🪙): ${esc(originalCardText({ type: "Mitarbeiter", name: st.name, text: st.text }))}</div>` : "";
+    return st ? `<div class="stfdetail"><b>👷 ${esc(st.name)}</b> (−${st.cost} ${MZ}): ${esc(originalCardText({ type: "Mitarbeiter", name: st.name, text: st.text }))}</div>` : "";
   })() : "";
   // v2.5: Anfangsbuchstabe im Avatar – auch bei Bots: „🤖 Name“ zeigt den Buchstaben,
   // nicht das Roboter-Emoji. Vorangestellte Nicht-Buchstaben (Emoji/Leerzeichen)
@@ -1286,7 +1292,7 @@ function spanelHTML(s, pi, links) {
     <div class="kopf">
       <div class="pav" style="border-color:${AV_COLORS[pi % 5]};background:${AV_DARK[pi % 5]}">${esc(x)}</div>
       <div class="pname">${p.connected ? "" : "📴 "}${esc(p.name)}<small>${statusFor(s, pi)}</small></div>
-      <div class="kenn"><span id="coinP${pi}"${FX && FX.coinGain[pi] ? ' class="cpop"' : ""}>🪙 <b>${p.coins}</b></span><span id="huntP${pi}"${FX && FX.huntGain[pi] ? ' class="cpop"' : ""}>🏹 <b>${p.hunters}</b></span><span>💳 <b>${p.credits}</b></span>${p.trophies ? `<span>🏆 <b>${p.trophies}</b></span>` : ""}<i class="pf">▸</i></div>
+      <div class="kenn"><span id="coinP${pi}"${FX && FX.coinGain[pi] ? ' class="cpop"' : ""}>${MZ} <b>${p.coins}</b></span><span id="huntP${pi}"${FX && FX.huntGain[pi] ? ' class="cpop"' : ""}>🏹 <b>${p.hunters}</b></span><span>💳 <b>${p.credits}</b></span>${p.trophies ? `<span>🏆 <b>${p.trophies}</b></span>` : ""}<i class="pf">▸</i></div>
     </div>
     <div class="landrows">${rows}</div>
     ${mons ? `<div class="minis">${mons}</div>` : ""}
@@ -1349,7 +1355,7 @@ function fanCardHTML(c, opts) {
     pts = `${c.level} P`;
     if (c.realm !== "traum" && c.level >= 2) eff = "entfernt · Land-Vorbedingung nötig";
   } else if (c.type === "Mitarbeiter") {
-    rc = "#0891b2"; art = "👷"; med = String(c.cost); pts = "🪙";
+    rc = "#0891b2"; art = "👷"; med = String(c.cost); pts = MZ;
     // v2.7: Original-Kartentext als Effekt – mit Client-Fallback, falls der
     // Server (noch) keine Texte schickt.
     eff = originalCardText(c);
@@ -1483,7 +1489,7 @@ window.fanSel = (id) => {
     const el = document.querySelector('.k[data-fid="' + id + '"]');
     handModus(true, el);
     const info = document.getElementById("info");
-    if (info && el && el.dataset.info) info.textContent = el.dataset.info;
+    if (info && el && el.dataset.info) info.innerHTML = esc(el.dataset.info).replace(/\uE9C3/g, MZ);
   }
 };
 
@@ -1638,7 +1644,7 @@ function drawerEigenHTML(s) {
   if (!mons && !stf) return "";
   const detail = staffDetail && staffDetail.pi === s.you ? (() => {
     const st = (me.staff || []).find((x) => x.name === staffDetail.name);
-    return st ? `<div class="stfdetail"><b>👷 ${esc(st.name)}</b> (−${st.cost} 🪙): ${esc(originalCardText({ type: "Mitarbeiter", name: st.name, text: st.text }))}</div>` : "";
+    return st ? `<div class="stfdetail"><b>👷 ${esc(st.name)}</b> (−${st.cost} ${MZ}): ${esc(originalCardText({ type: "Mitarbeiter", name: st.name, text: st.text }))}</div>` : "";
   })() : "";
   // v2.5: Keine Beschriftung – die Kacheln und Chips sprechen für sich (Nutzer-Wunsch).
   return `<div class="drawer ${openDrawer === "dEigen" ? "open" : ""}" id="dEigen">
@@ -1745,7 +1751,7 @@ function freshAufdecken(id) {
 
 function drawerChatHTML(s) {
   return `<div class="drawer ${openDrawer === "dChat" ? "open" : ""}" id="dChat"><h4>💬 Spielverlauf & Chat</h4>
-    <div class="logbox">${(s.log || []).map((l) => `<div>${esc(l)}</div>`).join("")}</div>
+    <div class="logbox">${(s.log || []).map((l) => `<div>${esc(l).replace(/🪙|\uE9C3/g, MZ)}</div>`).join("")}</div>
     <div class="chatrow"><input id="chatinput" placeholder="Nachricht an alle…" maxlength="200" /><button class="btn-ghost" onclick="sendChat()">💬</button></div></div>`;
 }
 
@@ -1773,7 +1779,7 @@ function bottombarHTML(s) {
     <button class="corner" id="cMen" onclick="event.stopPropagation();toggleDrawerById('dMen')"><span class="emoji">🎭</span>${mengN ? `<span class="badge">${mengN}</span>` : ""}</button>
     ${freshAll ? `<button class="corner hot" id="cFresh" onclick="event.stopPropagation();toggleDrawerById('dFresh')"><span class="emoji">🃏</span>${freshN ? `<span class="badge">${freshN}</span>` : ""}</button>` : ""}
     <div class="midst" onclick="event.stopPropagation()">
-      <span id="crownMe"${FX && FX.coinGain[s.you] ? ' class="cpop"' : ""}>🪙 <b>${me.coins}</b></span><span class="sep">·</span>
+      <span id="crownMe"${FX && FX.coinGain[s.you] ? ' class="cpop"' : ""}>${MZ} <b>${me.coins}</b></span><span class="sep">·</span>
       <span id="huntMe"${FX && FX.huntGain[s.you] ? ' class="cpop"' : ""}>🏹 <b>${me.hunters}</b></span><span class="sep">·</span>
       <span>💳 <b>${me.credits}</b></span>${me.trophies ? `<span class="sep">·</span><span>🏆 <b>${me.trophies}</b></span>` : ""}
     </div>
