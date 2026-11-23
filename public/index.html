@@ -248,6 +248,20 @@
   .freshov .stapel { display:flex; gap:6px; justify-content:center; margin-top:16px; }
   .freshov .stapel .k { --ch:54px; --cw:calc(54px*.667); pointer-events:none; opacity:.8;
              filter: drop-shadow(0 6px 14px #000b); }
+  /* v3.14: .k schleppen den Fächer-Überlapp (margin-right: -45 % Kartenbreite)
+     mit – im Zieh-Schleier schob das die große Karte aus der Bildschirmmitte
+     (Nutzer-Feedback) und ließ den Reststapel-Karten ihren 6-px-Abstand fressen.
+     Im Schleier gilt: keine Überlappung, alles sitzt mittig. */
+  .freshov .k { margin-right:0; }
+  /* v3.14: Mit „Bewegung reduzieren“ (Handy-Einstellung, hier aktiv) laufen
+     manche CSS-Animationen nicht – die .spaet-Buttons blieben dauerhaft
+     unsichtbar (opacity:0, forwards-Fill kam nie) und die Zieh-Zeremonie
+     wirkte eingefroren. Ausnahme vom „keine reduced-motion-Checks“-Grundsatz:
+     hier sichert die Abfrage FUNKTION (Buttons sichtbar), nicht Effekt-Optik. */
+  @media (prefers-reduced-motion: reduce) {
+    .freshov .freshbig.ein { animation: none; }
+    .freshbtns.spaet { opacity: 1; animation: none; }
+  }
   .freshov .freshbtns { display:flex; gap:8px; justify-content:center; align-items:stretch;
              margin-top:14px; flex-wrap:wrap; width:min(430px,100%); }
   .freshov .freshbtns > button { flex:1 1 auto; min-width:120px; }
@@ -1767,9 +1781,11 @@ function mitteHTML(s) {
 
 // ---------------------------- Der Spieltisch ----------------------------
 function phoneShellHTML(s) {
-  // v3.13: Der Zieh-Schleier oeffnet sich nur bei NEUEN Karten (statt bei jedem
-  // render) – sonst liesse er sich nach dem Antippen nicht mehr zuklappen.
-  if ((s.freshDraw || []).length && FX && (FX.freshNeu || []).length) openDrawer = "dFresh";
+  // 🃏 v3.14: Der Zieh-Schleier öffnet/kehrt zurück, solange irgendeine wartende
+  // Karte noch NICHT umgedreht wurde (vorher: nur einmalig bei NEUEN Karten – ein
+  // versehentliches Zuklappen vor dem Flip ließ die Zeremonie zu und der Ablauf
+  // hing am unosichtbaren Banner). Umgedrehte Karten: Zuklappen wird respektiert.
+  if ((s.freshDraw || []).some((c) => !freshUp[c.id])) openDrawer = "dFresh";
   if (!(s.phase === "draft" && s.hand && s.hand.length)) inhand = false;
   // v3.13: Nach „Fertig“ im 🐢-Modus liegt die eigene Hand ab (freie Sicht).
   const simdone = s.mode === "langsam" && s.phase === "draft" && window._simSent
