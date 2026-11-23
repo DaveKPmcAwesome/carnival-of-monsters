@@ -180,6 +180,14 @@
   /* v3.13: Nach „Fertig“ im 🐢-Modus legt man die eigene Hand ab – freie Sicht
      auf die Mitspieler. „✏️ Ändern“ holt die Karten sofort zurück. */
   .phone.simdone .handwrap { opacity:0; pointer-events:none; transition:opacity .45s ease; }
+  /* 🐛 v3.19: Unsichtbare Karten fraßen Tipps. Der simdone-Fächer wird nach
+     „Fertig“ im 🐢-Modus nur per opacity:0 ausgeblendet, .k hat aber
+     pointer-events:auto aus der Basisklasse – die Karten blieben also
+     klickbar und lagen unsichtbar über dem Banner. „Jetzt aufdecken!“ geriet
+     genau in diese Zone, sobald die Mitspieler-Leiste (4/5 Spieler) das Banner
+     nach unten drückte; der Tipp traf eine unsichtbare Karte (kein Toast, kein
+     Effekt). Unsichtbare Karten sind jetzt tot für Tipps. */
+  .phone.simdone .handwrap .k { pointer-events:none; }
   .hand { width:100%; height:100%; overflow-x:auto; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
   .hand::-webkit-scrollbar { display:none; }
   .handin { display:flex; align-items:flex-end; height:100%; }
@@ -1569,7 +1577,11 @@ function outsideTap(e) {
   // verschwand der Kasten beim Wählen des Landes!
   if (!t.isConnected) return;
   const drawerWasOpen = !!document.querySelector(".drawer.open, .freshov.open");
-  if (!t.closest(".drawer") && !t.closest(".freshov") && !t.closest(".corner") && !t.closest(".midst")) closeDrawersNow();
+  // 🐛 v3.19: Taps auf Menü-Einträge („Spielverlauf & Chat“ etc.) öffnen den
+  // Kasten und blubbern dann HIER weiter – outsideTap schloss ihn im selben
+  // Augenblick wieder (die Guard-Liste kannte .optionen nicht). Der Kasten
+  // „ging nie auf“, in jedem Modus. Menü-Tips öffnen jetzt bleibend.
+  if (!t.closest(".drawer") && !t.closest(".freshov") && !t.closest(".corner") && !t.closest(".midst") && !t.closest(".optionen")) closeDrawersNow();
   if (!t.closest(".optionen") && !t.closest(".menu")) closeMenu();
   if (inhand && !suppressClick && !drawerWasOpen
     && !t.closest(".k") && !t.closest("#actionbar") && !t.closest(".uiband")
