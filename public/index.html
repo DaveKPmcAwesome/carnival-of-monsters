@@ -416,6 +416,20 @@ function toast(msg) {
 }
 
 function send(obj) { if (ws && ws.readyState === 1) ws.send(JSON.stringify(obj)); }
+// v3.15: Kritische Aktionen gehen nie mehr STUMM verloren. Bricht die Verbindung
+// halb ab (Handy gesperrt, NAT-Timeout: readyState bleibt 1, aber nichts kommt
+// mehr an), lieferte send() bisher ins Leere – der Tipp „passierte einfach
+// nichts“. Deswegen: Frische-Check (letzte Server-Antwort < 25 s her). Tot oder
+// halbtot -> Status-Balken zeigen, alten Socket stilllegen, NEU verbinden; der
+// Resume-Puls holt den Spielstand und der Tipp wird einfach wiederholt.
+function sendWichtig(obj) {
+  const frisch = ws && ws.readyState === 1 && Date.now() - lastMsg < 25000;
+  if (frisch) { send(obj); return; }
+  statusEl.style.display = "block";
+  const alt = ws;
+  if (alt) { alt.onclose = () => {}; try { alt.close(); } catch (e) {} }
+  connect();
+}
 
 function connect() {
   const proto = location.protocol === "https:" ? "wss://" : "ws://";
@@ -652,9 +666,9 @@ window.toggleGoals = () => {
 };
 // 🃏 Zieh-Schlange: über JEDE gezogene Karte wird einzeln entschieden –
 // ausspielen (gratis) oder einlagern. Der Zug geht erst weiter, wenn alles entschieden ist.
-window.freshPlay = (id) => send({ t: "freshDecide", cardId: id, action: "play", realm: window._freshRealm || null });
-window.freshKeep = (id) => send({ t: "freshDecide", cardId: id, action: "keep" });
-window.freshClear = () => send({ t: "freshClear" });
+window.freshPlay = (id) => sendWichtig({ t: "freshDecide", cardId: id, action: "play", realm: window._freshRealm || null });
+window.freshKeep = (id) => sendWichtig({ t: "freshDecide", cardId: id, action: "keep" });
+window.freshClear = () => sendWichtig({ t: "freshClear" });
 window.chooseFreshRealm = (rid) => { window._freshRealm = rid; render(); };
 
 
@@ -733,17 +747,17 @@ function logBox(s) {
 }
 window.sendChat = () => {
   const el = document.getElementById("chatinput");
-  if (el && el.value.trim()) send({ t: "chat", text: el.value.trim() });
+  if (el && el.value.trim()) sendWichtig({ t: "chat", text: el.value.trim() });
   if (el) el.value = "";
 };
-window.pickPlay = () => send({ t: "pick", cardId: selected.id, action: "play", realm: window._realm });
+window.pickPlay = () => sendWichtig({ t: "pick", cardId: selected.id, action: "play", realm: window._realm });
 // 🌙 Traum-Monster: Hilfsreich selber aussuchen (Nutzer-Wunsch)
-window.pickTraum = (rid) => send({ t: "pick", cardId: selected.id, action: "play", realm: rid });
-window.freshDecideTraum = (id, rid) => send({ t: "freshDecide", cardId: id, action: "play", realm: rid });
-window.pickKeep = () => send({ t: "pick", cardId: selected.id, action: "keep" });
-window.discardOpen = () => send({ t: "discard", cardId: selected.id });
-window.setSeasons = (n) => send({ t: "setSeasons", seasons: n });
-window.setMode = (m) => send({ t: "setMode", mode: m });
+window.pickTraum = (rid) => sendWichtig({ t: "pick", cardId: selected.id, action: "play", realm: rid });
+window.freshDecideTraum = (id, rid) => sendWichtig({ t: "freshDecide", cardId: id, action: "play", realm: rid });
+window.pickKeep = () => sendWichtig({ t: "pick", cardId: selected.id, action: "keep" });
+window.discardOpen = () => sendWichtig({ t: "discard", cardId: selected.id });
+window.setSeasons = (n) => sendWichtig({ t: "setSeasons", seasons: n });
+window.setMode = (m) => sendWichtig({ t: "setMode", mode: m });
 // ⚡/🐢 Wahl-Flow (v2.9, Nutzer-Wunsch): Auf „Ausspielen“/„Einlagern“ wird die
 // Wahl NUR GESTUFT – an derselben Stelle erscheinen dann „✅ Fertig“ und
 // „✏️ Ändern“. Erst der Tipp auf „Fertig“ schickt die Wahl ab und beendet den
@@ -764,9 +778,9 @@ window.simSetDiscard = (id) => {
 // bzw. oeffnet den Aendern-Modus fuer die schon gewaehlte (staged) Karte.
 window.simDiscTap = (id) => { if (suppressClick) return; if (!inhand) { handModus(true); return; } if (simSel && id === simSel.cardId) simEdit(); else simSetDiscard(id); };
 window.simStagedTap = () => { if (suppressClick) return; if (!inhand) { handModus(true); return; } simEdit(); };
-window.simConfirm = () => { if (!simSel) return; window._simEditing = false; window._simSent = true; send({ t: "simPick", cardId: simSel.cardId, action: simSel.action, realm: simSel.realm, discardId: simDiscard }); render(); };
+window.simConfirm = () => { if (!simSel) return; window._simEditing = false; window._simSent = true; sendWichtig({ t: "simPick", cardId: simSel.cardId, action: simSel.action, realm: simSel.realm, discardId: simDiscard }); render(); };
 window.simEdit = () => { simSel = null; simDiscard = null; window._simSent = false; window._simEditing = true; render(); };
-window.revealNow = () => send({ t: "reveal" }); // 🐢 Langsam: „Jetzt aufdecken!“
+window.revealNow = () => sendWichtig({ t: "reveal" }); // 🐢 Langsam: „Jetzt aufdecken!“
 // 🚨 TAMTAM für FETTE Monster (Level 4 Standard / Level 10 Traum): Vollbild-Banner
 // + Dreifach-Gong, verschwindet nach 6 Sek. oder per Tipp auf das Banner.
 
@@ -832,17 +846,17 @@ function fanfareDing() {
   } catch (e) {}
 }
 window.chooseRealm = (rid) => { window._realm = rid; renderActionBar(); };
-window.seasonDone = () => send({ t: "seasonDone" });
-window.next = () => send({ t: "next" });
+window.seasonDone = () => sendWichtig({ t: "seasonDone" });
+window.next = () => sendWichtig({ t: "next" });
 // 🎲 v3.1: Gefahrenprobe – der eine Wurf für alle kommt vom HOST
 // (der Knopf erscheint nur bei ihm, alle anderen sehen das Ergebnis gleichzeitig).
-window.dangerRoll = () => send({ t: "dangerRoll" });
-window.rematch = () => send({ t: "rematch" });
+window.dangerRoll = () => sendWichtig({ t: "dangerRoll" });
+window.rematch = () => sendWichtig({ t: "rematch" });
 // 🔄 Host: Partie abbrechen und zurück in die Lobby
-window.newGame = () => { if (confirm("Aktuelle Partie abbrechen und zurück in die Lobby? Alle Punkte dieser Partie gehen verloren.")) send({ t: "newGame" }); };
+window.newGame = () => { if (confirm("Aktuelle Partie abbrechen und zurück in die Lobby? Alle Punkte dieser Partie gehen verloren.")) sendWichtig({ t: "newGame" }); };
 // 🔎 v3.0: Weiter-blättern liegt beim SERVER – nur der Host klickt, alle springen
 // synchron auf den nächsten Schritt (kein eigenes Tempo mehr je Spieler).
-window.revealNext = () => send({ t: "revealNext" });
+window.revealNext = () => sendWichtig({ t: "revealNext" });
 
 
 window.selectCard = (id, from) => {
@@ -865,6 +879,18 @@ function seasonEndButtons(s) {
 
 function renderActionBar() {
   const seTurnActive = state.phase === "seasonEnd" && state.isYourSeasonTurn;
+  // v3.15: Während der Aufdeck-Phase hat die Leiste unten nichts zu melden:
+  // Die Wahl ist längst abgegeben, „✏️ Ändern“ wäre ein toter Knopf (der Server
+  // lehnt neue Wahlen bis zum Ende der Aufdeckrunde ab) und Restinfos der Wahl
+  // (z. B. Reich des gewählten Monsters) standen als Text-Leichen im Band.
+  // Nur die offene 2er-Ablage (awaitDiscard) braucht die Leiste weiter.
+  if (state.phase === "draft" && (state.mode === "schnell" || state.mode === "langsam")
+      && state.showTurn >= 0 && state.awaitDiscard !== state.you) {
+    actionBand(false);
+    const inf = document.getElementById("info");
+    if (inf) inf.textContent = "";
+    return;
+  }
   // ⚡/🐢 schon bestätigt und nicht im Ändern-Modus: unten großer „Ändern“-Knopf –
   // die Wahl bleibt änderbar, solange nicht alle Spieler fertig sind
   if ((state.mode === "schnell" || state.mode === "langsam") && state.phase === "draft" && state.showTurn < 0 && state.mySimPick && !window._simEditing) {
@@ -872,7 +898,7 @@ function renderActionBar() {
     // war eine Falle: Nach dem Bestätigen sind die Karten deaktiviert, der Fächer
     // lässt sich gar nicht mehr anheben – es gab KEINEN Weg zurück zum Ändern/Fertig.
     actionInner.innerHTML = `<button class="btn-indigo" onclick="simEdit()">✏️ Ändern</button>
-      <div class="note">Deine Wahl ist abgegeben – du kannst sie noch ändern, solange nicht alle fertig sind.</div>`;
+      <div class="note">✅ Abgegeben – änderbar, bis alle fertig sind.</div>`;
     actionBand(true);
     return;
   }
@@ -910,7 +936,7 @@ function renderActionBar() {
   const traumFn = staging ? "stageTraum" : "pickTraum";
   let inner = "";
   if (staging && !staged) inner = state.mode === "langsam"
-    ? `<div class="note" style="margin-bottom:6px">🐢 Deine Wahl bleibt verdeckt – wenn alle fertig sind, deckt ihr NACHEINANDER auf. Du klickst selbst „Jetzt aufdecken!“.</div>`
+    ? `<div class="note" style="margin-bottom:6px">🐢 Deine Wahl bleibt verdeckt – aufgedeckt wird reihum.</div>`
     : `<div class="note" style="margin-bottom:6px">⚡ Deine Wahl bleibt verdeckt – alles wird gleichzeitig ausgeführt, sobald alle fertig sind.</div>`;
   const inHand = selectedFrom === "hand";
   const isEntdecker = !!selected && selected.type === "Mitarbeiter" && selected.kind === "land";
@@ -923,14 +949,14 @@ function renderActionBar() {
     const twoP = state.mode === "schnell" && state.players.length === 2 && state.hand.length > 1;
     if (window._simSent) {
       // „Fertig“ wurde getippt: Wahl ist raus, nur noch Ändern (oder warten).
-      inner = `<div class="note" style="margin-bottom:6px">✅ Abgeschickt – sobald alle fertig sind, wird ausgeführt. Mit „✏️ Ändern“ kannst du noch neu wählen.</div>
+      inner = `<div class="note" style="margin-bottom:6px">✅ Abgeschickt – änderbar, bis alle fertig sind.</div>
         <button class="btn-indigo" onclick="simEdit()">✏️ Ändern</button>`;
     } else if (twoP && !simDiscard) {
       inner = `<div class="note" style="margin-bottom:6px">🗑️ Und jetzt deine <b>ABWURFKARTE</b> im Kartenfächer antippen – danach wird „Fertig“ klickbar.</div>
         <button class="btn-green" disabled onclick="simConfirm()">✅ Fertig</button>
         <button class="btn-indigo" onclick="simEdit()">✏️ Ändern</button>`;
     } else {
-      inner = `<div class="note" style="margin-bottom:6px">✅ Bereit – mit „Fertig“ gibst du deinen Zug ab. Mit „✏️ Ändern“ wählst du stattdessen neu.</div>
+      inner = `<div class="note" style="margin-bottom:6px">✅ Bereit – „Fertig“ gibt den Zug ab.</div>
         <button class="btn-green" onclick="simConfirm()">✅ Fertig</button>
         <button class="btn-indigo" onclick="simEdit()">✏️ Ändern</button>`;
     }
@@ -995,13 +1021,13 @@ function renderConnect() {
       </div>
     </div>`;
 }
-window.createRoom = () => { myName = document.getElementById("name").value.trim(); if (!myName) return toast("Bitte erst deinen Namen eingeben!"); send({ t: "create", name: myName }); };
+window.createRoom = () => { myName = document.getElementById("name").value.trim(); if (!myName) return toast("Bitte erst deinen Namen eingeben!"); sendWichtig({ t: "create", name: myName }); };
 window.joinRoom = () => {
   myName = document.getElementById("name").value.trim();
   const code = document.getElementById("code").value.trim().toUpperCase();
   if (!myName) return toast("Bitte erst deinen Namen eingeben!");
   if (code.length !== 4) return toast("Der Raum-Code hat 4 Buchstaben/Ziffern.");
-  send({ t: "join", room: code, name: myName });
+  sendWichtig({ t: "join", room: code, name: myName });
 };
 
 function renderLobby(s) {
@@ -1043,10 +1069,10 @@ function renderLobby(s) {
       <button class="btn-ghost" style="max-width:420px;width:100%;font-size:0.85rem" onclick="leaveRoom()">${s.isHost ? "🚪 Raum schließen" : "🚪 Raum verlassen"}</button>
     </div>`;
 }
-window.startGame = () => send({ t: "start" });
+window.startGame = () => sendWichtig({ t: "start" });
 // 🤖 Bots (nur Host, nur Lobby)
-window.addBot = () => send({ t: "addBot" });
-window.removeBot = (name) => { if (confirm(`${name} entfernen?`)) send({ t: "removeBot", name }); };
+window.addBot = () => sendWichtig({ t: "addBot" });
+window.removeBot = (name) => { if (confirm(`${name} entfernen?`)) sendWichtig({ t: "removeBot", name }); };
 // 🚪 Raum verlassen (Gast) bzw. für alle schließen (Host) – zurück zum Startbildschirm.
 // Das Token wird gelöscht: Beim nächsten Öffnen landet man NICHT mehr im alten Raum.
 window.leaveRoom = () => {
@@ -1059,7 +1085,7 @@ window.leaveRoom = () => {
       ? `Partie verlassen?\nDu kannst danach NICHT zu dieser Partie zurückkehren.`
       : `Raum verlassen?`;
   if (!confirm(q)) return;
-  send({ t: "leave" });
+  sendWichtig({ t: "leave" });
   localStorage.removeItem("com-token");
   state = null; simSel = null; simDiscard = null; selected = null; selectedFrom = null; window._simEditing = false; window._simSent = false; freshUp = {};
   renderConnect();
@@ -1781,11 +1807,14 @@ function mitteHTML(s) {
 
 // ---------------------------- Der Spieltisch ----------------------------
 function phoneShellHTML(s) {
-  // 🃏 v3.14: Der Zieh-Schleier öffnet/kehrt zurück, solange irgendeine wartende
-  // Karte noch NICHT umgedreht wurde (vorher: nur einmalig bei NEUEN Karten – ein
-  // versehentliches Zuklappen vor dem Flip ließ die Zeremonie zu und der Ablauf
-  // hing am unosichtbaren Banner). Umgedrehte Karten: Zuklappen wird respektiert.
-  if ((s.freshDraw || []).some((c) => !freshUp[c.id])) openDrawer = "dFresh";
+  // 🃏 v3.15: Der Zieh-Schleier kehrt zurück, solange eine wartende NICHT-Ziel-
+  // Karte noch nicht umgedreht wurde (sie blockiert den Spielablauf – bloßes
+  // Zuklappen vor dem Flip darf den Ablauf nicht einfrieren). Umgedrehte Karten
+  // und gezogene ZIELE (sie blockieren nichts) werden nach dem ersten Öffnen
+  // respektiert: einmal angesehen/genutzt genügt, 🃏-Banner und Ecke holen sie
+  // jederzeit zurück. Neu angekommene Karten öffnen den Schleier einmalig.
+  const wartet = (s.freshDraw || []).some((c) => c.type !== "Ziel" && !freshUp[c.id]);
+  if (wartet || (FX && (FX.freshNeu || []).length)) openDrawer = "dFresh";
   if (!(s.phase === "draft" && s.hand && s.hand.length)) inhand = false;
   // v3.13: Nach „Fertig“ im 🐢-Modus liegt die eigene Hand ab (freie Sicht).
   const simdone = s.mode === "langsam" && s.phase === "draft" && window._simSent
