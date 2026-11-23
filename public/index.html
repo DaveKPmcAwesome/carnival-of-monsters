@@ -416,19 +416,29 @@ function toast(msg) {
 }
 
 function send(obj) { if (ws && ws.readyState === 1) ws.send(JSON.stringify(obj)); }
-// v3.15: Kritische Aktionen gehen nie mehr STUMM verloren. Bricht die Verbindung
-// halb ab (Handy gesperrt, NAT-Timeout: readyState bleibt 1, aber nichts kommt
-// mehr an), lieferte send() bisher ins Leere – der Tipp „passierte einfach
-// nichts“. Deswegen: Frische-Check (letzte Server-Antwort < 25 s her). Tot oder
-// halbtot -> Status-Balken zeigen, alten Socket stilllegen, NEU verbinden; der
-// Resume-Puls holt den Spielstand und der Tipp wird einfach wiederholt.
+// v3.16: Der v3.15-Frische-Check verlangte bei halbtoter Leitung einen ZWEITEN Tipp
+// nach dem Neu-Verbinden – und wer schnell mehrfach tippte, riss jeden Neuaufbau
+// selbst wieder ab („manchmal 5-10× klicken“). Neu: Der Tipp wird GEPARKT und geht
+// beim frischen Socket AUTOMATISCH raus (nopf nach dem Resume-Puls). Ein einmal
+// begonnener Neu-Aufbau blockt weitere Klick-Stürme; nach dem letzten Tipp gewinnt.
+window._parkWichtig = null;   // 📡 geparkter Tipp: geht automatisch raus, sobald die Verbindung steht
+window._verbNeu = false;       // 📡 Neu-Verbindung läuft gerade (Sturm-Schutz)
+function sendGeparkt() {
+  const p = window._parkWichtig;
+  if (!p) return;
+  window._parkWichtig = null;
+  if (ws && ws.readyState === 1) send(p);
+}
 function sendWichtig(obj) {
-  const frisch = ws && ws.readyState === 1 && Date.now() - lastMsg < 25000;
-  if (frisch) { send(obj); return; }
+  if (ws && ws.readyState === 1 && Date.now() - lastMsg < 25000) { window._parkWichtig = null; send(obj); return; }
+  window._parkWichtig = obj;            // der letzte Tipp gewinnt
   statusEl.style.display = "block";
+  if (window._verbNeu) return;          // Neu-Aufbau läuft schon – nichts mehr kaputt-tippen
+  window._verbNeu = true;
   const alt = ws;
   if (alt) { alt.onclose = () => {}; try { alt.close(); } catch (e) {} }
   connect();
+  setTimeout(() => { window._verbNeu = false; }, 15000); // Not-Ventil, falls kein onopen/onclose kommt
 }
 
 function connect() {
@@ -438,8 +448,9 @@ function connect() {
     lastMsg = Date.now();
     statusEl.style.display = "none";
     const token = localStorage.getItem("com-token");
-    if (token) send({ t: "resume", token });
-    else renderConnect();
+    if (token) { send({ t: "resume", token }); sendGeparkt(); } // 📡 v3.16: geparkter Tipp automatisch raus
+    else { window._parkWichtig = null; renderConnect(); }
+    window._verbNeu = false; // Sturm-Schutz freigeben
   };
   ws.onmessage = (ev) => {
     let msg; try { msg = JSON.parse(ev.data); } catch { return; }
@@ -602,7 +613,7 @@ function cardInfo(c) {
     if (c.draw > 0) t += ` · 🃏 zieht ${c.draw}`;
     if (c.danger > 0) t += ` · ⚠️ ${c.danger}`;
   } else if (c.type === "Mitarbeiter" || c.type === "Event" || c.type === "Ziel") {
-    t = (c.type === "Mitarbeiter" ? `−${c.cost} 👑 · ` : "") + originalCardText(c); // v2.7: Originaltext auch im Drawer/Info
+    t = (c.type === "Mitarbeiter" ? `−${c.cost} 🪙 · ` : "") + originalCardText(c); // v2.7: Originaltext auch im Drawer/Info
   }
   return t;
 }
@@ -961,7 +972,7 @@ function renderActionBar() {
         <button class="btn-indigo" onclick="simEdit()">✏️ Ändern</button>`;
     }
   } else if (isEntdecker) {
-    inner = `<div class="note" style="margin-bottom:6px">„${esc(selected.name)}" – Typ des Landes festlegen: <b>dauerhaft!</b> (−${selected.cost} 👑)</div>`;
+    inner = `<div class="note" style="margin-bottom:6px">„${esc(selected.name)}" – Typ des Landes festlegen: <b>dauerhaft!</b> (−${selected.cost} 🪙)</div>`;
     inner += ALL_REALMS.map((r) => `<button class="btn-indigo" onclick="chooseRealm('${r.id}')" ${staged ? "disabled" : ""}>${r.emoji} ${r.short}${window._realm === r.id ? " ✓" : ""}</button>`).join("");
     inner += `<button class="btn-green" onclick="${onPlay}" ${window._realm && !staged ? "" : "disabled"}>✅ Ausspielen</button>`;
   } else if (selected.type === "Monster" && selected.realm === "traum") {
@@ -978,15 +989,15 @@ function renderActionBar() {
     inner = `<div class="note" style="margin-bottom:6px">🌙 Traum-Monster – bezahlt mit Traumland und/oder GENAU EINEM Hilfsreich:</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">${opts || '<span class="muted">Passt gerade nicht – zu wenig freie Landpunkte.</span>'}</div>`;
     if (state.phase === "draft" && inHand)
-      inner += `<button class="btn-indigo" style="width:100%;margin-top:8px" onclick="${onKeep}" ${staged ? "disabled" : ""}>📥 Einlagern (−1 👑)</button>`;
+      inner += `<button class="btn-indigo" style="width:100%;margin-top:8px" onclick="${onKeep}" ${staged ? "disabled" : ""}>📥 Einlagern (−1 🪙)</button>`;
   } else if (selected.type === "Ziel") {
-    inner = `<button class="btn-purple" onclick="${onKeep}" ${state.phase === "draft" && inHand && !staged ? "" : "disabled"}>📥 Als Ziel annehmen (−1 👑)</button>`;
+    inner = `<button class="btn-purple" onclick="${onKeep}" ${state.phase === "draft" && inHand && !staged ? "" : "disabled"}>📥 Als Ziel annehmen (−1 🪙)</button>`;
   } else {
     const playable = cardPlayable(selected, me);
-    inner = `<button class="btn-green" onclick="${onPlay}" ${playable && !staged ? "" : "disabled"}>✅ Ausspielen${selected.type === "Mitarbeiter" ? ` (−${selected.cost} 👑)` : ""}</button>`;
+    inner = `<button class="btn-green" onclick="${onPlay}" ${playable && !staged ? "" : "disabled"}>✅ Ausspielen${selected.type === "Mitarbeiter" ? ` (−${selected.cost} 🪙)` : ""}</button>`;
     // v2.6: Bei eingelagerten Karten ergibt „Einlagern“ keinen Sinn – nur für Handkarten.
     // v3.2 (Nutzer-Wunsch): Events und Mitarbeitende werden NICHT eingelagert – sie müssen ausgespielt werden.
-    if (inHand && selected.type !== "Event" && selected.type !== "Mitarbeiter") inner += `<button class="btn-indigo" onclick="${onKeep}" ${state.phase === "draft" && !staged ? "" : "disabled"}>📥 Einlagern (−1 👑)</button>`;
+    if (inHand && selected.type !== "Event" && selected.type !== "Mitarbeiter") inner += `<button class="btn-indigo" onclick="${onKeep}" ${state.phase === "draft" && !staged ? "" : "disabled"}>📥 Einlagern (−1 🪙)</button>`;
   }
   const stCard = (!selected && staged && simSel) ? ((state.hand || []).find((c) => c.id === simSel.cardId) || null) : null;
   const nc = selected || stCard;
@@ -996,7 +1007,7 @@ function renderActionBar() {
     if (nc.type === "Monster" && !canPlayMonster(nc, me2))
       note += nc.realm === "traum" ? " – braucht 🌙 bzw. 🌙+EIN Reich!" : " – zu wenig Kapazität!";
     if (nc.type === "Land" && !canPlayLand(nc, me2)) note += " – entfernte Länder brauchen Vorbedingung";
-    if (nc.type === "Mitarbeiter" && me2.coins < nc.cost) note += " · 🏦 Kredit nötig (+3 👑, −5 SP)";
+    if (nc.type === "Mitarbeiter" && me2.coins < nc.cost) note += " · 🏦 Kredit nötig (+3 🪙, −5 SP)";
     if (nc.type === "Ziel") note += " · Ziele nur annehmen, nicht ausspielen";
   }
   if (seTurnActive) inner += seasonEndButtons(state);
@@ -1115,7 +1126,7 @@ function renderDanger(s) {
       return `<div class="revrow ${idx === s.you ? "me" : ""}">
         <span>${esc(r.name)}</span>
         <span class="pts">${r.danger}⚠️ · ${r.danger === 0 ? "alles ruhig 😌" : ""}
-          ${r.cages ? `👷 ${r.cages} · ` : ""}${r.markers ? `🏹 ${r.markers} · ` : ""}${r.payCoins ? `👑 ${r.payCoins * 3} · ` : ""}${r.newCredits ? `🏦 ${r.newCredits}` : ""}</span>
+          ${r.cages ? `👷 ${r.cages} · ` : ""}${r.markers ? `🏹 ${r.markers} · ` : ""}${r.payCoins ? `🪙 ${r.payCoins * 3} · ` : ""}${r.newCredits ? `🏦 ${r.newCredits}` : ""}</span>
       </div>`;
     }).join("");
     body = `<div class="center" style="margin:6px 0 10px">Ein Wurf für alle: <b>${d.roll.join(" + ")} = ${d.rollSum} Käfige</b></div>` + rows;
@@ -1150,11 +1161,11 @@ function renderReveal(s) {
         <span><b>${esc(gr.name)}</b> <span class="goal">(${esc(originalGoalText(gr))})</span></span><span class="pts">+${gr.pts}</span></div>`).join("")}
       ${p.goalResults.length ? `<div class="revrow" style="background:rgba(245,158,11,0.2)"><span><b>🎯 Ziele gesamt</b></span><span class="pts"><b>+${p.goalResults.reduce((sum, gr) => sum + gr.pts, 0)}</b></span></div>` : ""}
       </div>`).join("");
-  if (revealStep === 3) body = `<p class="center muted" style="margin-bottom:8px">Kronen, Jäger &amp; Kredite (1 👑 = 1 SP · 1 🏹 = 1 SP · Kredit = −5 SP)</p>` +
+  if (revealStep === 3) body = `<p class="center muted" style="margin-bottom:8px">Kronen, Jäger &amp; Kredite (1 🪙 = 1 SP · 1 🏹 = 1 SP · Kredit = −5 SP)</p>` +
     rv.players.map((p, i) => `<div class="revrow ${i === s.you ? "me" : ""}">
       <span>👤 ${esc(p.name)}</span>
       <span class="pts">+${p.coinsPts + p.hunterPts} ${p.creditPts ? `<span style="color:#f87171">−${-p.creditPts}</span>` : ""}
-        <span class="goal">(👑${p.coins} ×1 · 🏹${p.hunters} ×1 · 🏦${p.credits})</span></span></div>`).join("");
+        <span class="goal">(🪙${p.coins} ×1 · 🏹${p.hunters} ×1 · 🏦${p.credits})</span></span></div>`).join("");
   if (revealStep >= 4) {
     body = `<p class="center" style="color:#fde68a;margin-bottom:8px">Das Endergebnis!</p>` +
       rv.ranked.map((p, i) => `<div class="revrow ${rv.players.indexOf(p) === s.you ? "me" : ""}">
@@ -1264,7 +1275,7 @@ function spanelHTML(s, pi, links) {
   const stf = (p.staff || []).map((x, xi) => `<span class="stf${FX && FX.newStf && FX.newStf[pi] && xi >= (p.staff || []).length - FX.newStf[pi] ? " neu" : ""}" onclick="event.stopPropagation();toggleStaff(${pi},'${esc(x.name)}')">${esc(x.name)}</span>`).join("");
   const detail = staffDetail && staffDetail.pi === pi ? (() => {
     const st = (p.staff || []).find((x) => x.name === staffDetail.name);
-    return st ? `<div class="stfdetail"><b>👷 ${esc(st.name)}</b> (−${st.cost} 👑): ${esc(originalCardText({ type: "Mitarbeiter", name: st.name, text: st.text }))}</div>` : "";
+    return st ? `<div class="stfdetail"><b>👷 ${esc(st.name)}</b> (−${st.cost} 🪙): ${esc(originalCardText({ type: "Mitarbeiter", name: st.name, text: st.text }))}</div>` : "";
   })() : "";
   // v2.5: Anfangsbuchstabe im Avatar – auch bei Bots: „🤖 Name“ zeigt den Buchstaben,
   // nicht das Roboter-Emoji. Vorangestellte Nicht-Buchstaben (Emoji/Leerzeichen)
@@ -1275,7 +1286,7 @@ function spanelHTML(s, pi, links) {
     <div class="kopf">
       <div class="pav" style="border-color:${AV_COLORS[pi % 5]};background:${AV_DARK[pi % 5]}">${esc(x)}</div>
       <div class="pname">${p.connected ? "" : "📴 "}${esc(p.name)}<small>${statusFor(s, pi)}</small></div>
-      <div class="kenn"><span id="coinP${pi}"${FX && FX.coinGain[pi] ? ' class="cpop"' : ""}>👑 <b>${p.coins}</b></span><span id="huntP${pi}"${FX && FX.huntGain[pi] ? ' class="cpop"' : ""}>🏹 <b>${p.hunters}</b></span><span>💳 <b>${p.credits}</b></span>${p.trophies ? `<span>🏆 <b>${p.trophies}</b></span>` : ""}<i class="pf">▸</i></div>
+      <div class="kenn"><span id="coinP${pi}"${FX && FX.coinGain[pi] ? ' class="cpop"' : ""}>🪙 <b>${p.coins}</b></span><span id="huntP${pi}"${FX && FX.huntGain[pi] ? ' class="cpop"' : ""}>🏹 <b>${p.hunters}</b></span><span>💳 <b>${p.credits}</b></span>${p.trophies ? `<span>🏆 <b>${p.trophies}</b></span>` : ""}<i class="pf">▸</i></div>
     </div>
     <div class="landrows">${rows}</div>
     ${mons ? `<div class="minis">${mons}</div>` : ""}
@@ -1338,7 +1349,7 @@ function fanCardHTML(c, opts) {
     pts = `${c.level} P`;
     if (c.realm !== "traum" && c.level >= 2) eff = "entfernt · Land-Vorbedingung nötig";
   } else if (c.type === "Mitarbeiter") {
-    rc = "#0891b2"; art = "👷"; med = String(c.cost); pts = "👑";
+    rc = "#0891b2"; art = "👷"; med = String(c.cost); pts = "🪙";
     // v2.7: Original-Kartentext als Effekt – mit Client-Fallback, falls der
     // Server (noch) keine Texte schickt.
     eff = originalCardText(c);
@@ -1627,7 +1638,7 @@ function drawerEigenHTML(s) {
   if (!mons && !stf) return "";
   const detail = staffDetail && staffDetail.pi === s.you ? (() => {
     const st = (me.staff || []).find((x) => x.name === staffDetail.name);
-    return st ? `<div class="stfdetail"><b>👷 ${esc(st.name)}</b> (−${st.cost} 👑): ${esc(originalCardText({ type: "Mitarbeiter", name: st.name, text: st.text }))}</div>` : "";
+    return st ? `<div class="stfdetail"><b>👷 ${esc(st.name)}</b> (−${st.cost} 🪙): ${esc(originalCardText({ type: "Mitarbeiter", name: st.name, text: st.text }))}</div>` : "";
   })() : "";
   // v2.5: Keine Beschriftung – die Kacheln und Chips sprechen für sich (Nutzer-Wunsch).
   return `<div class="drawer ${openDrawer === "dEigen" ? "open" : ""}" id="dEigen">
@@ -1681,12 +1692,10 @@ function drawerFreshHTML(s) {
     if (cur.type === "Ziel") {
       btns = `<div class="freshbtns${late}"><button class="btn-amber" style="border:none;border-radius:12px;padding:13px 22px;font-weight:800" onclick="freshClear()">✅ Alles klar</button></div>`;
     } else if (cur.type === "Mitarbeiter" && cur.kind === "land") {
+      // v3.16 (Hausregel): Mitarbeitende werden NIE eingelagert – nur anstellen.
       btns = `<div class="freshbtns${late}" style="flex-direction:column">
         <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center">${ALL_REALMS.map((r) => `<button class="btn-indigo" style="flex:1;min-height:48px;font-size:.95rem;border:none;border-radius:12px;padding:12px 6px;font-weight:700" onclick="chooseFreshRealm('${r.id}')">${r.emoji}${window._freshRealm === r.id ? " ✓" : ""}</button>`).join("")}</div>
-        <div style="display:flex;gap:8px">
-          <button class="btn-green" style="flex:1;border:none;border-radius:12px;padding:12px;font-weight:800" ${window._freshRealm ? "" : "disabled"} onclick="freshPlay(${cur.id})">✅ Diese ausspielen</button>
-          <button class="btn-indigo" style="flex:1;border:none;border-radius:12px;padding:12px;font-weight:800" onclick="freshKeep(${cur.id})">📥 Diese einlagern</button>
-        </div></div>`;
+        <button class="btn-green" style="width:100%;border:none;border-radius:12px;padding:12px;font-weight:800" ${window._freshRealm ? "" : "disabled"} onclick="freshPlay(${cur.id})">✅ Diese anstellen</button></div>`;
     } else if (cur.type === "Monster" && cur.realm === "traum") {
       const free = freeLandsOf(s.players[s.you].lands, s.players[s.you].seasonMonsters);
       let opts = "";
@@ -1701,9 +1710,10 @@ function drawerFreshHTML(s) {
         <button class="btn-indigo" style="width:100%;border:none;border-radius:12px;padding:12px;font-weight:800" onclick="freshKeep(${cur.id})">📥 Diese einlagern (gratis)</button></div>`;
     } else {
       const playable = cardPlayable(cur, s.players[s.you]);
+      const keinLager = cur.type === "Mitarbeiter"; // v3.16 (Hausregel): Mitarbeitende nie einlagern
       btns = `<div class="freshbtns${late}">
-          <button class="btn-green" style="flex:1;border:none;border-radius:12px;padding:12px;font-weight:800" ${playable ? "" : "disabled"} onclick="freshPlay(${cur.id})">✅ Diese ausspielen</button>
-          <button class="btn-indigo" style="flex:1;border:none;border-radius:12px;padding:12px;font-weight:800" onclick="freshKeep(${cur.id})">📥 Diese einlagern (gratis)</button>
+          <button class="btn-green" style="flex:1;border:none;border-radius:12px;padding:12px;font-weight:800" ${playable ? "" : "disabled"} onclick="freshPlay(${cur.id})">${keinLager ? "✅ Diese anstellen" : "✅ Diese ausspielen"}</button>
+          ${keinLager ? "" : `<button class="btn-indigo" style="flex:1;border:none;border-radius:12px;padding:12px;font-weight:800" onclick="freshKeep(${cur.id})">📥 Diese einlagern (gratis)</button>`}
         </div>`;
     }
   }
@@ -1763,7 +1773,7 @@ function bottombarHTML(s) {
     <button class="corner" id="cMen" onclick="event.stopPropagation();toggleDrawerById('dMen')"><span class="emoji">🎭</span>${mengN ? `<span class="badge">${mengN}</span>` : ""}</button>
     ${freshAll ? `<button class="corner hot" id="cFresh" onclick="event.stopPropagation();toggleDrawerById('dFresh')"><span class="emoji">🃏</span>${freshN ? `<span class="badge">${freshN}</span>` : ""}</button>` : ""}
     <div class="midst" onclick="event.stopPropagation()">
-      <span id="crownMe"${FX && FX.coinGain[s.you] ? ' class="cpop"' : ""}>👑 <b>${me.coins}</b></span><span class="sep">·</span>
+      <span id="crownMe"${FX && FX.coinGain[s.you] ? ' class="cpop"' : ""}>🪙 <b>${me.coins}</b></span><span class="sep">·</span>
       <span id="huntMe"${FX && FX.huntGain[s.you] ? ' class="cpop"' : ""}>🏹 <b>${me.hunters}</b></span><span class="sep">·</span>
       <span>💳 <b>${me.credits}</b></span>${me.trophies ? `<span class="sep">·</span><span>🏆 <b>${me.trophies}</b></span>` : ""}
     </div>
