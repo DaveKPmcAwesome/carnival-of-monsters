@@ -226,7 +226,7 @@ const staffCount = (p, kind, realm) => p.staff.filter((s) => s.kind === kind && 
 
 function takeCredits(p, shortfall) {
   const n = Math.ceil((shortfall - p.coins) / 3);
-  if (n > 0) { p.coins += 3 * n; p.credits += n; return `🏦 ${n} Kredit(e) aufgenommen (+${3 * n}👑, je −5 SP)`; }
+  if (n > 0) { p.coins += 3 * n; p.credits += n; return `🏦 ${n} Kredit(e) aufgenommen (+${3 * n}🪙, je −5 SP)`; }
   return "";
 }
 
@@ -246,9 +246,9 @@ function onMonsterPlayed(g, pIdx, card) {
   const p = g.players[pIdx];
   const msgs = [];
   const experts = staffCount(p, "realm", card.realm);
-  if (experts > 0) { p.coins += 2 * experts; msgs.push(`+${2 * experts}👑 (Experten)`); }
+  if (experts > 0) { p.coins += 2 * experts; msgs.push(`+${2 * experts}🪙 (Experten)`); }
   const baendiger = staffCount(p, "dangerCoin");
-  if (baendiger > 0 && card.danger > 0) { p.coins += baendiger * card.danger; msgs.push(`+${baendiger * card.danger}👑 (Bändiger)`); }
+  if (baendiger > 0 && card.danger > 0) { p.coins += baendiger * card.danger; msgs.push(`+${baendiger * card.danger}🪙 (Bändiger)`); }
   if (card.draw > 0 && g.deckIdx < g.deck.length) {
     const drawnCards = [];
     for (let i = 0; i < card.draw && g.deckIdx < g.deck.length; i++) {
@@ -276,7 +276,7 @@ function onEvent(p, card) {
   else if (card.kind === "summer") { const c = 2 * p.staff.length; p.coins += c; msg = `+${c} Kronen (Sommerfest)`; }
   else if (card.kind === "show") { const c = p.stored.filter((x) => x.type === "Monster").length; p.coins += c; msg = `+${c} Kronen (Monster gezeigt)`; }
   const martini = staffCount(p, "eventCoin");
-  if (martini > 0) { p.coins += martini; msg += ` +${martini}👑 (P. T. Martini)`; }
+  if (martini > 0) { p.coins += martini; msg += ` +${martini}🪙 (P. T. Martini)`; }
   return msg;
 }
 
@@ -324,9 +324,9 @@ function playIntoPlayer(g, pIdx, card, chosenRealm) {
     p.staff.push(card);
     if (card.kind === "land") {
       p.lands[chosenRealm] = (p.lands[chosenRealm] || 0) + 1;
-      return { ok: true, msg: `✅ ${card.name} als Landpunkt ${realmInfo(chosenRealm).emoji} festgelegt (−${card.cost} 👑)${cMsg}.` };
+      return { ok: true, msg: `✅ ${card.name} als Landpunkt ${realmInfo(chosenRealm).emoji} festgelegt (−${card.cost} 🪙)${cMsg}.` };
     }
-    return { ok: true, msg: `✅ ${card.name} angestellt (−${card.cost} 👑)${cMsg}.` };
+    return { ok: true, msg: `✅ ${card.name} angestellt (−${card.cost} 🪙)${cMsg}.` };
   }
   if (card.type === "Event") return { ok: true, msg: `✅ Event „${card.name}": ${onEvent(p, card)}.` };
   return null; // Ziele sind nicht spielbar
@@ -677,11 +677,11 @@ function applyHandPick(g, pIdx, pick) {
     return { err: "Events und Mitarbeitende werden nicht eingelagert – spiel die Karte aus!" };
   if (pick.action === "keep") {
     let cMsg = "";
-    if (p.coins < 1) { p.coins += 3; p.credits += 1; cMsg = " · 🏦 Kredit (+3👑, −5 SP)"; }
+    if (p.coins < 1) { p.coins += 3; p.credits += 1; cMsg = " · 🏦 Kredit (+3🪙, −5 SP)"; }
     p.coins -= 1;
     // Datenschutz: Eingelagertes und Ziele sind GEHEIM – der Log ist für alle sichtbar, also OHNE Kartennamen!
-    if (card.type === "Ziel") { p.goals.push(card); g.log.unshift(`📥 ${p.name} nimmt ein Ziel an (−1👑)${cMsg}.`); }
-    else { p.stored.push(card); g.log.unshift(`📥 ${p.name} lagert eine Karte ein (−1👑)${cMsg}.`); }
+    if (card.type === "Ziel") { p.goals.push(card); g.log.unshift(`📥 ${p.name} nimmt ein Ziel an (−1🪙)${cMsg}.`); }
+    else { p.stored.push(card); g.log.unshift(`📥 ${p.name} lagert eine Karte ein (−1🪙)${cMsg}.`); }
     g.hands[pIdx] = g.hands[pIdx].filter((c) => c.id !== card.id);
     return { ok: true };
   }
@@ -801,6 +801,7 @@ function handleFreshDecide(g, pIdx, msg) {
   const card = p.freshDraw[idx];
   if (card.type === "Ziel") return { err: "Ziele liegen schon bei deinen Zielen – tippe auf „Alles klar“." };
   if (msg.action === "keep") {
+    if (card.type === "Mitarbeiter") return { err: "Mitarbeitende werden nicht eingelagert – stelle die Karte an!" }; // v3.16: Hausregel
     p.freshDraw.splice(idx, 1); // bleibt gratis eingelagert
   } else if (msg.action === "play") {
     if (!p.stored.some((c) => c.id === card.id)) return { err: "Diese Karte liegt nicht bei dir." }; // Anti-Cheating
@@ -870,8 +871,8 @@ function endSeason(g) {
     const markers = Math.min(rest, p.hunters); p.hunters -= markers; rest -= markers;
     const payCoins = Math.min(rest, Math.floor(p.coins / 3)); p.coins -= payCoins * 3; rest -= payCoins;
     // Erst mit 3 Kronen je offenes Symbol zahlen (oben) – und nur wenn das Geld
-    // nicht reicht: ganz normal 1 Kredit je Rest-Symbol (+3 👑, −5 SP). Das
-    // Kreditgeld (+3 👑) fließt direkt in die Bezahlung (−3 👑 je Symbol),
+    // nicht reicht: ganz normal 1 Kredit je Rest-Symbol (+3 🪙, −5 SP). Das
+    // Kreditgeld (+3 🪙) fließt direkt in die Bezahlung (−3 🪙 je Symbol),
     // die restlichen Kronen bleiben unverändert.
     const newCredits = rest; p.credits += newCredits;
     const snapshot = [...p.seasonMonsters];
