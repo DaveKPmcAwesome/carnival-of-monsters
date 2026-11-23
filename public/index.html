@@ -8,8 +8,8 @@
      Homescreen, startet im Vollbild ohne Adresszeile. Im Browser-Betrieb
      ändern diese Zeilen nichts. -->
 <link rel="manifest" href="/manifest.webmanifest" />
-<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png?v=2" />
-<link rel="apple-touch-icon" href="/icon-180.png?v=2" />
+<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png?v=3" />
+<link rel="apple-touch-icon" href="/icon-180.png?v=3" />
 <meta name="theme-color" content="#070d1a" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-title" content="Carnival of Monsters" />
@@ -34,6 +34,16 @@
   .phone { width:100%; max-width:430px; margin:0 auto; background:var(--bg); height:100dvh; display:flex; flex-direction:column; position:relative; overflow:hidden; padding-bottom:124px;
            --ch:250px; --cw:calc(var(--ch)*.667); }
   .phone.inhand { --ch:min(48dvh,380px); --cw:calc(var(--ch)*.667); }
+  /* 🎨 v3.20: Saison-Hauch – jede Saison tönt den Tisch oben dezent in ihrer
+     Reichsfarbe aus und verläuft nach unten ins gewohnte Dunkel. Subtil bewusst:
+     Kein Layout ändert sich, nur die Stimmung nimmt die aktuelle Saison mit. */
+  .phone.saison-wald    { background: linear-gradient(205deg, #16302a 0%, #0f172a 46%); }
+  .phone.saison-tiefsee { background: linear-gradient(205deg, #0f2946 0%, #0f172a 46%); }
+  .phone.saison-wolken  { background: linear-gradient(205deg, #1d3a55 0%, #0f172a 46%); }
+  .phone.saison-hoehlen { background: linear-gradient(205deg, #2b2130 0%, #0f172a 46%); }
+  .phone.saison-dunkel  { background: linear-gradient(205deg, #20182e 0%, #0f172a 46%); }
+  .phone.saison-traum   { background: linear-gradient(205deg, #2a1c44 0%, #0f172a 46%); }
+  .phone.saison-gefahr  { background: linear-gradient(205deg, #401618 0%, #0f172a 46%); }
 
   /* ---- Kopf: Saison-Symbol mit Richtungspfeil-Ring + Reichs-Lampen ---- */
   .top { display:flex; align-items:center; gap:10px; padding:10px 12px 4px; }
@@ -1848,7 +1858,9 @@ function phoneShellHTML(s) {
   // v3.13: Nach „Fertig“ im 🐢-Modus liegt die eigene Hand ab (freie Sicht).
   const simdone = s.mode === "langsam" && s.phase === "draft" && window._simSent
     && !window._simEditing && !!s.hand && s.hand.length > 0;
-  return `<div class="phone${inhand ? " inhand" : ""}${simdone ? " simdone" : ""}" id="phone">`
+  // 🎨 v3.20: Saison-Hauch – die Saison-Karte färbt den Tisch oben dezent ein.
+  const saisonCls = s.seasonCard ? " saison-" + s.seasonCard : "";
+  return `<div class="phone${inhand ? " inhand" : ""}${simdone ? " simdone" : ""}${saisonCls}" id="phone">`
     + saisonHeadHTML(s)
     + `<div class="spieler" id="spielerBox">${spielerBoxHTML(s)}</div>`
     + `<div class="mitte">${mitteHTML(s)}</div>`
