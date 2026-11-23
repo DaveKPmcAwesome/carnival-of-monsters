@@ -1258,8 +1258,9 @@ function statusFor(s, i) {
   if (s.phase === "reveal") return "🏁 Wertung";
   if (s.phase === "seasonEnd") return (s.seDone || [])[i] ? "✅ fertig" : "📐 spielt noch";
   if (s.mode === "schnell" || s.mode === "langsam") {
-    if (s.showTurn >= 0) return s.showTurn === i ? "🔍 deckt gerade auf" : (s.simReady && s.simReady[i] ? "✅" : "⏳");
-    return s.simReady && s.simReady[i] ? "✅ hat gewählt" : "⏳ wählt verdeckt…";
+    // v3.18: Bereit-Stand nur im Hinweisband (Chips) – in den Kästen stand er doppelt
+    if (s.showTurn >= 0) return s.showTurn === i ? "🔍 deckt gerade auf" : "";
+    return "";
   }
   if (s.awaitDiscard === i) return "🗑️ legt offen ab…";
   if (s.turn === i) return "🎯 ist am Zug";
@@ -1292,7 +1293,7 @@ function spanelHTML(s, pi, links) {
     <div class="kopf">
       <div class="pav" style="border-color:${AV_COLORS[pi % 5]};background:${AV_DARK[pi % 5]}">${esc(x)}</div>
       <div class="pname">${p.connected ? "" : "📴 "}${esc(p.name)}<small>${statusFor(s, pi)}</small></div>
-      <div class="kenn"><span id="coinP${pi}"${FX && FX.coinGain[pi] ? ' class="cpop"' : ""}>${MZ} <b>${p.coins}</b></span><span id="huntP${pi}"${FX && FX.huntGain[pi] ? ' class="cpop"' : ""}>🏹 <b>${p.hunters}</b></span><span>💳 <b>${p.credits}</b></span>${p.trophies ? `<span>🏆 <b>${p.trophies}</b></span>` : ""}<i class="pf">▸</i></div>
+      <div class="kenn"><span id="coinP${pi}"${FX && FX.coinGain[pi] ? ' class="cpop"' : ""}>${MZ} <b>${p.coins}</b></span><span id="huntP${pi}"${FX && FX.huntGain[pi] ? ' class="cpop"' : ""}>🏹 <b>${p.hunters}</b></span><span>💳 <b>${p.credits}</b></span><i class="pf">▸</i></div>
     </div>
     <div class="landrows">${rows}</div>
     ${mons ? `<div class="minis">${mons}</div>` : ""}
