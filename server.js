@@ -1138,7 +1138,12 @@ function botApply(room) {
       const p = g.players[i];
       const card = (p.freshDraw || []).find((c) => c.type !== "Ziel");
       const realm = card.type === "Mitarbeiter" && card.kind === "land" ? botLandRealm(g, p) : null;
-      const wantPlay = cardPlayable(card, p) && botScoreCard(g, i, card) >= 12;
+      // 🐛 v3.18: Mitarbeitende werden NIE eingelagert (Hausregel, s. handleFreshDecide).
+      // Bots entschieden sich bei knappen Kronen oder Land-Mitarbeitern trotzdem für
+      // „keep“ → Fehler-Loop → das Reihen-Aufdecken fror bei 4/5 Spielern mitten in
+      // der Runde ein. Gezogene Mitarbeitende werden jetzt IMMER angestellt
+      // (Kredit vergibt playIntoPlayer automatisch, Reich wählt botLandRealm).
+      const wantPlay = card.type === "Mitarbeiter" ? true : cardPlayable(card, p) && botScoreCard(g, i, card) >= 12;
       res = wantPlay
         ? handleFreshDecide(g, i, { cardId: card.id, action: "play", realm })
         : handleFreshDecide(g, i, { cardId: card.id, action: "keep" });
