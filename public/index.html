@@ -173,6 +173,9 @@
   .phone.inhand .handwrap { transform:translateY(-10vh); z-index:40; }
   .phone.inhand.bandhoch .handwrap { transform:translateY(calc(-10vh - 96px)); }
   .phone.inhand .uiband { z-index:45; }
+  /* v3.13: Nach „Fertig“ im 🐢-Modus legt man die eigene Hand ab – freie Sicht
+     auf die Mitspieler. „✏️ Ändern“ holt die Karten sofort zurück. */
+  .phone.simdone .handwrap { opacity:0; pointer-events:none; transition:opacity .45s ease; }
   .hand { width:100%; height:100%; overflow-x:auto; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
   .hand::-webkit-scrollbar { display:none; }
   .handin { display:flex; align-items:flex-end; height:100%; }
@@ -231,6 +234,25 @@
   .freshfan .k { margin-right:calc(var(--cw)*-.45); }
   .freshfan .k:last-child { margin-right:0; }
   .freshfan .k.sel { box-shadow:0 0 0 3px var(--gold), 0 12px 28px #000c; z-index:5; }
+  /* 🃏 v3.13 (Nutzer-Wunsch): Die Gratis-Ziehung ist KEIN Kasten mehr – EINE große
+     Karte in der Bildschirmmitte, alles andere liegt hinter dunklem Schleier. */
+  .freshov { position:fixed; inset:0; z-index:130; background:rgba(3,7,15,.87); display:none;
+             align-items:center; justify-content:center; flex-direction:column; padding:14px; }
+  .freshov.open { display:flex; }
+  .freshov .freshbig { --ch:min(46dvh,340px); --cw:calc(var(--ch)*.667);
+             filter: drop-shadow(0 24px 60px #000d) drop-shadow(0 0 34px rgba(233,199,102,.16)); }
+  .freshov .freshbig.ein { animation: freshein .55s cubic-bezier(.34,1.42,.5,1); }
+  @keyframes freshein { 0% { transform: scale(.5) rotate(8deg); opacity: 0; }
+                        70% { transform: scale(1.05) rotate(-2deg); opacity: 1; }
+                        100% { transform: scale(1) rotate(0deg); } }
+  .freshov .stapel { display:flex; gap:6px; justify-content:center; margin-top:16px; }
+  .freshov .stapel .k { --ch:54px; --cw:calc(54px*.667); pointer-events:none; opacity:.8;
+             filter: drop-shadow(0 6px 14px #000b); }
+  .freshov .freshbtns { display:flex; gap:8px; justify-content:center; align-items:stretch;
+             margin-top:14px; flex-wrap:wrap; width:min(430px,100%); }
+  .freshov .freshbtns > button { flex:1 1 auto; min-width:120px; }
+  .freshbtns.spaet { opacity:0; animation: freshbtnein .4s .95s forwards; }
+  @keyframes freshbtnein { to { opacity: 1; } }
   .drawer .k .eff { display:block; }
   .mon { display:inline-block; background:rgba(239,68,68,.15); color:#fecaca; border-radius:8px; padding:3px 8px; margin:2px; font-size:.7rem; }
   .stf { display:inline-block; background:rgba(6,182,212,.15); color:#a5f3fc; border-radius:8px; padding:3px 8px; margin:2px; font-size:.7rem; cursor:pointer; text-decoration:underline dotted; }
@@ -654,7 +676,7 @@ function turnBanner(s) {
           if ((s.freshDraw || []).some((c) => c.type !== "Ziel"))
             // v2.7: Banner ist jetzt ein KNOPF – der Zieh-Kasten lässt sich hiermit
             // jederzeit wieder öffnen (Nachbauten des „Kasten ist weg“-Dead-Ends).
-            return `<div class="banner your" style="cursor:pointer" onclick="event.stopPropagation();toggleDrawerById('dFresh')">🃏 Deine gezogenen Karten warten – hier antippen, falls der Kasten zu ist!</div>`;
+            return `<div class="banner your" style="cursor:pointer" onclick="event.stopPropagation();toggleDrawerById('dFresh')">🃏 Deine gezogenen Karten warten – hier antippen!</div>`;
           return `<div class="banner your">🔍 Du bist dran – decke deine Karte auf!</div>
             <div class="center" style="margin-top:8px"><button class="btn-green" style="min-width:220px;min-height:52px;padding:15px 20px;font-size:1.05rem;border-radius:16px;border:none" onclick="revealNow()">👁️ Jetzt aufdecken!</button></div>`;
         }
@@ -1488,8 +1510,8 @@ function outsideTap(e) {
   // „Tipp außerhalb“ werten und den Aufklapper schließen. Genau deshalb
   // verschwand der Kasten beim Wählen des Landes!
   if (!t.isConnected) return;
-  const drawerWasOpen = !!document.querySelector(".drawer.open");
-  if (!t.closest(".drawer") && !t.closest(".corner") && !t.closest(".midst")) closeDrawersNow();
+  const drawerWasOpen = !!document.querySelector(".drawer.open, .freshov.open");
+  if (!t.closest(".drawer") && !t.closest(".freshov") && !t.closest(".corner") && !t.closest(".midst")) closeDrawersNow();
   if (!t.closest(".optionen") && !t.closest(".menu")) closeMenu();
   if (inhand && !suppressClick && !drawerWasOpen
     && !t.closest(".k") && !t.closest("#actionbar") && !t.closest(".uiband")
@@ -1508,7 +1530,7 @@ function bindFan() {
   document.querySelectorAll(".k").forEach(function (el) {
     // v2.7: Die großen Zieh-Karten im Draco liegen im Drawer – ein Wisch darüber
     // darf den Kartenfächer darunter NICHT verschieben.
-    if (el.closest(".drawer")) return;
+    if (el.closest(".drawer") || el.closest(".freshov")) return;
     el.addEventListener("pointerdown", function (e) {
       cancelAnimationFrame(animId);
       drag = { x: e.clientX, sl: hand.scrollLeft, samples: [{ t: Date.now(), x: e.clientX }] };
@@ -1531,7 +1553,7 @@ function bindFan() {
 window.toggleMenu = () => { const m = document.getElementById("optmenu"); if (m) m.classList.toggle("open"); };
 window.closeMenu = () => { const m = document.getElementById("optmenu"); if (m) m.classList.remove("open"); };
 function closeDrawersNow() {
-  document.querySelectorAll(".drawer.open").forEach((x) => x.classList.remove("open"));
+  document.querySelectorAll(".drawer.open, .freshov.open").forEach((x) => x.classList.remove("open"));
   document.querySelectorAll(".corner.open").forEach((x) => x.classList.remove("open"));
   openDrawer = null;
 }
@@ -1539,7 +1561,7 @@ window.toggleDrawerById = (id) => {
   const d = document.getElementById(id);
   if (!d) return;
   openDrawer = d.classList.contains("open") ? null : id;
-  document.querySelectorAll(".drawer.open").forEach((x) => x.classList.remove("open"));
+  document.querySelectorAll(".drawer.open, .freshov.open").forEach((x) => x.classList.remove("open"));
   document.querySelectorAll(".corner.open").forEach((x) => x.classList.remove("open"));
   if (openDrawer) {
     d.classList.add("open");
@@ -1594,64 +1616,68 @@ function drawerLagerHTML(s) {
   </div>`;
 }
 
+// 🃏 v3.13 (Nutzer-Wunsch): Die Gratis-Ziehung ist KEIN Kasten mehr, sondern
+// EINE große Karte in der Bildschirmmitte – verdeckt mit goldenem ?, ein Tipp
+// dreht sie langsam um (.95 s), ERST DANACH erscheinen die Buttons (Ausspielen
+// / Einlagern). Kein Kasten, kein Text – Hand und Tisch liegen hinter dunklem
+// Schleier im Hintergrund. Warten weitere Karten, liegen sie als kleine
+// verdeckte Stapel darunter und kommen der Reihe nach dran.
 function drawerFreshHTML(s) {
   if ((s.phase !== "draft" && s.phase !== "seasonEnd") || !(s.freshDraw || []).length) return "";
   const open = (s.freshDraw || []).filter((c) => c.type !== "Ziel");
-  const cur = open[0];
+  const cur = (open.length ? open[0] : s.freshDraw[0]); // v3.13: nur Ziele? Dann das erste Ziel
   // 🃏 v3.9: Aufdeck-Gedächtnis auf die aktuelle Schlange kürzen
   const up = {}; (s.freshDraw || []).forEach((c) => { if (freshUp[c.id]) up[c.id] = true; }); freshUp = up;
   if (cur && window._freshRealmFor !== cur.id) { window._freshRealm = null; window._freshRealmFor = cur.id; }
-  let inner = `<h4>🃏 Gratis gezogen${open.length > 1 ? ` – noch ${open.length} offen` : ""}${cur && !freshUp[cur.id] ? " – umdrehen!" : " – jetzt entscheiden!"}</h4>`;
-  // v2.7: Gezogene Karten GROSS im Handkarten-Format (Nutzer-Wunsch: präsenter
-  // wie die Handkarten) – inklusive Effekt-Text unten auf der Karte.
-  // v2.8: Aktuelle Karte ans ENDE des Fächers – so liegt sie ganz oben (spätere
-  // Karten überdecken frühere) und bleibt komplett sichtbar, die restlichen
-  // warten fächerig dahinter.
-  const wartende = s.freshDraw.slice();
-  const curPos = wartende.indexOf(cur); if (curPos >= 0) wartende.push(wartende.splice(curPos, 1)[0]);
-  // 🃏 v3.9 (Nutzer-Wunsch): Gezogene Karten liegen VERDECKT („falsch herum“)
-  // auf dem Tisch – erst ein Tipp auf die Rückseite dreht sie um. Bis dahin
-  // gibt es keine Entscheidungsknöpfe. Rein kosmetisch im eigenen Client, der
-  // Server entscheidet nichts mit.
-  inner += `<div class="freshfan">${wartende.map((c) => (c.type !== "Ziel" && !freshUp[c.id]) ? rueckCardHTML(c, cur && c.id === cur.id) : fanCardHTML(c, { noClick: true, selected: cur && c.id === cur.id, cls: "" })).join("")}</div>`;
-  if (s.freshDraw.some((c) => c.type === "Ziel")) inner += `<p class="muted center" style="margin-top:6px">🔒 Gezogene Ziele liegen direkt bei deinen Zielen – gratis angenommen.</p>`;
-  if (s.mode === "schnell") inner += `<p class="muted center" style="margin-top:6px">⚡ Dein neues Blatt bleibt verdeckt, bis du entschieden hast – das ist fair für alle.</p>`;
-  if (cur && !freshUp[cur.id]) {
-    inner += `<p class="muted center" style="margin-top:8px">👉 Karte antippen zum Aufdecken</p>`;
-  }
-  else if (cur) {
-    if (cur.type === "Mitarbeiter" && cur.kind === "land") {
-      inner += `<p class="muted center" style="margin-top:8px">„${esc(cur.name)}“ – Typ des Landes festlegen: <b>dauerhaft!</b></p>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;justify-content:center">${ALL_REALMS.map((r) => `<button class="btn-indigo" style="flex:1;min-height:48px;font-size:.92rem;border:none;border-radius:10px;padding:13px 6px;font-weight:700" onclick="chooseFreshRealm('${r.id}')">${r.emoji}${window._freshRealm === r.id ? " ✓" : ""}</button>`).join("")}</div>
-        <div style="display:flex;gap:8px;margin-top:8px">
-          <button class="btn-green" style="flex:1;border:none;border-radius:10px;padding:11px;font-weight:800" ${window._freshRealm ? "" : "disabled"} onclick="freshPlay(${cur.id})">✅ Diese ausspielen</button>
-          <button class="btn-indigo" style="flex:1;border:none;border-radius:10px;padding:11px;font-weight:800" onclick="freshKeep(${cur.id})">📥 Diese einlagern (gratis)</button>
-        </div>
-        ${window._freshRealm ? "" : `<p class="muted center" style="margin-top:6px">👉 „Ausspielen“ wird erst klickbar, wenn du oben den Typ des Landes gewählt hast.</p>`}`;
+  // v3.13: Pop-Effekt nur beim ERSTEN Auftreten als aktuelle Karte (nicht bei jedem render).
+  const neu = cur && (!window._freshShown || !window._freshShown[cur.id]);
+  if (cur) window._freshShown = Object.assign({}, window._freshShown || {}, { [cur.id]: true });
+  // v3.13: Läuft gerade der .95-s-Umdreh-Flip? Dann Buttons erst danach einblenden.
+  const flipLaeuft = window._freshFlipAt && Date.now() - window._freshFlipAt < 1500;
+  const noch = (s.freshDraw || []).filter((c) => c.id !== (cur || {}).id);
+  let btns = "";
+  if (cur && freshUp[cur.id]) {
+    const late = flipLaeuft ? " spaet" : ""; // Buttons erst NACH dem Umdrehen
+    if (cur.type === "Ziel") {
+      btns = `<div class="freshbtns${late}"><button class="btn-amber" style="border:none;border-radius:12px;padding:13px 22px;font-weight:800" onclick="freshClear()">✅ Alles klar</button></div>`;
+    } else if (cur.type === "Mitarbeiter" && cur.kind === "land") {
+      btns = `<div class="freshbtns${late}" style="flex-direction:column">
+        <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center">${ALL_REALMS.map((r) => `<button class="btn-indigo" style="flex:1;min-height:48px;font-size:.95rem;border:none;border-radius:12px;padding:12px 6px;font-weight:700" onclick="chooseFreshRealm('${r.id}')">${r.emoji}${window._freshRealm === r.id ? " ✓" : ""}</button>`).join("")}</div>
+        <div style="display:flex;gap:8px">
+          <button class="btn-green" style="flex:1;border:none;border-radius:12px;padding:12px;font-weight:800" ${window._freshRealm ? "" : "disabled"} onclick="freshPlay(${cur.id})">✅ Diese ausspielen</button>
+          <button class="btn-indigo" style="flex:1;border:none;border-radius:12px;padding:12px;font-weight:800" onclick="freshKeep(${cur.id})">📥 Diese einlagern</button>
+        </div></div>`;
     } else if (cur.type === "Monster" && cur.realm === "traum") {
       const free = freeLandsOf(s.players[s.you].lands, s.players[s.you].seasonMonsters);
       let opts = "";
-      if (free.traum >= cur.cost) opts += `<button class="btn-green" style="flex:1;min-width:150px;border:none;border-radius:10px;padding:11px;font-weight:800" onclick="freshDecideTraum(${cur.id},null)">✅ Nur 🌙 (${cur.cost} 🌙)</button>`;
+      if (free.traum >= cur.cost) opts += `<button class="btn-green" style="flex:1;min-width:150px;border:none;border-radius:12px;padding:12px;font-weight:800" onclick="freshDecideTraum(${cur.id},null)">✅ ${cur.cost} 🌙</button>`;
       REALMS.forEach((r) => {
         const helper = free[r.id] || 0;
         if (helper > 0 && free.traum < cur.cost && free.traum + helper >= cur.cost)
-          opts += `<button class="btn-indigo" style="flex:1;min-width:150px;border:none;border-radius:10px;padding:11px;font-weight:800" onclick="freshDecideTraum(${cur.id},'${r.id}')">✅ ${free.traum} 🌙 + ${cur.cost - free.traum} ${r.emoji}</button>`;
+          opts += `<button class="btn-indigo" style="flex:1;min-width:150px;border:none;border-radius:12px;padding:12px;font-weight:800" onclick="freshDecideTraum(${cur.id},'${r.id}')">✅ ${free.traum} 🌙 + ${cur.cost - free.traum} ${r.emoji}</button>`;
       });
-      inner += `<p class="muted center" style="margin-top:8px">🌙 Bezahlt mit Traumland und/oder GENAU EINEM Hilfsreich:</p>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:6px">${opts || '<span class="muted">Passt gerade nicht – nur Einlagern möglich.</span>'}</div>
-        <button class="btn-indigo" style="width:100%;margin-top:8px;border:none;border-radius:10px;padding:11px;font-weight:800" onclick="freshKeep(${cur.id})">📥 Diese einlagern (gratis)</button>`;
+      btns = `<div class="freshbtns${late}" style="flex-direction:column">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">${opts}</div>
+        <button class="btn-indigo" style="width:100%;border:none;border-radius:12px;padding:12px;font-weight:800" onclick="freshKeep(${cur.id})">📥 Diese einlagern (gratis)</button></div>`;
     } else {
       const playable = cardPlayable(cur, s.players[s.you]);
-      inner += `<div style="display:flex;gap:8px;margin-top:8px">
-          <button class="btn-green" style="flex:1;border:none;border-radius:10px;padding:11px;font-weight:800" ${playable ? "" : "disabled"} onclick="freshPlay(${cur.id})">✅ Diese ausspielen</button>
-          <button class="btn-indigo" style="flex:1;border:none;border-radius:10px;padding:11px;font-weight:800" onclick="freshKeep(${cur.id})">📥 Diese einlagern (gratis)</button>
-        </div>
-        ${playable ? "" : `<p class="muted center" style="margin-top:6px">Passt gerade nicht – du kannst die Karte nur gratis einlagern.</p>`}`;
+      btns = `<div class="freshbtns${late}">
+          <button class="btn-green" style="flex:1;border:none;border-radius:12px;padding:12px;font-weight:800" ${playable ? "" : "disabled"} onclick="freshPlay(${cur.id})">✅ Diese ausspielen</button>
+          <button class="btn-indigo" style="flex:1;border:none;border-radius:12px;padding:12px;font-weight:800" onclick="freshKeep(${cur.id})">📥 Diese einlagern (gratis)</button>
+        </div>`;
     }
-  } else {
-    inner += `<button class="btn-amber" style="width:100%;margin-top:8px;border:none;border-radius:10px;padding:11px;font-weight:800" onclick="freshClear()">✅ Alles klar</button>`;
   }
-  return `<div class="drawer frisch ${openDrawer === "dFresh" ? "open" : ""}" id="dFresh">${inner}</div>`;
+  const bigCard = (cur && freshUp[cur.id])
+    ? fanCardHTML(cur, { noClick: true, selected: true, cls: "" })
+    : rueckCardHTML(cur, true);
+  const stapel = noch.length
+    ? `<div class="stapel">${noch.map(() => `<div class="k rueck" style="--rc:#2b3860"><div class="rueckm"><div class="rc1">?</div></div></div>`).join("")}</div>`
+    : "";
+  return `<div class="freshov${openDrawer === "dFresh" ? " open" : ""}" id="dFresh" onclick="if(event.target===this) toggleDrawerById('dFresh')">
+    <div class="freshbig${neu ? " ein" : ""}">${bigCard}</div>
+    ${btns}
+    ${stapel}
+  </div>`;
 }
 
 // 🃏 v3.9: Rückseiten-Karte („falsch herum“) – ein Tipp dreht sie um.
@@ -1660,6 +1686,7 @@ function rueckCardHTML(c, istAktuell) {
 }
 function freshAufdecken(id) {
   if (!freshUp[id]) freshUp[id] = true;
+  window._freshFlipAt = Date.now(); // v3.13: Buttons erst NACH dem .95-s-Umdrehen zeigen
   render();
   // Umdreh-Animation: die frisch aufgedeckte Karte flippt einmal ins Bild.
   const el = document.querySelector(`#dFresh .k[data-fid="${id}"]`);
@@ -1740,9 +1767,14 @@ function mitteHTML(s) {
 
 // ---------------------------- Der Spieltisch ----------------------------
 function phoneShellHTML(s) {
-  if ((s.freshDraw || []).length) openDrawer = "dFresh"; // v3.11: auch reine Ziel-Ziehungen oeffnen den Kasten
+  // v3.13: Der Zieh-Schleier oeffnet sich nur bei NEUEN Karten (statt bei jedem
+  // render) – sonst liesse er sich nach dem Antippen nicht mehr zuklappen.
+  if ((s.freshDraw || []).length && FX && (FX.freshNeu || []).length) openDrawer = "dFresh";
   if (!(s.phase === "draft" && s.hand && s.hand.length)) inhand = false;
-  return `<div class="phone${inhand ? " inhand" : ""}" id="phone">`
+  // v3.13: Nach „Fertig“ im 🐢-Modus liegt die eigene Hand ab (freie Sicht).
+  const simdone = s.mode === "langsam" && s.phase === "draft" && window._simSent
+    && !window._simEditing && !!s.hand && s.hand.length > 0;
+  return `<div class="phone${inhand ? " inhand" : ""}${simdone ? " simdone" : ""}" id="phone">`
     + saisonHeadHTML(s)
     + `<div class="spieler" id="spielerBox">${spielerBoxHTML(s)}</div>`
     + `<div class="mitte">${mitteHTML(s)}</div>`
@@ -1799,6 +1831,7 @@ function fxSnapshot(s) {
   return {
     you: s.you,
     phase: s.phase,
+    gameId: s.gameId || 0,
     coins: s.players.map((p) => p.coins || 0),
     hunters: s.players.map((p) => p.hunters || 0),
     lands: s.players.map((p) => Object.assign({}, p.lands)),
@@ -1809,8 +1842,17 @@ function fxSnapshot(s) {
   };
 }
 function computeFx(prev, s) {
-  const fx = { myCoinGain: 0, coinGain: [], coinLoss: [], huntGain: [], landNeu: [], freshNeu: [], handAnkunft: false, newMon: [], newStf: [], opFX: [] };
+  const fx = { myCoinGain: 0, coinGain: [], coinLoss: [], huntGain: [], landNeu: [], freshNeu: [], handAnkunft: false, newMon: [], newStf: [], opFX: [], startCoins: false };
   fx.freshNeu = (s.freshDraw || []).filter((c) => !window._seenFresh || !window._seenFresh[c.id]).map((c) => c.id);
+  // ✨ v3.13: SPIELSTART – jeder Spieler bekommt seine 4 Start-Kronen als
+  // Münz-Flug (Nutzer-Wunsch). Ein neues Spiel hat eine neue gameId; bei einem
+  // Wechsel (oder dem allerersten Spielzustand nach der Lobby) fliegt es genau 1x.
+  if (prev && (prev.gameId || 0) !== (s.gameId || 0)) window._startCoinsShown = false;
+  if (!window._startCoinsShown && s.phase === "draft" && s.season === 0
+      && (s.hand || []).length >= 7 && (!prev || (prev.gameId || 0) !== (s.gameId || 0))) {
+    window._startCoinsShown = true;
+    fx.startCoins = true;
+  }
   if (prev && s && Array.isArray(s.players) && prev.coins.length === s.players.length && prev.you === s.you) {
     if (prev.handLen === 0 && (s.hand || []).length > 0 && s.phase === "draft") fx.handAnkunft = true;
     // ✨ v3.10: Gespielte Monster/Mitarbeiter – auch über den draft→seasonEnd-
@@ -1881,6 +1923,12 @@ function fxAfter(fx, s) {
     const loss = fx.coinLoss[i] || 0;
     if (loss > 0) flySpend(Math.min(loss, i === s.you ? 6 : 3), i === s.you ? "crownMe" : "coinP" + i);
   });
+  // ✨ v3.13: Spielstart-Tamtam – die 4 Start-Kronen fliegen zu JEDEM Spieler.
+  if (fx.startCoins) {
+    s.players.forEach((p, i) => {
+      setTimeout(() => flyBadges(4, i === s.you ? "crownMe" : "coinP" + i, "coinfly", "", false), 220 + i * 240);
+    });
+  }
   // ✨ v3.11: Der eigene Spiel-Blitz ist WEG (Nutzer-Wunsch). Dafür: kleine
   // Version der gespielten Karte im Mitspieler-Panel, und beim Einlagern /
   // Ziel-Annehmen verschwindet eine verdeckte Karte am Bildschirmrand dort.
