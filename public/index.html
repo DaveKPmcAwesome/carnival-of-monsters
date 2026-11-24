@@ -538,6 +538,8 @@ function connect() {
       render();
     }
     else if (msg.t === "token") localStorage.setItem("com-token", msg.token);
+    // 🏅 v3.23: Bestenliste/Antwort auf getStats – Drawer füllen (wenn offen)
+    else if (msg.t === "stats") { window._stats = msg.stats || {}; if (state && openDrawer === "dStats") render(); }
     else if (msg.t === "closed") {
       // 🚪 Raum wurde geschlossen (Host) – zurück zum Startbildschirm
       localStorage.removeItem("com-token");
@@ -833,6 +835,8 @@ window.pickKeep = () => sendWichtig({ t: "pick", cardId: selected.id, action: "k
 window.discardOpen = () => sendWichtig({ t: "discard", cardId: selected.id });
 window.setSeasons = (n) => sendWichtig({ t: "setSeasons", seasons: n });
 window.setMode = (m) => sendWichtig({ t: "setMode", mode: m });
+// 🏅 v3.23: Wertungs-Schalter des Hosts in der Lobby (Standard: zählt)
+window.setWertung = (on) => sendWichtig({ t: "setWertung", on });
 // ⚡/🐢 Wahl-Flow (v2.9, Nutzer-Wunsch): Auf „Ausspielen“/„Einlagern“ wird die
 // Wahl NUR GESTUFT – an derselben Stelle erscheinen dann „✅ Fertig“ und
 // „✏️ Ändern“. Erst der Tipp auf „Fertig“ schickt die Wahl ab und beendet den
@@ -1193,6 +1197,14 @@ function renderLobby(s) {
           <button class="${s.mode === "turbo" ? "btn-amber" : "btn-ghost"}" style="font-size:0.9rem" onclick="setMode('turbo')">🚀 Turbo</button>
         </div>
       </div>` : `<p class="muted center" style="max-width:420px">Spieltempo: ${(s.mode || "langsam") === "langsam" ? "🐢 Langsam" : s.mode === "schnell" ? "⚡ Schnell" : "🚀 Turbo"}</p>`}
+      ${s.isHost ? `<div class="card-panel" style="max-width:420px;width:100%">
+        <div class="label">Wertung</div>
+        <div style="display:flex;gap:8px">
+          <button class="${s.wertung !== false ? "btn-amber" : "btn-ghost"}" style="flex:1;font-size:0.9rem" onclick="setWertung(true)">🏅 Zählt für Bestenliste</button>
+          <button class="${s.wertung === false ? "btn-amber" : "btn-ghost"}" style="flex:1;font-size:0.9rem" onclick="setWertung(false)">🎪 Nur zum Spaß</button>
+        </div>
+        <p class="muted" style="margin:8px 0 0;font-size:.75rem">Gewertet wird nur mit mindestens 2 echten Menschen.</p>
+      </div>` : `<p class="muted center" style="max-width:420px">Wertung: ${s.wertung === false ? "🎪 nur zum Spaß (zählt nicht)" : "🏅 zählt für die Bestenliste"}</p>`}
       ${s.isHost
         ? `<button class="btn-amber" style="max-width:420px;width:100%" ${s.names.filter((p) => p.connected).length >= 2 ? "" : "disabled"} onclick="startGame()">🚀 Partie starten (ab 2 Spielern)</button>`
         : `<div class="banner wait" style="width:100%;max-width:420px">Warte, bis der Host startet…</div>`}
@@ -1900,6 +1912,47 @@ function drawerSaisonHTML(s) {
     <p class="muted" style="margin:0">${modeTxt}</p></div>`;
 }
 
+// 🏅 v3.23: Statistik-Drawer – Bestenliste, Hall of Fame, letzte Partien.
+// Daten kommen per getStats vom Server (window._stats), bis dahin „Lädt…“.
+const MODE_KURZ = { langsam: "🐢", schnell: "⚡", turbo: "🚀" };
+function statsLeaderboardHTML(st) {
+  if (!st.lb || !st.lb.length) return `<p class="muted" style="margin:0 0 6px">Noch keine gewerteten Partien – die Liste füllt sich, sobald eine Partie mit mindestens 2 echten Menschen gewertet wird.</p>`;
+  return `<div class="sub">Bestenliste (Ø Punkte, Top 10)</div>` +
+    st.lb.map((e, i) => `<div class="revrow"><span><b>${i + 1}. ${esc(e.name)}</b> · ${e.spiele} ${e.spiele === 1 ? "Partie" : "Partien"} · ${e.siege} 🏆</span><span class="pts">Ø ${e.avg} SP</span></div>`).join("");
+}
+function statsHofHTML(st) {
+  if (!st.hof || !st.hof.length) return "";
+  return `<div class="sub">Hall of Fame (beste Einzelleistung)</div>` +
+    st.hof.map((e) => `<div class="revrow"><span><b>${esc(e.name)}</b> <span class="goal">(${esc(e.date)} · ${MODE_KURZ[e.mode] || ""} ${e.seasons} Saisons)</span></span><span class="pts">${e.punkte} SP</span></div>`).join("");
+}
+function statsRecentHTML(st) {
+  if (!st.recent || !st.recent.length) return "";
+  return `<div class="sub">Letzte Partien</div>` +
+    st.recent.map((g) => {
+      const pl = (g.players || []).map((p) => `${p.bot ? "🤖" : ""}${esc(p.name)} ${p.punkte}`).join(" · ");
+      return `<div class="revrow"><span><b>${esc(g.date)}</b> ${g.winner ? `${g.winner.bot ? "🤖" : "🏅"} ${esc(g.winner.name)} gewinnt` : ""}<span class="goal">(${pl})</span></span><span class="pts">${MODE_KURZ[g.mode] || ""} ${g.seasons}S</span></div>`;
+    }).join("");
+}
+function drawerStatsHTML(s) {
+  const st = window._stats || null;
+  const body = !st
+    ? `<p class="muted" style="margin:0 0 6px">Lädt…</p>`
+    : `${statsLeaderboardHTML(st)}${statsHofHTML(st)}${statsRecentHTML(st)}
+       <p class="muted" style="margin:8px 0 0;font-size:.7rem">${st.total || 0} gewertete ${st.total === 1 ? "Partie" : "Partien"} · dauerhaft gespeichert${st.firebase ? " (Firebase)" : " – bis zum Server-Neustart (Firebase noch nicht eingerichtet)"} · zählt nur Partien mit mindestens 2 echten Menschen</p>`;
+  return `<div class="drawer ${openDrawer === "dStats" ? "open" : ""}" id="dStats"><h4>🏅 Statistiken &amp; Bestenliste <small> aller Räume</small></h4>${body}</div>`;
+}
+// Menü-Eintrag: Drawer auf/zu + frische Daten anfordern
+window.showStats = () => {
+  const open = openDrawer === "dStats";
+  openDrawer = open ? null : "dStats";
+  document.querySelectorAll(".drawer.open, .freshov.open").forEach((x) => x.classList.remove("open"));
+  if (openDrawer) {
+    const d = document.getElementById("dStats");
+    if (d) d.classList.add("open");
+  }
+  if (!open) send({ t: "getStats" }); // beim Öffnen immer frisch laden
+};
+
 function bottombarHTML(s) {
   const me = s.players[s.you];
   const lagN = (s.stored || []).length + (s.goals || []).length;
@@ -1924,6 +1977,7 @@ function menuHTML(s) {
   return `<div class="optionen" id="optmenu">
     <button class="optitem" onclick="closeMenu();toggleDrawerById('dSaison')">ℹ️ <span>Saison-Info & Spieltempo</span></button>
     <button class="optitem" onclick="closeMenu();toggleDrawerById('dChat')">💬 <span>Spielverlauf & Chat</span></button>
+    <button class="optitem" onclick="closeMenu();showStats()">🏅 <span>Statistiken &amp; Bestenliste</span></button>
     ${s.isHost && (s.phase === "draft" || s.phase === "seasonEnd" || s.phase === "danger")
       ? `<button class="optitem" onclick="closeMenu();newGame()">🔄 <span>Neue Partie (zur Lobby)</span></button>` : ""}
     <button class="optitem" onclick="closeMenu();leaveRoom()">🚪 <span>Raum ${s.isHost ? "schließen" : "verlassen"}</span></button>
@@ -1983,6 +2037,7 @@ function phoneShellHTML(s) {
     + drawerFreshHTML(s)
     + drawerChatHTML(s)
     + drawerSaisonHTML(s)
+    + drawerStatsHTML(s)
     + bottombarHTML(s)
     + menuHTML(s)
     + `</div>`;
