@@ -18,6 +18,7 @@
 // ============================================================================
 
 const http = require("http");
+const https = require("https"); // 🏅 v3.23: Firebase-REST-Speicher für die Bestenliste
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
@@ -1201,10 +1202,120 @@ function makeCode() {
 }
 
 function mkRoom() {
-  return { code: makeCode(), players: [], game: null, lastActivity: Date.now() };
+  // 🏅 wertung (v3.23): Host-Schalter in der Lobby – zählt die Partie für die
+  // Bestenliste? Standard AN; gewertet wird ohnehin nur mit ≥ 2 echten Menschen.
+  return { code: makeCode(), players: [], game: null, lastActivity: Date.now(), wertung: true };
 }
 
 const addLog = (g, lines) => { g.log = [...lines.slice().reverse(), ...g.log].slice(0, 40); };
+
+// ---------------------------- 🏅 Wertung & Bestenliste (v3.23) -----------------------------
+// Nutzer-Regeln: Gewertet werden nur Partien mit MINDESTENS ZWEI echten Menschen
+// (Solo gegen Bots zählt nie). Der HOST entscheidet pro Partie in der Lobby, ob
+// sie zählt (Schalter neben Saisonanzahl & Spieltempo) – Standard: gewertet.
+// Speicher-Doppelboden: Ohne Firebase-Umgebungsvariablen leben die Ergebnisse im
+// Server-RAM bis zum nächsten Neustart; FIREBASE_URL + FIREBASE_SECRET gesetzt
+// (Render-Umgebung), wird jede Wertung zusätzlich dauerhaft per REST gesichert
+// und beim Start hineingeladen. Kein npm-Paket – nur https + JSON.
+const statsStore = { records: [] };
+
+const fbConfigured = () => !!(process.env.FIREBASE_URL && process.env.FIREBASE_SECRET);
+
+function fbRequest(method, pathname, body) {
+  return new Promise((resolve, reject) => {
+    try {
+      const base = String(process.env.FIREBASE_URL).replace(/\/+$/, "");
+      const u = new URL(base + pathname + "?auth=" + encodeURIComponent(String(process.env.FIREBASE_SECRET || "")));
+      const req = https.request(
+        { hostname: u.hostname, path: u.pathname + u.search, method,
+          headers: body ? { "Content-Type": "application/json", "Content-Length": Buffer.byteLength(body) } : {} },
+        (res) => {
+          let d = "";
+          res.on("data", (c) => { d += c; });
+          res.on("end", () => { (res.statusCode >= 200 && res.statusCode < 300) ? resolve(d) : reject(new Error("Firebase HTTP " + res.statusCode)); });
+        }
+      );
+      req.on("error", reject);
+      if (body) req.write(body);
+      req.end();
+    } catch (e) { reject(e); }
+  });
+}
+
+function fbLoadStats() {
+  return fbRequest("GET", "/records.json").then((d) => {
+    const obj = d ? JSON.parse(d) : null;
+    if (obj && typeof obj === "object") {
+      statsStore.records = Object.values(obj).sort((a, b) => (b.ts || 0) - (a.ts || 0));
+      console.log("🏅 Bestenliste aus Firebase geladen: " + statsStore.records.length + " gewertete Partien.");
+    }
+  }).catch((e) => console.log("🏅 Firebase-Ladung fehlgeschlagen (RAM-Modus aktiv): " + e.message));
+}
+if (fbConfigured()) fbLoadStats();
+
+// 🏅 Eine Partie bewerten: genau 1×, wenn die Schlusswertung beginnt.
+function recordGame(room) {
+  const g = room.game;
+  if (!g || g.phase !== "reveal" || !g.reveal || g.statsSaved) return;
+  g.statsSaved = true; // auch bei „nicht gewertet“ nicht erneut probieren (Reveal-Refresh)
+  const humans = room.players.filter((p) => !p.isBot).length;
+  if (!room.wertung || humans < 2) return;
+  const rec = {
+    ts: Date.now(),
+    date: new Date().toISOString().slice(0, 10),
+    mode: g.mode,
+    seasons: g.totalSeasons || 4,
+    players: g.reveal.ranked.map((r, i) => {
+      const pi = room.players.findIndex((p) => p.name === r.name);
+      return {
+        name: r.name, bot: pi >= 0 && !!room.players[pi].isBot, rank: i + 1,
+        total: r.total, mon: r.monPts, tro: r.trophyPts, ziel: r.goalPts,
+        coins: r.coinsPts, jagd: r.hunterPts, kredit: r.creditPts,
+        trophies: r.trophies, monster: r.monsterCount,
+      };
+    }),
+  };
+  statsStore.records.unshift(rec);
+  if (statsStore.records.length > 500) statsStore.records.length = 500;
+  if (fbConfigured()) {
+    fbRequest("POST", "/records.json", JSON.stringify(rec))
+      .catch((e) => console.log("🏅 Firebase-Speicherung fehlgeschlagen (nur RAM): " + e.message));
+  }
+  addLog(g, [`🏅 Wertung gespeichert: Partie zählt für die Bestenliste (${humans} echte Menschen).`]);
+}
+
+// 🏅 Abgeleitete Ansichten fürs Client-Drawer (Top 10, Top 5, letzte 15)
+function buildStats() {
+  const byName = {};
+  for (const rec of statsStore.records) {
+    for (const p of rec.players) {
+      if (p.bot) continue; // Bestenliste zählt nur echte Menschen
+      const e = byName[p.name] || (byName[p.name] = { name: p.name, spiele: 0, siege: 0, sumP: 0, beste: -Infinity });
+      e.spiele++;
+      e.sumP += p.total;
+      if (p.rank === 1) e.siege++;
+      if (p.total > e.beste) e.beste = p.total;
+    }
+  }
+  const lb = Object.values(byName)
+    .map((e) => ({ ...e, avg: Math.round((e.sumP / e.spiele) * 10) / 10 }))
+    .sort((a, b) => (b.avg - a.avg) || (b.siege - a.siege) || (b.sumP - a.sumP))
+    .slice(0, 10)
+    .map((e) => ({ name: e.name, spiele: e.spiele, avg: e.avg, siege: e.siege, beste: e.beste, sumP: e.sumP }));
+  const hof = [];
+  for (const rec of statsStore.records) {
+    for (const p of rec.players) {
+      if (!p.bot) hof.push({ name: p.name, punkte: p.total, date: rec.date, mode: rec.mode, seasons: rec.seasons });
+    }
+  }
+  hof.sort((a, b) => b.punkte - a.punkte);
+  const recent = statsStore.records.slice(0, 15).map((rec) => ({
+    date: rec.date, mode: rec.mode, seasons: rec.seasons,
+    winner: rec.players[0] ? { name: rec.players[0].name, bot: rec.players[0].bot } : null,
+    players: rec.players.map((p) => ({ name: p.name, bot: p.bot, punkte: p.total })),
+  }));
+  return { lb, hof: hof.slice(0, 5), recent, total: statsStore.records.length, firebase: fbConfigured() };
+}
 
 // Öffentliche Spieleransicht (alles, was auf dem Tisch für alle sichtbar ist)
 // Ziel-Anzahl und Menagerie sind PRIVAT – sie gehen nur an den Besitzer (siehe viewFor).
@@ -1236,6 +1347,7 @@ function viewFor(room, idx) {
     names: room.players.map((p) => ({ name: p.name, connected: p.connected, isBot: !!p.isBot })),
     seasons: room.seasons || (g && g.totalSeasons) || 4,
     mode: room.mode || "langsam",
+    wertung: room.wertung !== false, // 🏅 v3.23: Host-Schalter aus der Lobby
   };
   if (!g || g.phase === "lobby") return base;
   const p = g.players[idx];
@@ -1449,6 +1561,19 @@ wss.on("connection", (ws) => {
           broadcast(room);
           break;
         }
+        // 🏅 Wertung für diese Partie (Host, nur Lobby): zählt sie für die Bestenliste?
+        // Standard ist AN; gewertet wird real nur mit mindestens 2 echten Menschen.
+        case "setWertung": {
+          if (!room || !joined || joined.idx !== 0 || !room.game || room.game.phase !== "lobby") return;
+          room.wertung = msg.on !== false;
+          broadcast(room);
+          break;
+        }
+        // 🏅 Bestenliste & Statistiken abrufen (jederzeit, jeder verbundene Spieler)
+        case "getStats": {
+          reply({ t: "stats", stats: buildStats() });
+          break;
+        }
         // 🤖 Bot hinzufügen / entfernen (nur Host, nur in der Lobby)
         case "addBot": {
           if (!room || !joined || joined.idx !== 0) return;
@@ -1530,7 +1655,10 @@ wss.on("connection", (ws) => {
           if (!room || !room.game || !joined) return;
           const res = handleNext(room.game, joined.idx);
           if (res && res.err) reply({ t: "error", msg: res.err });
-          else broadcast(room);
+          else {
+            recordGame(room); // 🏅 v3.23: 1× bewerten, sobald die Schlusswertung beginnt
+            broadcast(room);
+          }
           break;
         }
         // 🎲 Gefahrenprobe (v3.1): NUR der Host würfelt den einen Wurf für alle
