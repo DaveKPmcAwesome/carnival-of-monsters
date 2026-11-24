@@ -1285,9 +1285,13 @@ function recordGame(room) {
 }
 
 // 🏅 Abgeleitete Ansichten fürs Client-Drawer (Top 10, Top 5, letzte 15)
-function buildStats() {
+// 🏅 v3.24 (Nutzer-Wunsch): Bestenliste und Hall of Fame GETRENNT nach
+// 4er- und 5er-Saisons – 5er-Partien punkten im Schnitt höher und wären
+// in einer gemeinsamen Liste unfair. „Letzte Partien“ bleibt eine gemischte
+// Chronik (je Eintrag steht dabei, ob 4er oder 5er).
+function statsForRecords(recs) {
   const byName = {};
-  for (const rec of statsStore.records) {
+  for (const rec of recs) {
     for (const p of rec.players) {
       if (p.bot) continue; // Bestenliste zählt nur echte Menschen
       const e = byName[p.name] || (byName[p.name] = { name: p.name, spiele: 0, siege: 0, sumP: 0, beste: -Infinity });
@@ -1303,18 +1307,24 @@ function buildStats() {
     .slice(0, 10)
     .map((e) => ({ name: e.name, spiele: e.spiele, avg: e.avg, siege: e.siege, beste: e.beste, sumP: e.sumP }));
   const hof = [];
-  for (const rec of statsStore.records) {
+  for (const rec of recs) {
     for (const p of rec.players) {
       if (!p.bot) hof.push({ name: p.name, punkte: p.total, date: rec.date, mode: rec.mode, seasons: rec.seasons });
     }
   }
   hof.sort((a, b) => b.punkte - a.punkte);
+  return { lb, hof: hof.slice(0, 5) };
+}
+
+function buildStats() {
+  const bySeasons = {};
+  for (const n of [4, 5]) bySeasons[n] = statsForRecords(statsStore.records.filter((r) => (r.seasons || 4) === n));
   const recent = statsStore.records.slice(0, 15).map((rec) => ({
     date: rec.date, mode: rec.mode, seasons: rec.seasons,
     winner: rec.players[0] ? { name: rec.players[0].name, bot: rec.players[0].bot } : null,
     players: rec.players.map((p) => ({ name: p.name, bot: p.bot, punkte: p.total })),
   }));
-  return { lb, hof: hof.slice(0, 5), recent, total: statsStore.records.length, firebase: fbConfigured() };
+  return { bySeasons, recent, total: statsStore.records.length, firebase: fbConfigured() };
 }
 
 // Öffentliche Spieleransicht (alles, was auf dem Tisch für alle sichtbar ist)
