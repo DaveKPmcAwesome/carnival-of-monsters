@@ -34,16 +34,18 @@
   .phone { width:100%; max-width:430px; margin:0 auto; background:var(--bg); height:100dvh; display:flex; flex-direction:column; position:relative; overflow:hidden; padding-bottom:124px;
            --ch:250px; --cw:calc(var(--ch)*.667); }
   .phone.inhand { --ch:min(48dvh,380px); --cw:calc(var(--ch)*.667); }
-  /* 🎨 v3.20: Saison-Hauch – jede Saison tönt den Tisch oben dezent in ihrer
-     Reichsfarbe aus und verläuft nach unten ins gewohnte Dunkel. Subtil bewusst:
+  /* 🎨 v3.20: Saison-Hauch – jede Saison tönt den Tisch oben in ihrer
+     Reichsfarbe aus und verläuft nach unten ins gewohnte Dunkel.
+     🎨 v3.22: Nutzer-Wunsch „noch ein bisschen kräftiger“ – die Töne sind
+     satter und der Farbverlauf reicht weiter runter (60 % statt 46 %).
      Kein Layout ändert sich, nur die Stimmung nimmt die aktuelle Saison mit. */
-  .phone.saison-wald    { background: linear-gradient(205deg, #16302a 0%, #0f172a 46%); }
-  .phone.saison-tiefsee { background: linear-gradient(205deg, #0f2946 0%, #0f172a 46%); }
-  .phone.saison-wolken  { background: linear-gradient(205deg, #1d3a55 0%, #0f172a 46%); }
-  .phone.saison-hoehlen { background: linear-gradient(205deg, #2b2130 0%, #0f172a 46%); }
-  .phone.saison-dunkel  { background: linear-gradient(205deg, #20182e 0%, #0f172a 46%); }
-  .phone.saison-traum   { background: linear-gradient(205deg, #2a1c44 0%, #0f172a 46%); }
-  .phone.saison-gefahr  { background: linear-gradient(205deg, #401618 0%, #0f172a 46%); }
+  .phone.saison-wald    { background: linear-gradient(205deg, #1e4634 0%, #0f172a 60%); }
+  .phone.saison-tiefsee { background: linear-gradient(205deg, #12395f 0%, #0f172a 60%); }
+  .phone.saison-wolken  { background: linear-gradient(205deg, #24507e 0%, #0f172a 60%); }
+  .phone.saison-hoehlen { background: linear-gradient(205deg, #3f2a38 0%, #0f172a 60%); }
+  .phone.saison-dunkel  { background: linear-gradient(205deg, #2e2047 0%, #0f172a 60%); }
+  .phone.saison-traum   { background: linear-gradient(205deg, #3a2568 0%, #0f172a 60%); }
+  .phone.saison-gefahr  { background: linear-gradient(205deg, #5e1a22 0%, #0f172a 60%); }
 
   /* ---- Kopf: Saison-Symbol mit Richtungspfeil-Ring + Reichs-Lampen ---- */
   .top { display:flex; align-items:center; gap:10px; padding:10px 12px 4px; }
@@ -500,13 +502,20 @@ function connect() {
       // 🚨 Fanfare: neues FETTES Monster → großes TAMTAM (jede Fanfare nur 1× zeigen)
       if (state.gameId !== (window._fanGame || 0)) { window._fanGame = state.gameId; window._fanSeen = (state.fanfare && state.fanfare.id) || null; }
       else if (state.fanfare && state.fanfare.id !== window._fanSeen) { window._fanSeen = state.fanfare.id; showFanfare(state.fanfare); }
-      // 🎪 v3.21: Saison-Enthüllung beim SaisonWECHSEL & Wertungszeremonie am Ende.
-      // Enthüllt wird nur, wenn die Saisonnummer INNERHALB derselben Partie steigt:
-      // Saison 1 bleibt still (Spielstart-Tamtam reicht), Reconnect zeigt nie etwas Altes.
+      // 🎪 v3.21: Saison-Enthüllung beim Saisonwechsel & Wertungszeremonie am Ende.
+      // Saisons enthüllen sich beim Wechsel UND beim Spielstart (Saison 1, ab v3.22) –
+      // nur die erste State-Nachricht nach dem App-Öffnen bleibt still (Reconnect-Schutz).
       if (state.gameId !== (window._veilGame || 0)) {
+        // 🎪 v3.22 (Nutzer-Wunsch): Auch SEASON 1 wird enthüllt – aber nur, wenn
+        // die Seite das Spiel live anfahren sieht (Lobby → Draft oder Revanche).
+        // Die ALLERSTE State-Nachricht nach dem App-Öffnen bleibt still: Wer nach
+        // einem Neuladen mitten in eine Partie zurückkommt, sieht sonst bei jedem
+        // Reconnect einen falschen Begrüßungsschirm für eine längst laufende Saison.
+        const ersteMeldung = window._veilGame === undefined;
         window._veilGame = state.gameId;
         window._veilSeason = (state.season != null && state.phase === "draft") ? state.season : null;
         window._zeremonieGame = null;
+        if (!ersteMeldung && state.phase === "draft" && state.season != null) showSaisonEnthuellung(state);
       } else if (state.phase === "draft" && state.season != null && window._veilSeason != null && state.season !== window._veilSeason) {
         window._veilSeason = state.season;
         showSaisonEnthuellung(state);
