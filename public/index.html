@@ -371,6 +371,22 @@
   #fanfare .fantitle { font-size:2rem; font-weight:800; margin:10px 0 4px; }
   #fanfare .fansub { font-size:1rem; }
   #fanfare .fanwho { margin-top:8px; font-size:1.1rem; font-weight:600; }
+  /* 🎪 v3.21: Saison-Enthüllung – beim Saisonwechsel erscheint die neue Saison
+     als große Karte in der Tischmitte (Flip in ihrer Reichsfarbe). */
+  #saisonveil { position:fixed; inset:0; z-index:210; background:rgba(7,13,26,.82);
+    display:flex; align-items:center; justify-content:center;
+    animation:veilin .25s ease; transition:opacity .45s ease; }
+  @keyframes veilin { from { opacity:0; } to { opacity:1; } }
+  #saisonveil.weg { opacity:0; pointer-events:none; }
+  #saisonveil .seasoncard { width:min(78vw,300px); border-radius:20px; padding:26px 18px;
+    text-align:center; border:2px solid #e9c766; color:#fff;
+    background:linear-gradient(168deg, var(--sc1,#17607e) 0%, #0f172a 130%);
+    box-shadow:0 24px 70px #000e, 0 0 60px var(--scglow,#e9c76666);
+    animation:fx-deckflip .95s cubic-bezier(.2,.75,.3,1.05) both .12s; }
+  #saisonveil .scemoji { font-size:3.2rem; line-height:1; }
+  #saisonveil .scname { font-size:1.25rem; font-weight:800; margin:10px 0 4px; color:#fde68a; }
+  #saisonveil .sccount { font-size:.9rem; color:#cbd5e1; }
+  #saisonveil .scsub { margin-top:10px; font-size:.8rem; color:#94a3b8; }
 </style>
 </head>
 <body>
@@ -484,6 +500,21 @@ function connect() {
       // 🚨 Fanfare: neues FETTES Monster → großes TAMTAM (jede Fanfare nur 1× zeigen)
       if (state.gameId !== (window._fanGame || 0)) { window._fanGame = state.gameId; window._fanSeen = (state.fanfare && state.fanfare.id) || null; }
       else if (state.fanfare && state.fanfare.id !== window._fanSeen) { window._fanSeen = state.fanfare.id; showFanfare(state.fanfare); }
+      // 🎪 v3.21: Saison-Enthüllung beim SaisonWECHSEL & Wertungszeremonie am Ende.
+      // Enthüllt wird nur, wenn die Saisonnummer INNERHALB derselben Partie steigt:
+      // Saison 1 bleibt still (Spielstart-Tamtam reicht), Reconnect zeigt nie etwas Altes.
+      if (state.gameId !== (window._veilGame || 0)) {
+        window._veilGame = state.gameId;
+        window._veilSeason = (state.season != null && state.phase === "draft") ? state.season : null;
+        window._zeremonieGame = null;
+      } else if (state.phase === "draft" && state.season != null && window._veilSeason != null && state.season !== window._veilSeason) {
+        window._veilSeason = state.season;
+        showSaisonEnthuellung(state);
+      }
+      if (state.phase === "reveal" && (state.revealStep || 0) >= 4 && window._zeremonieGame !== state.gameId) {
+        window._zeremonieGame = state.gameId;
+        zeigeWertungszeremonie(state);
+      }
       // Auswahl zurücksetzen, wenn die gewählte Karte nicht mehr bei mir liegt
       if (selected && !(state.hand || []).concat(state.stored || []).some((c) => c.id === selected.id)) selected = null;
       // ⚡ verdeckte Wahl pflegen: nach der Ausführung ist sie weg, nach Reconnect wiederherstellen
@@ -835,6 +866,61 @@ function showFanfare(f) {
   fanfareDing();
   confettiBurst(); // 🎊 v3.10: Tamtam mit Konfetti
   setTimeout(() => { if (document.getElementById("fanfare") === el) el.remove(); }, 6000);
+}
+// 🎪 v3.21: Saison-Enthüllung – beim SaisonWECHSEL (ab Saison 2, reconnect-sicher)
+// erscheint die neue Saison als große Karte in der Tischmitte. Tippen beendet sofort.
+function showSaisonEnthuellung(s) {
+  const old = document.getElementById("saisonveil"); if (old) old.remove();
+  const rc = s.seasonCard === "gefahr" ? "#dc2626" : (realmColor(s.seasonCard) || "#e9c766");
+  const emoji = s.seasonCard === "gefahr" ? "🎲" : realmInfo(s.seasonCard).emoji;
+  const el = document.createElement("div");
+  el.id = "saisonveil";
+  el.style.setProperty("--sc1", rc);
+  el.style.setProperty("--scglow", rc + "66");
+  el.innerHTML = `<div class="seasoncard">
+    <div class="scemoji">${emoji}</div>
+    <div class="scname">${esc(s.seasonName || "Neue Saison")}</div>
+    <div class="sccount">Saison ${s.season + 1} von ${s.totalSeasons || 4}</div>
+    <div class="scsub">Tippen zum Weitersehen</div>
+  </div>`;
+  el.onclick = () => el.remove();
+  document.body.appendChild(el);
+  veilPling();
+  setTimeout(() => {
+    if (document.getElementById("saisonveil") !== el) return;
+    el.classList.add("weg");
+    setTimeout(() => { if (document.getElementById("saisonveil") === el) el.remove(); }, 480);
+  }, 3000);
+}
+// 🎪 v3.21: kurzer Aufschlag-Ton zur Enthüllung (kein AudioContext → still, wie fanfareDing)
+function veilPling() {
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    const ctx = fanfareDing._ctx || (fanfareDing._ctx = new AC());
+    const o = ctx.createOscillator(); const gn = ctx.createGain();
+    o.type = "triangle";
+    o.frequency.setValueAtTime(392, ctx.currentTime);
+    o.frequency.exponentialRampToValueAtTime(784, ctx.currentTime + 0.18);
+    gn.gain.setValueAtTime(0.0001, ctx.currentTime);
+    gn.gain.exponentialRampToValueAtTime(0.22, ctx.currentTime + 0.03);
+    gn.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.5);
+    o.connect(gn); gn.connect(ctx.destination);
+    o.start(); o.stop(ctx.currentTime + 0.55);
+  } catch (e) { /* kein Audio möglich → still weiter */ }
+}
+// 🎪 v3.21: Wertungszeremonie – beim Endergebnis der Schlusswertung regnet Konfetti,
+// es dingen die Glocken, und die Trophäe fliegt zum Sieger.
+function zeigeWertungszeremonie(s) {
+  const rv = s.reveal;
+  if (!rv || !rv.ranked || !rv.ranked.length) return;
+  // 🎪 Achtung: nach JSON-Transfer sind ranked[0] und players[0] NICHT dasselbe
+  // Objekt (JSON kennt keine Referenzen) → indexOf scheitert. Namensvergleich!
+  const wi = rv.players.findIndex((p) => p && p.name === rv.ranked[0].name);
+  if (wi >= 0) flyBadges(6, wi === s.you ? "crownMe" : "coinP" + wi, "coinfly", "🏆", false);
+  confettiBurst();
+  setTimeout(() => confettiBurst(), 350);
+  fanfareDing();
 }
 // 🎊 v3.10: Konfetti-Hagel über dem TAMTAM-Banner (Web Animations API, kein Asset).
 function confettiBurst() {
@@ -1191,7 +1277,22 @@ function renderReveal(s) {
       <span class="pts">+${p.coinsPts + p.hunterPts} ${p.creditPts ? `<span style="color:#f87171">−${-p.creditPts}</span>` : ""}
         <span class="goal">(${MZ}${p.coins} ×1 · 🏹${p.hunters} ×1 · 🏦${p.credits})</span></span></div>`).join("");
   if (revealStep >= 4) {
+    // 🎪 v3.21: Sieger-Podium (klassisch 2-1-3 angeordnet, leichte Inline-Styles)
+    const pcols = [1, 0, 2].filter((i) => rv.ranked[i]);
+    const podium = pcols.map((i) => {
+      const p = rv.ranked[i];
+      const med = ["🥇", "🥈", "🥉"][i];
+      const h = [86, 64, 50][i];
+      const col = ["#e9c766", "#cbd5e1", "#b07c3f"][i];
+      return `<div style="display:flex;flex-direction:column;align-items:center;justify-content:flex-end">
+        <div style="font-size:1.3rem">${med}</div>
+        <div class="podsieg" style="font-size:.78rem;font-weight:700;max-width:92px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.name)}</div>
+        <div style="font-size:.72rem;color:#cbd5e1">${p.total} SP</div>
+        <div style="width:58px;border-radius:8px 8px 0 0;margin-top:5px;height:${h}px;border-top:3px solid ${col};background:linear-gradient(180deg,${col}33,${col}0d)"></div>
+      </div>`;
+    }).join("");
     body = `<p class="center" style="color:#fde68a;margin-bottom:8px">Das Endergebnis!</p>` +
+      `<div class="center" style="display:flex;justify-content:center;align-items:flex-end;gap:8px;margin:0 0 12px">${podium}</div>` +
       rv.ranked.map((p, i) => `<div class="revrow ${rv.players.indexOf(p) === s.you ? "me" : ""}">
         <span><b>${i === 0 ? "🥇" : i === 1 ? "🥈" : "🥉"} ${esc(p.name)}</b></span><span class="pts">${p.total} SP</span></div>`).join("") +
       `<div class="center" style="margin-top:12px;font-weight:800;color:#fcd34d">🎉 ${esc(rv.ranked[0].name)} wird als neues Mitglied in die Königlich Monstrologische Gesellschaft aufgenommen!</div>` +
