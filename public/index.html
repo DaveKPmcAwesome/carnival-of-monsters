@@ -539,7 +539,7 @@ function connect() {
     }
     else if (msg.t === "token") localStorage.setItem("com-token", msg.token);
     // 🏅 v3.23: Bestenliste/Antwort auf getStats – Drawer füllen (wenn offen)
-    else if (msg.t === "stats") { window._stats = msg.stats || {}; if (state && openDrawer === "dStats") render(); }
+    else if (msg.t === "stats") { window._stats = msg.stats || {}; if (state && openDrawer === "dStats") render(); else if (!state && window._statsOpen) render(); }
     else if (msg.t === "closed") {
       // 🚪 Raum wurde geschlossen (Host) – zurück zum Startbildschirm
       localStorage.removeItem("com-token");
@@ -1153,6 +1153,13 @@ function renderConnect() {
         <input id="code" placeholder="RAUM-CODE" maxlength="4" style="max-width:130px;text-transform:uppercase;letter-spacing:0.2em;text-align:center" />
         <button class="btn-ghost" onclick="joinRoom()">Beitreten</button>
       </div>
+      <button class="btn-ghost" style="max-width:280px;font-size:.9rem" onclick="showStats()">🏅 Statistiken &amp; Bestenliste</button>
+      <!-- 🏅 v3.24 (Nutzer-Wunsch): Statistiken direkt am Startbildschirm, -->
+      <!-- zusätzlich zum Eintrag im Optionsmenü (der bleibt). -->
+      ${window._statsOpen ? `<div class="card-panel" style="max-width:420px;width:100%;max-height:60dvh;overflow:auto">
+        <h4 style="margin:0 0 8px;display:flex;align-items:center;justify-content:space-between">🏅 Statistiken &amp; Bestenliste <button class="btn-ghost" style="font-size:.75rem;padding:2px 10px" onclick="showStats()">✖</button></h4>
+        ${statsBodyHTML()}
+      </div>` : ""}
     </div>`;
 }
 window.createRoom = () => { myName = document.getElementById("name").value.trim(); if (!myName) return toast("Bitte erst deinen Namen eingeben!"); sendWichtig({ t: "create", name: myName }); };
@@ -1916,7 +1923,7 @@ function drawerSaisonHTML(s) {
 // Daten kommen per getStats vom Server (window._stats), bis dahin „Lädt…“.
 const MODE_KURZ = { langsam: "🐢", schnell: "⚡", turbo: "🚀" };
 function statsLeaderboardHTML(st) {
-  if (!st.lb || !st.lb.length) return `<p class="muted" style="margin:0 0 6px">Noch keine gewerteten Partien – die Liste füllt sich, sobald eine Partie mit mindestens 2 echten Menschen gewertet wird.</p>`;
+  if (!st.lb || !st.lb.length) return `<p class="muted" style="margin:0 0 6px">Noch keine gewerteten ${window._statsSelSeasons === 5 ? "5er" : "4er"}-Partien – die Liste füllt sich, sobald eine ${window._statsSelSeasons === 5 ? "5er" : "4er"}-Partie mit mindestens 2 echten Menschen gewertet wird.</p>`;
   return `<div class="sub">Bestenliste (Ø Punkte, Top 10)</div>` +
     st.lb.map((e, i) => `<div class="revrow"><span><b>${i + 1}. ${esc(e.name)}</b> · ${e.spiele} ${e.spiele === 1 ? "Partie" : "Partien"} · ${e.siege} 🏆</span><span class="pts">Ø ${e.avg} SP</span></div>`).join("");
 }
@@ -1934,15 +1941,36 @@ function statsRecentHTML(st) {
     }).join("");
 }
 function drawerStatsHTML(s) {
-  const st = window._stats || null;
-  const body = !st
-    ? `<p class="muted" style="margin:0 0 6px">Lädt…</p>`
-    : `${statsLeaderboardHTML(st)}${statsHofHTML(st)}${statsRecentHTML(st)}
-       <p class="muted" style="margin:8px 0 0;font-size:.7rem">${st.total || 0} gewertete ${st.total === 1 ? "Partie" : "Partien"} · dauerhaft gespeichert${st.firebase ? " (Firebase)" : " – bis zum Server-Neustart (Firebase noch nicht eingerichtet)"} · zählt nur Partien mit mindestens 2 echten Menschen</p>`;
-  return `<div class="drawer ${openDrawer === "dStats" ? "open" : ""}" id="dStats"><h4>🏅 Statistiken &amp; Bestenliste <small> aller Räume</small></h4>${body}</div>`;
+  return `<div class="drawer ${openDrawer === "dStats" ? "open" : ""}" id="dStats"><h4>🏅 Statistiken &amp; Bestenliste <small> aller Räume</small></h4>${statsBodyHTML()}</div>`;
 }
+// 🏅 v3.24 (Nutzer-Wunsch): Statistik ist auch direkt am STARTBILDSCHIRM
+// erreichbar – dieser Inhalt teilt sich Start-Panel und Options-Drawer.
+// Oben schaltet man zwischen 4er- und 5er-Wertung um (getrennte Bestenlisten,
+// da 5er-Partien im Schnitt höher punkten).
+function statsBodyHTML() {
+  const st = window._stats || null;
+  const sel = window._statsSelSeasons === 5 ? 5 : 4;
+  if (!st) return `<p class="muted" style="margin:0 0 6px">Lädt…</p>`;
+  const sec = st.bySeasons ? (st.bySeasons[sel] || { lb: [], hof: [] }) : { lb: [], hof: [] };
+  return `<div style="display:flex;gap:8px;margin:0 0 8px">
+      <button class="${sel === 4 ? "btn-amber" : "btn-ghost"}" style="flex:1;font-size:.85rem" onclick="setStatsSeasons(4)">4 Saisons</button>
+      <button class="${sel === 5 ? "btn-amber" : "btn-ghost"}" style="flex:1;font-size:.85rem" onclick="setStatsSeasons(5)">5 Saisons</button>
+    </div>` + statsLeaderboardHTML(sec) + statsHofHTML(sec) + statsRecentHTML(st) +
+    `<p class="muted" style="margin:8px 0 0;font-size:.7rem">${st.total || 0} gewertete ${st.total === 1 ? "Partie" : "Partien"} · dauerhaft gespeichert${st.firebase ? " (Firebase)" : " – bis zum Server-Neustart (Firebase noch nicht eingerichtet)"} · zählt nur Partien mit mindestens 2 echten Menschen</p>`;
+}
+window.setStatsSeasons = (n) => { window._statsSelSeasons = n === 5 ? 5 : 4; render(); };
 // Menü-Eintrag: Drawer auf/zu + frische Daten anfordern
 window.showStats = () => {
+  // 🏅 v3.24 (Nutzer-Wunsch): Am STARTBILDSCHIRM gibt es den Button direkt
+  // unter „Raum erstellen“ – da gibt es noch keinen Drawer, das Statistik-
+  // Panel öffnet sich als eigene Karte auf der Startseite.
+  if (!state) {
+    const warAuf = !!window._statsOpen;
+    window._statsOpen = !warAuf;
+    render();
+    if (window._statsOpen) send({ t: "getStats" }); // beim Öffnen immer frisch laden
+    return;
+  }
   const open = openDrawer === "dStats";
   openDrawer = open ? null : "dStats";
   document.querySelectorAll(".drawer.open, .freshov.open").forEach((x) => x.classList.remove("open"));
