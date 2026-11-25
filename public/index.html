@@ -223,6 +223,11 @@
   .k .pts { position:absolute; right:clamp(6px,5cqw,10px); bottom:clamp(4px,3cqh,10px); display:flex; align-items:center; gap:4px; background:#fffdf2de; border-radius:999px; padding:2px 7px; font-weight:800; color:#3a3312; font-size:clamp(11px,9cqw,18px); }
   .k .eff { display:none; position:absolute; left:6px; right:6px; bottom:6px; background:#31281adde8; color:#fde68a; border:1px solid #b08a2e; border-radius:8px; padding:4px 8px; font-size:clamp(9px,6.6cqw,12px); font-weight:700; line-height:1.3; text-align:left; }
   .phone.inhand .k .eff { display:block; }
+  /* 🃏 v3.25 (Nutzer-Fehlerbericht): Der Effekt-Balken ist standardmäßig unsichtbar
+     und wurde nur im Kartenfächer (inhand) sichtbar. Im ZIEH-OVERLAY fehlte er –
+     wer per Monstereffekt ein Event, einen Mitarbeitenden oder ein entferntes Land
+     zog, sah nur den Namen, aber nicht, was die Karte bewirkt. */
+  .freshov .k .eff { display:block; }
   .k.ziel .ztxt { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; padding:10px 12px 30px; text-align:center; }
   .k.ziel .ztxt b { font-size:clamp(11px,7.5cqw,14px); }
   .k.ziel .ztxt span { font-size:clamp(8px,6cqw,11px); color:#b9c4d6; line-height:1.35; }
@@ -988,6 +993,10 @@ window.dangerRoll = () => sendWichtig({ t: "dangerRoll" });
 window.rematch = () => sendWichtig({ t: "rematch" });
 // 🔄 Host: Partie abbrechen und zurück in die Lobby
 window.newGame = () => { if (confirm("Aktuelle Partie abbrechen und zurück in die Lobby? Alle Punkte dieser Partie gehen verloren.")) sendWichtig({ t: "newGame" }); };
+// 🛋️ v3.25 (Nutzer-Wunsch): Am SPIELENDE zurück in die Lobby, um Saisons, Tempo
+// und Wertung neu einzustellen. Ohne Bestätigung – die Partie ist vorbei, nichts
+// geht verloren (die Wertung ist längst gespeichert).
+window.lobbyBack = () => sendWichtig({ t: "newGame" });
 // 🔎 v3.0: Weiter-blättern liegt beim SERVER – nur der Host klickt, alle springen
 // synchron auf den nächsten Schritt (kein eigenes Tempo mehr je Spieler).
 window.revealNext = () => sendWichtig({ t: "revealNext" });
@@ -1324,8 +1333,9 @@ function renderReveal(s) {
       rv.ranked.map((p, i) => `<div class="revrow ${rv.players.indexOf(p) === s.you ? "me" : ""}">
         <span><b>${i === 0 ? "🥇" : i === 1 ? "🥈" : "🥉"} ${esc(p.name)}</b></span><span class="pts">${p.total} SP</span></div>`).join("") +
       `<div class="center" style="margin-top:12px;font-weight:800;color:#fcd34d">🎉 ${esc(rv.ranked[0].name)} wird als neues Mitglied in die Königlich Monstrologische Gesellschaft aufgenommen!</div>` +
-      (s.isHost ? `<button class="btn-amber" style="width:100%;margin-top:12px" onclick="rematch()">🔄 Neue Partie im gleichen Raum</button>`
-                : `<div class="banner wait" style="margin-top:12px">Der Host kann eine neue Partie starten…</div>`);
+      (s.isHost ? `<button class="btn-amber" style="width:100%;margin-top:12px" onclick="rematch()">🔄 Revanche – gleiche Einstellungen</button>
+            <button class="btn-ghost" style="width:100%;margin-top:8px" onclick="lobbyBack()">🛋️ Zur Lobby – Saisons, Tempo &amp; Wertung ändern</button>`
+          : `<div class="banner wait" style="margin-top:12px">Der Host kann eine Revanche starten oder in die Lobby wechseln…</div>`);
   }
   // 🔎 v3.0: Nur der HOST hat den Weiter-Knopf – alle anderen springen mit,
   // wenn der Server den nächsten Schritt ausliefert.
