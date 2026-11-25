@@ -1584,6 +1584,17 @@ wss.on("connection", (ws) => {
           reply({ t: "stats", stats: buildStats() });
           break;
         }
+        // 🔧 TEMPORÄR (v3.25.1-Diagnose): Firebase-Umgebungsvariablen prüfen (nur Ja/Nein, nie Werte)
+        case "fbdbg": {
+          const u = process.env.FIREBASE_URL || "";
+          const s = process.env.FIREBASE_SECRET || "";
+          reply({
+            t: "fbdbg",
+            uSet: u.length > 0, uWs: u !== u.trim(), uHttp: u.startsWith("https://"),
+            sSet: s.length > 0, sWs: s !== s.trim(),
+          });
+          break;
+        }
         // 🤖 Bot hinzufügen / entfernen (nur Host, nur in der Lobby)
         case "addBot": {
           if (!room || !joined || joined.idx !== 0) return;
