@@ -1324,7 +1324,19 @@ function buildStats() {
     winner: rec.players[0] ? { name: rec.players[0].name, bot: rec.players[0].bot } : null,
     players: rec.players.map((p) => ({ name: p.name, bot: p.bot, punkte: p.total })),
   }));
-  return { bySeasons, recent, total: statsStore.records.length, firebase: fbConfigured() };
+  // 📦 v3.27 (Nutzer-Wunsch): ARCHIV – ALLE gewerteten Partien chronologisch
+  // (neueste zuerst) mit vollständiger Punkteübersicht je Spieler. Der Client
+  // zeigt daraus die Partie-Liste; ein Klick öffnet die Detail-Ansicht.
+  const archiv = statsStore.records.map((rec) => ({
+    ts: rec.ts || 0, date: rec.date, mode: rec.mode, seasons: rec.seasons,
+    winner: rec.players[0] ? { name: rec.players[0].name, bot: rec.players[0].bot } : null,
+    players: rec.players.map((p) => ({
+      name: p.name, bot: p.bot, rank: p.rank, total: p.total,
+      mon: p.mon, tro: p.tro, ziel: p.ziel, coins: p.coins,
+      jagd: p.jagd, kredit: p.kredit, trophies: p.trophies, monster: p.monster,
+    })),
+  }));
+  return { bySeasons, recent, archiv, total: statsStore.records.length, firebase: fbConfigured() };
 }
 
 // Öffentliche Spieleransicht (alles, was auf dem Tisch für alle sichtbar ist)
