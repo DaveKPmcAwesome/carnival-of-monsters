@@ -1439,6 +1439,17 @@ const PWA_FILES = {
   "/icon-maskable-512.png":       { file: "icon-maskable-512.png",   type: "image/png" },
 };
 
+// 🔧 v3.26: Reparierte App-Icons (gelber Streifen rechts vom Zelt entfernt) liegen
+// als Base64 in icons-b64/ und werden VOR den v2-PNGs aus public/ ausgeliefert.
+// Die requires sind absichtlich HART: Fehlt eine Datei, startet der Server nicht –
+// statt stiller Regression auf die alten Icons.
+const ICONS = {
+  "/icon-180.png": require("./icons-b64/icon-180"),
+  "/icon-192.png": require("./icons-b64/icon-192"),
+  "/icon-512.png": require("./icons-b64/icon-512"),
+  "/icon-maskable-512.png": require("./icons-b64/icon-maskable-512"),
+};
+
 // ------------------------------ HTTP-Server ---------------------------------
 
 const server = http.createServer((req, res) => {
@@ -1458,6 +1469,13 @@ const server = http.createServer((req, res) => {
   // 📲 PWA (v3.5): Manifest, Service-Worker und Icons ausliefern – die App-
   // Installation braucht sie; im Browser-Betrieb interessieren sie niemanden.
   if (req.method === "GET") {
+    // 🔧 v3.26: Icons zuerst aus icons-b64.js (reparierte Optik, Query ?v=3 wird ignoriert)
+    const icon = ICONS[req.url.split("?")[0]];
+    if (icon) {
+      res.writeHead(200, { "Content-Type": "image/png", "Cache-Control": "public, max-age=300" });
+      res.end(Buffer.from(icon, "base64"));
+      return;
+    }
     const pwa = PWA_FILES[req.url.split("?")[0]];
     if (pwa) {
       fs.readFile(path.join(__dirname, "public", pwa.file), (err, data) => {
