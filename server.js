@@ -1289,6 +1289,9 @@ function recordGame(room) {
 // 4er- und 5er-Saisons – 5er-Partien punkten im Schnitt höher und wären
 // in einer gemeinsamen Liste unfair. „Letzte Partien“ bleibt eine gemischte
 // Chronik (je Eintrag steht dabei, ob 4er oder 5er).
+// 🏅 v3.28 (Nutzer-Wunsch): Dazu zwei REKORDLISTEN – meiste Punkte mit
+// Monstern (monHof) und meiste Punkte mit Zielen (zielHof), jeweils die
+// beste Einzelleistung einer Partie (nur echte Menschen, Top 5).
 function statsForRecords(recs) {
   const byName = {};
   for (const rec of recs) {
@@ -1306,14 +1309,20 @@ function statsForRecords(recs) {
     .sort((a, b) => (b.avg - a.avg) || (b.siege - a.siege) || (b.sumP - a.sumP))
     .slice(0, 10)
     .map((e) => ({ name: e.name, spiele: e.spiele, avg: e.avg, siege: e.siege, beste: e.beste, sumP: e.sumP }));
-  const hof = [];
+  const hof = [], monHof = [], zielHof = [];
   for (const rec of recs) {
     for (const p of rec.players) {
-      if (!p.bot) hof.push({ name: p.name, punkte: p.total, date: rec.date, mode: rec.mode, seasons: rec.seasons });
+      if (p.bot) continue;
+      const meta = { name: p.name, gesamt: p.total, date: rec.date, mode: rec.mode, seasons: rec.seasons };
+      hof.push({ ...meta, punkte: p.total });
+      monHof.push({ ...meta, punkte: p.mon || 0 });
+      zielHof.push({ ...meta, punkte: p.ziel || 0 });
     }
   }
   hof.sort((a, b) => b.punkte - a.punkte);
-  return { lb, hof: hof.slice(0, 5) };
+  monHof.sort((a, b) => b.punkte - a.punkte);
+  zielHof.sort((a, b) => b.punkte - a.punkte);
+  return { lb, hof: hof.slice(0, 5), monHof: monHof.slice(0, 5), zielHof: zielHof.slice(0, 5) };
 }
 
 function buildStats() {
