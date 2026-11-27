@@ -214,6 +214,12 @@
      Randpolster, und man kann nie ganz zur letzten Karte durchwischen. */
   .handin .k:last-of-type { margin-right:0; }
   .phone.inhand .k { border-width:5px; }
+  /* 🃏 v3.29 (Nutzer-Wunsch): LANDKARTEN im Querformat wie im echten Spiel –
+     im Hochformat-Rahmen um 90 Grad gedreht (Höhe/Breite im Inneren getauscht).
+     Der Titel (.name, oben im Quer-Layout) landet so am RECHTEN Rand der
+     Hochformat-Karte und bleibt beim Wischen durch den Fächer lesbar:
+     Land ist damit auf einen Blick vom Monster zu unterscheiden. */
+  .k.quer .querl { position:absolute; top:50%; left:50%; width:var(--ch); height:var(--cw); transform:translate(-50%,-50%) rotate(90deg); }
   .k .art { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:linear-gradient(#ffffff08,#00000038); font-size:34cqw; }
   .k .name { position:absolute; top:5px; left:6px; right:6px; text-align:center; background:#0b1424ee; padding:2px 8px; border-radius:10px; font-weight:800; border:1px solid #ffffff26; white-space:normal; line-height:1.16; font-size:clamp(9px,6.5cqw,15px); overflow:hidden; max-height:2.4em; }
   /* v2.7: Titel zweizeilig statt seitlich abgeschnitten; bei Karten mit Kosten-
@@ -1331,7 +1337,7 @@ function renderReveal(s) {
         <span><b>${i === 0 ? "🥇" : i === 1 ? "🥈" : "🥉"} ${esc(p.name)}</b></span><span class="pts">${p.total} SP</span></div>`).join("") +
       `<div class="center" style="margin-top:12px;font-weight:800;color:#fcd34d">🎉 ${esc(rv.ranked[0].name)} wird als neues Mitglied in die Königlich Monstrologische Gesellschaft aufgenommen!</div>` +
       (s.isHost ? `<button class="btn-amber" style="width:100%;margin-top:12px" onclick="rematch()">🔄 Revanche – gleiche Einstellungen</button>
-            <button class="btn-ghost" style="width:100%;margin-top:8px" onclick="lobbyBack()">🛋️ Zur Lobby – Saisons, Tempo &amp; Wertung ändern</button>`
+            <button class="btn-amber" style="width:100%;margin-top:8px" onclick="lobbyBack()">🛋️ Zur Lobby – Saisons, Tempo &amp; Wertung ändern</button>`
           : `<div class="banner wait" style="margin-top:12px">Der Host kann eine Revanche starten oder in die Lobby wechseln…</div>`);
   }
   // 🔎 v3.0: Nur der HOST hat den Weiter-Knopf – alle anderen springen mit,
@@ -1524,10 +1530,15 @@ function fanCardHTML(c, opts) {
   const sel = opts.selected ? " sel" : "";
   const click = opts.noClick ? "" : (opts.onClick ? ` onclick="${opts.onClick}"` : " disabled");
   const info = esc(`${cardTypeLabel(c)} · ${cardInfo(c)}`);
-  return `<button class="k${sel}${zielK ? " ziel" : ""}${opts.cls ? " " + opts.cls : ""}" style="--rc:${rc}" data-fid="${c.id}" data-info="${info}"${click}>` +
-    (zielK
+  // 🃏 v3.29 (Nutzer-Wunsch): LANDKARTEN im Querformat wie im echten Spiel –
+  // der Inhalt liegt um 90 Grad gedreht im Hochformat-Rahmen (.querl), der
+  // Titel steht dadurch beim Wischen durch den Fächer lesbar am rechten Rand.
+  const quer = !zielK && c.type === "Land";
+  const inhalt = (zielK
       ? `<span class="secret">🔒 geheim</span><div class="ztxt"><div class="big">🎯</div><b>${esc(c.name || "Ziel")}</b><span>${esc(originalCardText(c))}</span></div>`
-      : `<div class="art">${art}</div><div class="name">${esc(c.name || ri.name)}</div>${med ? `<div class="med">${med}</div>` : ""}${eff ? `<div class="eff">${esc(eff)}</div>` : ""}${pts ? `<div class="pts">${pts}</div>` : ""}`) +
+      : `<div class="art">${art}</div><div class="name">${esc(c.name || ri.name)}</div>${med ? `<div class="med">${med}</div>` : ""}${eff ? `<div class="eff">${esc(eff)}</div>` : ""}${pts ? `<div class="pts">${pts}</div>` : ""}`);
+  return `<button class="k${sel}${zielK ? " ziel" : ""}${quer ? " quer" : ""}${opts.cls ? " " + opts.cls : ""}" style="--rc:${rc}" data-fid="${c.id}" data-info="${info}"${click}>` +
+    (quer ? `<div class="querl">${inhalt}</div>` : inhalt) +
     `</button>`;
 }
 
@@ -1769,13 +1780,21 @@ function bindFan() {
 window.toggleMenu = () => { const m = document.getElementById("optmenu"); if (m) m.classList.toggle("open"); };
 window.closeMenu = () => { const m = document.getElementById("optmenu"); if (m) m.classList.remove("open"); };
 function closeDrawersNow() {
-  document.querySelectorAll(".drawer.open, .freshov.open").forEach((x) => x.classList.remove("open"));
+  // 🃏 v3.29 (Nutzer-Regel): Der Zieh-Schleier (#dFresh) darf NICHT geschlossen
+  // werden, solange gezogene Nicht-Ziel-Karten noch nicht entschieden sind –
+  // weglegen ohne Entscheidung ist verboten.
+  const freshZwang = state && (state.freshDraw || []).some((c) => c.type !== "Ziel");
+  document.querySelectorAll(".drawer.open, .freshov.open").forEach((x) => { if (freshZwang && x.id === "dFresh") return; x.classList.remove("open"); });
   document.querySelectorAll(".corner.open").forEach((x) => x.classList.remove("open"));
+  if (freshZwang && openDrawer === "dFresh") return; // Schleier bleibt auf
   openDrawer = null;
 }
 window.toggleDrawerById = (id) => {
   const d = document.getElementById(id);
   if (!d) return;
+  // 🃏 v3.29 (Nutzer-Regel): Der Zieh-Schleier lässt sich nicht mehr zuklappen,
+  // solange eine gezogene Nicht-Ziel-Karte auf ihre Entscheidung wartet.
+  if (id === "dFresh" && d.classList.contains("open") && state && (state.freshDraw || []).some((c) => c.type !== "Ziel")) return;
   openDrawer = d.classList.contains("open") ? null : id;
   document.querySelectorAll(".drawer.open, .freshov.open").forEach((x) => x.classList.remove("open"));
   document.querySelectorAll(".corner.open").forEach((x) => x.classList.remove("open"));
@@ -1888,7 +1907,9 @@ function drawerFreshHTML(s) {
   const stapel = noch.length
     ? `<div class="stapel">${noch.map(() => `<div class="k rueck" style="--rc:#2b3860"><div class="rueckm"><div class="rc1">?</div></div></div>`).join("")}</div>`
     : "";
-  return `<div class="freshov${openDrawer === "dFresh" ? " open" : ""}" id="dFresh" onclick="if(event.target===this) toggleDrawerById('dFresh')">
+  // 🃏 v3.29 (Nutzer-Regel): KEIN Schließen durch Tipp auf den Hintergrund –
+  // gezogene Nicht-Ziel-Karten MÜSSEN aufgedeckt und entschieden werden.
+  return `<div class="freshov${openDrawer === "dFresh" ? " open" : ""}" id="dFresh">
     <div class="freshbig${neu ? " ein" : ""}">${bigCard}</div>
     ${btns}
     ${stapel}
@@ -2072,7 +2093,10 @@ function renderStatsScreen() {
 window.showStats = () => {
   const open = openDrawer === "dStats";
   openDrawer = open ? null : "dStats";
-  document.querySelectorAll(".drawer.open, .freshov.open").forEach((x) => x.classList.remove("open"));
+  // 🃏 v3.29 (Nutzer-Regel): Der Zieh-Schleier bleibt auch hier auf, solange
+  // eine gezogene Nicht-Ziel-Karte noch nicht entschieden ist.
+  const freshZwang = state && (state.freshDraw || []).some((c) => c.type !== "Ziel");
+  document.querySelectorAll(".drawer.open, .freshov.open").forEach((x) => { if (freshZwang && x.id === "dFresh") return; x.classList.remove("open"); });
   if (openDrawer) {
     window._statsPage = null; // beim Öffnen immer das Statistik-Hauptmenü (v3.28)
     window._statsDetail = null;
@@ -2139,13 +2163,12 @@ function mitteHTML(s) {
 
 // ---------------------------- Der Spieltisch ----------------------------
 function phoneShellHTML(s) {
-  // 🃏 v3.15: Der Zieh-Schleier kehrt zurück, solange eine wartende NICHT-Ziel-
-  // Karte noch nicht umgedreht wurde (sie blockiert den Spielablauf – bloßes
-  // Zuklappen vor dem Flip darf den Ablauf nicht einfrieren). Umgedrehte Karten
-  // und gezogene ZIELE (sie blockieren nichts) werden nach dem ersten Öffnen
-  // respektiert: einmal angesehen/genutzt genügt, 🃏-Banner und Ecke holen sie
-  // jederzeit zurück. Neu angekommene Karten öffnen den Schleier einmalig.
-  const wartet = (s.freshDraw || []).some((c) => c.type !== "Ziel" && !freshUp[c.id]);
+  // 🃏 v3.15/v3.29 (Nutzer-Regel): Der Zieh-Schleier bleibt offen, bis JEDE
+  // gezogene Nicht-Ziel-Karte ENTSCHIEDEN ist (ausspielen/einlagern/anstellen).
+  // Vor v3.29 war nur der Flip erzwungen – danach ließ sich der Schleier
+  // zuklicken und die Karte wartete unsichtbar ohne Entscheidung (verboten!).
+  // Gezogene ZIELE blockieren weiterhin nichts (einmal ansehen genügt).
+  const wartet = (s.freshDraw || []).some((c) => c.type !== "Ziel");
   if (wartet || (FX && (FX.freshNeu || []).length)) openDrawer = "dFresh";
   if (!(s.phase === "draft" && s.hand && s.hand.length)) inhand = false;
   // v3.13: Nach „Fertig“ im 🐢-Modus liegt die eigene Hand ab (freie Sicht).
