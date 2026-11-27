@@ -1926,17 +1926,24 @@ function drawerSaisonHTML(s) {
     <p class="muted" style="margin:0">${modeTxt}</p></div>`;
 }
 
-// 🏅 v3.23/v3.27: Statistik-Bereich – Archiv, Hall of Fame, Beste Spieler.
+// 🏅 v3.23/v3.28: Statistik-Bereich – Archiv, Bestenliste, Hall of Fame, Rekorde.
 // Daten kommen per getStats vom Server (window._stats), bis dahin „Lädt…“.
-// v3.27 (Nutzer-Wunsch): Eigener VOLLBILD-Bereich vom Startbildschirm (kein
-// Aufklapp-Panel mehr) mit DREI anklickbaren Reitern; das Optionsmenü im
-// Spiel zeigt denselben Inhalt weiterhin als Drawer.
+// v3.27: Eigener Vollbild-Bereich vom Startbildschirm (Optionsmenü im Spiel
+// zeigt denselben Inhalt als Drawer).
+// v3.28 (Nutzer-Wunsch): Die Bereiche stehen UNTEREINANDER als Menü-Liste,
+// jeder Klick öffnet eine EIGENE Seite (nicht aufklappbar darunter). Neu:
+// Rekord-Seiten „Meiste Punkte mit Monstern“ und „Meiste Punkte mit Zielen“.
 const MODE_KURZ = { langsam: "🐢", schnell: "⚡", turbo: "🚀" };
-const statsTabsHTML = (tab) => `<div style="display:flex;gap:8px;margin:0 0 10px">
-    <button class="${tab === "archiv" ? "btn-amber" : "btn-ghost"}" style="flex:1;font-size:.85rem" onclick="setStatsTab('archiv')">📦 Archiv</button>
-    <button class="${tab === "hof" ? "btn-amber" : "btn-ghost"}" style="flex:1;font-size:.85rem" onclick="setStatsTab('hof')">🏆 Hall of Fame</button>
-    <button class="${tab === "spieler" ? "btn-amber" : "btn-ghost"}" style="flex:1;font-size:.85rem" onclick="setStatsTab('spieler')">⭐ Beste Spieler</button>
-  </div>`;
+// 📋 Statistik-Hauptmenü: die Bereiche untereinander, je Klick → eigene Seite
+function statsMenuHTML() {
+  const eintrag = (page, emoji, titel, hinweis) => `<div class="revrow" style="cursor:pointer;padding:12px 10px" onclick="setStatsPage('${page}')">
+      <span>${emoji} <b>${titel}</b><br><span class="goal">${hinweis}</span></span><span class="pts">▶</span></div>`;
+  return eintrag("archiv", "📦", "Archiv", "alle gewerteten Partien, mit Klick auf die Partie die Punkte im Detail") +
+    eintrag("spieler", "⭐", "Bestenliste", "Ø Punkte je Spieler, Top 10") +
+    eintrag("hof", "🏆", "Hall of Fame", "beste Gesamtleistung in einer Partie") +
+    eintrag("mon", "👹", "Meiste Punkte mit Monstern", "Rekordliste: Monster-Punkte in einer Partie") +
+    eintrag("ziel", "🎯", "Meiste Punkte mit Zielen", "Rekordliste: Ziel-Punkte in einer Partie");
+}
 function statsLeaderboardHTML(st) {
   if (!st.lb || !st.lb.length) return `<p class="muted" style="margin:0 0 6px">Noch keine gewerteten ${window._statsSelSeasons === 5 ? "5er" : "4er"}-Partien – die Liste füllt sich, sobald eine ${window._statsSelSeasons === 5 ? "5er" : "4er"}-Partie mit mindestens 2 echten Menschen gewertet wird.</p>`;
   return `<div class="sub">Bestenliste (Ø Punkte, Top 10)</div>` +
@@ -1946,6 +1953,14 @@ function statsHofHTML(st) {
   if (!st.hof || !st.hof.length) return `<p class="muted" style="margin:0 0 6px">Noch keine gewerteten ${window._statsSelSeasons === 5 ? "5er" : "4er"}-Partien – die Hall of Fame füllt sich mit der besten Einzelleistung aller Zeiten.</p>`;
   return `<div class="sub">Hall of Fame (beste Einzelleistung)</div>` +
     st.hof.map((e) => `<div class="revrow"><span><b>${esc(e.name)}</b> <span class="goal">(${esc(e.date)} · ${MODE_KURZ[e.mode] || ""} ${e.seasons} Saisons)</span></span><span class="pts">${e.punkte} SP</span></div>`).join("");
+}
+// 👹🎯 v3.28 (Nutzer-Wunsch): Rekordlisten für EINE Punkte-Kategorie
+// (mon = Monster-Punkte, ziel = Ziel-Punkte) – je Partie die beste Leistung.
+function statsKategorieHofHTML(st, key, label) {
+  const list = st[key] || [];
+  if (!list.length) return `<p class="muted" style="margin:0 0 6px">Noch keine gewerteten ${window._statsSelSeasons === 5 ? "5er" : "4er"}-Partien – die Rekordliste füllt sich mit der besten Leistung in einer Partie.</p>`;
+  return `<div class="sub">${label}</div>` +
+    list.map((e) => `<div class="revrow"><span><b>${esc(e.name)}</b> <span class="goal">(${esc(e.date)} · ${MODE_KURZ[e.mode] || ""} ${e.seasons} Saisons · insgesamt ${e.gesamt} SP)</span></span><span class="pts">${e.punkte} SP</span></div>`).join("");
 }
 // 📦 v3.27 (Nutzer-Wunsch): ARCHIV – alle gewerteten Partien chronologisch,
 // je Partie auf einen Blick Datum, Modus, Gewinner und Mitspieler.
@@ -1988,42 +2003,56 @@ function statsDetailHTML(st, idx) {
 function drawerStatsHTML(s) {
   return `<div class="drawer ${openDrawer === "dStats" ? "open" : ""}" id="dStats"><h4>🏅 Statistiken &amp; Bestenliste <small> aller Räume</small></h4>${statsBodyHTML()}</div>`;
 }
-// 🏅 v3.27: Inhalt des Statistik-Bereichs – DREI anklickbare Reiter.
-// Beste Spieler & Hall of Fame bleiben nach 4er/5er-Partien getrennt
-// (5er-Partien punkten im Schnitt höher).
+// 🏅 v3.28: Inhalt des Statistik-Bereichs – HAUPTMENÜ mit den Bereichen
+// untereinander; jeder Bereich öffnet eine EIGENE Seite mit ←-Zurück-Button.
+// Bestenliste, Hall of Fame und die Rekordlisten bleiben nach 4er/5er-Partien
+// getrennt (5er-Partien punkten im Schnitt höher).
 function statsBodyHTML() {
   const st = window._stats || null;
   if (!st) return `<p class="muted" style="margin:0 0 6px">Lädt…</p>`;
-  const tab = window._statsTab || "archiv";
-  let body = "";
-  if (window._statsDetail != null && window._statsDetail >= 0 && tab === "archiv") {
-    body = statsDetailHTML(st, window._statsDetail);
-  } else if (tab === "archiv") {
-    body = statsArchivHTML(st);
-  } else {
-    const sel = window._statsSelSeasons === 5 ? 5 : 4;
-    const sec = st.bySeasons ? (st.bySeasons[sel] || { lb: [], hof: [] }) : { lb: [], hof: [] };
-    body = `<div style="display:flex;gap:8px;margin:0 0 8px">
-        <button class="${sel === 4 ? "btn-amber" : "btn-ghost"}" style="flex:1;font-size:.85rem" onclick="setStatsSeasons(4)">4 Saisons</button>
-        <button class="${sel === 5 ? "btn-amber" : "btn-ghost"}" style="flex:1;font-size:.85rem" onclick="setStatsSeasons(5)">5 Saisons</button>
-      </div>` + (tab === "spieler" ? statsLeaderboardHTML(sec) : statsHofHTML(sec));
+  const seitenKopf = (titel) => `<div style="display:flex;align-items:center;gap:8px;margin:0 0 10px">
+      <button class="btn-ghost" style="font-size:.8rem;padding:4px 10px" onclick="setStatsPage(null)">← Statistik</button>
+      <b>${titel}</b>
+    </div>`;
+  const fusszeile = `<p class="muted" style="margin:10px 0 0;font-size:.7rem">${st.total || 0} gewertete ${st.total === 1 ? "Partie" : "Partien"} · dauerhaft gespeichert${st.firebase ? " (Firebase)" : " – bis zum Server-Neustart (Firebase noch nicht eingerichtet)"} · zählt nur Partien mit mindestens 2 echten Menschen</p>`;
+  const page = window._statsPage || null;
+  if (!page) return statsMenuHTML() + fusszeile;
+  if (page === "archiv") {
+    if (window._statsDetail != null && window._statsDetail >= 0) return seitenKopf("📦 Archiv") + statsDetailHTML(st, window._statsDetail) + fusszeile;
+    return seitenKopf("📦 Archiv") + statsArchivHTML(st) + fusszeile;
   }
-  return statsTabsHTML(tab) + body +
-    `<p class="muted" style="margin:8px 0 0;font-size:.7rem">${st.total || 0} gewertete ${st.total === 1 ? "Partie" : "Partien"} · dauerhaft gespeichert${st.firebase ? " (Firebase)" : " – bis zum Server-Neustart (Firebase noch nicht eingerichtet)"} · zählt nur Partien mit mindestens 2 echten Menschen</p>`;
+  const sel = window._statsSelSeasons === 5 ? 5 : 4;
+  const sec = st.bySeasons ? (st.bySeasons[sel] || { lb: [], hof: [], monHof: [], zielHof: [] }) : { lb: [], hof: [], monHof: [], zielHof: [] };
+  const umschalter = `<div style="display:flex;gap:8px;margin:0 0 8px">
+      <button class="${sel === 4 ? "btn-amber" : "btn-ghost"}" style="flex:1;font-size:.85rem" onclick="setStatsSeasons(4)">4 Saisons</button>
+      <button class="${sel === 5 ? "btn-amber" : "btn-ghost"}" style="flex:1;font-size:.85rem" onclick="setStatsSeasons(5)">5 Saisons</button>
+    </div>`;
+  if (page === "spieler") return seitenKopf("⭐ Bestenliste") + umschalter + statsLeaderboardHTML(sec) + fusszeile;
+  if (page === "hof") return seitenKopf("🏆 Hall of Fame") + umschalter + statsHofHTML(sec) + fusszeile;
+  if (page === "mon") return seitenKopf("👹 Meiste Punkte mit Monstern") + umschalter + statsKategorieHofHTML(sec, "monHof", "Monster-Rekorde (beste Einzelleistung)") + fusszeile;
+  if (page === "ziel") return seitenKopf("🎯 Meiste Punkte mit Zielen") + umschalter + statsKategorieHofHTML(sec, "zielHof", "Ziel-Rekorde (beste Einzelleistung)") + fusszeile;
+  return statsMenuHTML() + fusszeile;
 }
 window.setStatsSeasons = (n) => { window._statsSelSeasons = n === 5 ? 5 : 4; render(); };
-window.setStatsTab = (t) => { window._statsTab = t === "hof" ? "hof" : t === "spieler" ? "spieler" : "archiv"; window._statsDetail = null; render(); };
+// 📌 v3.28: Seiten-Navigation im Statistik-Bereich (null = Hauptmenü)
+window.setStatsPage = (p) => {
+  window._statsPage = ["archiv", "spieler", "hof", "mon", "ziel"].includes(p) ? p : null;
+  window._statsDetail = null;
+  render();
+};
 window.openStatsDetail = (i) => { window._statsDetail = i; render(); };
 window.closeStatsDetail = () => { window._statsDetail = null; render(); };
-// 🚪 v3.27 (Nutzer-Wunsch): Der Startbildschirm-Button führt in einen EIGENEN
+// 🚪 v3.27: Der Startbildschirm-Button führt in einen EIGENEN
 // Statistik-Bereich (voller Bildschirm statt Aufklapp-Panel). Name und Raum-
 // Code bleiben beim Zurückkehren zum Startbildschirm erhalten.
+// v3.28: Beim Öffnen immer das Statistik-HAUPTMENÜ zeigen.
 window.openStatsScreen = () => {
   const n = document.getElementById("name"), c = document.getElementById("code");
   if (n) window._startName = n.value;
   if (c) window._startCode = c.value;
   window._statsScreen = true;
-  if (!window._statsTab) window._statsTab = "archiv";
+  window._statsPage = null;
+  window._statsDetail = null;
   render();
   send({ t: "getStats" }); // beim Öffnen immer frisch laden
 };
@@ -2045,6 +2074,8 @@ window.showStats = () => {
   openDrawer = open ? null : "dStats";
   document.querySelectorAll(".drawer.open, .freshov.open").forEach((x) => x.classList.remove("open"));
   if (openDrawer) {
+    window._statsPage = null; // beim Öffnen immer das Statistik-Hauptmenü (v3.28)
+    window._statsDetail = null;
     const d = document.getElementById("dStats");
     if (d) d.classList.add("open");
   }
