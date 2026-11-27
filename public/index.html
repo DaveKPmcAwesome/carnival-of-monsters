@@ -43,7 +43,7 @@
      Kein Layout ändert sich, nur die Stimmung nimmt die aktuelle Saison mit. */
   .phone.saison-wald    { background: linear-gradient(205deg, #2e9e57 0%, #175937 55%, #0f172a 100%); }
   .phone.saison-tiefsee { background: linear-gradient(205deg, #1a86c9 0%, #0e4f7d 55%, #0f172a 100%); }
-  .phone.saison-wolken  { background: linear-gradient(205deg, #4f8ef7 0%, #23508f 55%, #0f172a 100%); }
+  .phone.saison-wolken  { background: linear-gradient(205deg, #e9c766 0%, #6e5318 55%, #0f172a 100%); }
   .phone.saison-hoehlen { background: linear-gradient(205deg, #a05b77 0%, #5a2f47 55%, #0f172a 100%); }
   .phone.saison-dunkel  { background: linear-gradient(205deg, #7a52d9 0%, #3a2472 55%, #0f172a 100%); }
   .phone.saison-traum   { background: linear-gradient(205deg, #9b5cf0 0%, #4d2a8a 55%, #0f172a 100%); }
@@ -1386,11 +1386,13 @@ function renderReveal(s) {
 // Phasen, Aktionsleiste, Modi) bleibt unverändert.
 // ============================================================
 
-const REALM_COLORS = { wald:"#3f9d43", tiefsee:"#3f9ac2", wolken:"#e9c766", hoehlen:"#b07c3f", dunkel:"#94a3b8", traum:"#7c5fb8", gefahr:"#dc2626" };
+const REALM_COLORS = { wald:"#3f9d43", tiefsee:"#3f9ac2", wolken:"#f0d660", hoehlen:"#97642c", dunkel:"#94a3b8", traum:"#7c5fb8", gefahr:"#dc2626" };
 // v2.7: Belegte Land-Punkte kriegen je Reich eine EIGENE Abdunkel-Farbe statt
 // des alten Einheits-Filters: Wolkenlande bleiben sichtbar GELB und sind nicht
 // mehr mit den dunklen Höhlenlanden zu verwechseln.
-const REALM_OFF_COLORS = { wald:"#2f7a34", tiefsee:"#2b7ea8", wolken:"#c9a12e", hoehlen:"#4a3016", dunkel:"#5c6878", traum:"#584690", gefahr:"#993333" };
+// v3.33 (Nutzer-Wunsch): Wolken-Punkte etwas GELBER+HELLER, Höhlen-Punkte etwas
+// DUNKLER, damit beide Reiche sich klar unterscheiden (v.a. ausgeschaltet).
+const REALM_OFF_COLORS = { wald:"#2f7a34", tiefsee:"#2b7ea8", wolken:"#dcb645", hoehlen:"#3a2610", dunkel:"#5c6878", traum:"#584690", gefahr:"#993333" };
 const realmColor = (id) => REALM_COLORS[id] || "#8a94a8";
 const realmOffColor = (id) => REALM_OFF_COLORS[id] || "#55607a";
 const AV_COLORS = ["#3f9ac2", "#3f9d43", "#b07c3f", "#7c5fb8", "#e9c766"];
