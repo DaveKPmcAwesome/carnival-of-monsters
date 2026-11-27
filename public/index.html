@@ -38,14 +38,16 @@
      Reichsfarbe aus und verläuft nach unten ins gewohnte Dunkel.
      🎨 v3.22: Nutzer-Wunsch „noch ein bisschen kräftiger“ – die Töne sind
      satter und der Farbverlauf reicht weiter runter (60 % statt 46 %).
+     🎨 v3.32: Nutzer-Wunsch „richtig kräftig“ – satte Dreistufen-Verläufe:
+     kräftige Reichsfarbe oben, dunklere Mitte, gewohntes Nachtblau am Fuß.
      Kein Layout ändert sich, nur die Stimmung nimmt die aktuelle Saison mit. */
-  .phone.saison-wald    { background: linear-gradient(205deg, #1e4634 0%, #0f172a 60%); }
-  .phone.saison-tiefsee { background: linear-gradient(205deg, #12395f 0%, #0f172a 60%); }
-  .phone.saison-wolken  { background: linear-gradient(205deg, #24507e 0%, #0f172a 60%); }
-  .phone.saison-hoehlen { background: linear-gradient(205deg, #3f2a38 0%, #0f172a 60%); }
-  .phone.saison-dunkel  { background: linear-gradient(205deg, #2e2047 0%, #0f172a 60%); }
-  .phone.saison-traum   { background: linear-gradient(205deg, #3a2568 0%, #0f172a 60%); }
-  .phone.saison-gefahr  { background: linear-gradient(205deg, #5e1a22 0%, #0f172a 60%); }
+  .phone.saison-wald    { background: linear-gradient(205deg, #2e9e57 0%, #175937 55%, #0f172a 100%); }
+  .phone.saison-tiefsee { background: linear-gradient(205deg, #1a86c9 0%, #0e4f7d 55%, #0f172a 100%); }
+  .phone.saison-wolken  { background: linear-gradient(205deg, #4f8ef7 0%, #23508f 55%, #0f172a 100%); }
+  .phone.saison-hoehlen { background: linear-gradient(205deg, #a05b77 0%, #5a2f47 55%, #0f172a 100%); }
+  .phone.saison-dunkel  { background: linear-gradient(205deg, #7a52d9 0%, #3a2472 55%, #0f172a 100%); }
+  .phone.saison-traum   { background: linear-gradient(205deg, #9b5cf0 0%, #4d2a8a 55%, #0f172a 100%); }
+  .phone.saison-gefahr  { background: linear-gradient(205deg, #e03535 0%, #7c1e26 55%, #0f172a 100%); }
 
   /* ---- Kopf: Saison-Symbol mit Richtungspfeil-Ring + Reichs-Lampen ---- */
   .top { display:flex; align-items:center; gap:10px; padding:10px 12px 4px; }
@@ -544,7 +546,14 @@ function connect() {
         window._veilSeason = (state.season != null && state.phase === "draft") ? state.season : null;
         window._zeremonieGame = null;
         if (!ersteMeldung && state.phase === "draft" && state.season != null) showSaisonEnthuellung(state);
-      } else if (state.phase === "draft" && state.season != null && window._veilSeason != null && state.season !== window._veilSeason) {
+      } else if (state.phase === "draft" && state.season != null && (window._veilSeason === null || state.season !== window._veilSeason)) {
+        // 🎪 v3.32 (Fehlermeldung des Nutzers): SAISON 1 erschien nie. Grund: Wer aus
+        // der LOBBY startet, hat vorher eine Lobby-Nachricht gesehen, die _veilSeason
+        // auf null setzt – und null war bisher ein Ausschlusskriterium. Jetzt gilt:
+        // null heißt „ich war noch nie in einem Draft dieser Partie“ (Lobby, Reveal),
+        // also darf der ERSTE Draft-Übergang durchaus enthüllt werden. Reconnect bleibt
+        // sicher: Ein Neuladen mitten im Draft setzt _veilSeason auf die laufende
+        // Saison, und gleiche Saison zeigt weiterhin keinen Vorhang.
         window._veilSeason = state.season;
         showSaisonEnthuellung(state);
       }
