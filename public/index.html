@@ -233,6 +233,16 @@
      Badge rückt der Titel nur bis zum Badge, damit nichts übereinanderligt. */
   .k:has(.med) .name { right:calc(clamp(24px,17cqw,44px) + 9px); }
   .k .med { position:absolute; top:5px; right:6px; border-radius:50%; background:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; border:3px solid var(--rc,#888); color:#1a2433; width:clamp(24px,17cqw,44px); height:clamp(24px,17cqw,44px); font-size:clamp(10px,9cqw,22px); }
+  /* 🃏 v3.31 (Nutzer-Wunsch): Symbol-Stapel UNTER der Level-Zahl oben rechts
+     (Reihenfolge: Level, Gefahren, Kartenziehen). Die Zieh-Karte ist eine
+     kleine Fragezeichen-Karte in Medaillen-Größe; bei 2 gezogenen Karten
+     steckt die zweite dahinter, nur ihr unterer Rand schaut hervor. */
+  .k .medleg { position:absolute; top:calc(5px + clamp(24px,17cqw,44px) + 4px); right:6px; display:flex; flex-direction:column; align-items:center; gap:4px; }
+  .k .dsym { line-height:1; font-size:clamp(12px,10cqw,24px); filter:drop-shadow(0 1px 2px #000c); }
+  .k .zsym { position:relative; width:clamp(20px,15cqw,40px); height:clamp(28px,20cqw,54px); }
+  .k .zsym .zk { position:absolute; left:50%; transform:translateX(-50%); width:80%; height:100%; border-radius:5px; border:2px solid #e9c766; background:linear-gradient(180deg,#31406b,#101b2e); color:#fde68a; font-weight:800; display:flex; align-items:center; justify-content:center; font-size:clamp(10px,8cqw,18px); box-shadow:0 2px 5px #0009; }
+  .k .zsym .zk.b { top:7px; border-color:#b08a2e; background:linear-gradient(180deg,#26335a,#0c1526); z-index:1; }
+  .k .zsym .zk.f { top:0; z-index:2; }
   .k .pts { position:absolute; right:clamp(6px,5cqw,10px); bottom:clamp(4px,3cqh,10px); display:flex; align-items:center; gap:4px; background:#fffdf2de; border-radius:999px; padding:2px 7px; font-weight:800; color:#3a3312; font-size:clamp(11px,9cqw,18px); }
   .k .eff { display:none; position:absolute; left:6px; right:6px; bottom:6px; background:#31281adde8; color:#fde68a; border:1px solid #b08a2e; border-radius:8px; padding:4px 8px; font-size:clamp(9px,6.6cqw,12px); font-weight:700; line-height:1.3; text-align:left; }
   .phone.inhand .k .eff { display:block; }
@@ -1514,11 +1524,15 @@ function landsStripHTML(s) {
 function fanCardHTML(c, opts) {
   opts = opts || {};
   const ri = realmInfo(c.realm);
-  let art = c.realm === "traum" ? "🌙" : ri.emoji, med = "", pts = "", eff = "", zielK = false, rc = realmColor(c.realm);
+  let art = c.realm === "traum" ? "🌙" : ri.emoji, med = "", pts = "", eff = "", zielK = false, rc = realmColor(c.realm), bads = "", draws = 0;
   if (c.type === "Monster") {
     med = String(c.cost); pts = `⭐${c.points}`;
-    if (c.draw) eff += `🃏 zieht ${c.draw} · `;
-    if (c.danger) eff += `⚠️${c.danger}`;
+    // 🃏 v3.31 (Nutzer-Wunsch): Gefahr + Kartenziehen nicht mehr im Text-Balken,
+    // sondern als Symbole oben rechts UNTER der Level-Zahl (Reihenfolge: Level,
+    // Gefahren, Ziehen). Die Zieh-Karte ist eine kleine Fragezeichen-Karte;
+    // bei 2 gezogenen steckt die zweite dahinter hervor (nur unterer Rand).
+    if (c.danger) bads = "⚠️".repeat(c.danger);
+    if (c.draw) draws = c.draw;
   } else if (c.type === "Land") {
     pts = `${c.level} P`;
     if (c.realm !== "traum" && c.level >= 2) eff = "entfernt · Land-Vorbedingung nötig";
@@ -1543,7 +1557,7 @@ function fanCardHTML(c, opts) {
   const quer = !zielK && c.type === "Land";
   const inhalt = (zielK
       ? `<span class="secret">🔒 geheim</span><div class="ztxt"><div class="big">🎯</div><b>${esc(c.name || "Ziel")}</b><span>${esc(originalCardText(c))}</span></div>`
-      : `<div class="art">${art}</div><div class="name">${esc(c.name || ri.name)}</div>${med ? `<div class="med">${med}</div>` : ""}${eff ? `<div class="eff">${esc(eff)}</div>` : ""}${pts ? `<div class="pts">${pts}</div>` : ""}`);
+      : `<div class="art">${art}</div><div class="name">${esc(c.name || ri.name)}</div>${med ? `<div class="med">${med}</div>` : ""}${(bads || draws) ? `<div class="medleg">${bads ? `<div class="dsym">${bads}</div>` : ""}${draws ? `<div class="zsym">${draws > 1 ? `<div class="zk b"></div>` : ""}<div class="zk f">?</div></div>` : ""}</div>` : ""}${eff ? `<div class="eff">${esc(eff)}</div>` : ""}${pts ? `<div class="pts">${pts}</div>` : ""}`);
   return `<button class="k${sel}${zielK ? " ziel" : ""}${quer ? " quer" : ""}${opts.cls ? " " + opts.cls : ""}" style="--rc:${rc}" data-fid="${c.id}" data-info="${info}"${click}>` +
     (quer ? `<div class="querl">${inhalt}</div>` : inhalt) +
     `</button>`;
