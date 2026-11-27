@@ -220,8 +220,15 @@
      Hochformat-Karte und bleibt beim Wischen durch den Fächer lesbar:
      Land ist damit auf einen Blick vom Monster zu unterscheiden. */
   .k.quer .querl { position:absolute; top:50%; left:50%; width:var(--ch); height:var(--cw); transform:translate(-50%,-50%) rotate(90deg); }
+  /* 🃏 v3.30 (Nutzer-Wunsch): Bei den Querformat-LANDKARTEN sind Titel-Leiste
+     und Schrift zusätzlich etwas größer – der Titel am rechten Rand soll beim
+     Wischen noch besser lesbar sein. */
+  .k.quer .name { font-size:clamp(11px,8.5cqw,20px); min-height:calc(clamp(24px,17cqw,44px) + 4px); max-height:3.2em; }
   .k .art { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:linear-gradient(#ffffff08,#00000038); font-size:34cqw; }
-  .k .name { position:absolute; top:5px; left:6px; right:6px; text-align:center; background:#0b1424ee; padding:2px 8px; border-radius:10px; font-weight:800; border:1px solid #ffffff26; white-space:normal; line-height:1.16; font-size:clamp(9px,6.5cqw,15px); overflow:hidden; max-height:2.4em; }
+  /* 🃏 v3.30 (Nutzer-Wunsch): Die Titel-Leiste ist so hoch wie der Kreis oben
+     rechts (Medaille/Kosten-Punkt, clamp(24px,17cqw,44px)) – flex-zentriert,
+     Schriftgröße unverändert. */
+  .k .name { position:absolute; top:5px; left:6px; right:6px; display:flex; align-items:center; justify-content:center; text-align:center; background:#0b1424ee; padding:2px 8px; border-radius:10px; font-weight:800; border:1px solid #ffffff26; white-space:normal; line-height:1.16; font-size:clamp(9px,6.5cqw,15px); overflow:hidden; min-height:clamp(24px,17cqw,44px); max-height:3.4em; }
   /* v2.7: Titel zweizeilig statt seitlich abgeschnitten; bei Karten mit Kosten-
      Badge rückt der Titel nur bis zum Badge, damit nichts übereinanderligt. */
   .k:has(.med) .name { right:calc(clamp(24px,17cqw,44px) + 9px); }
