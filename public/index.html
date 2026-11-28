@@ -40,18 +40,47 @@
      satter und der Farbverlauf reicht weiter runter (60 % statt 46 %).
      🎨 v3.32: Nutzer-Wunsch „richtig kräftig“ – satte Dreistufen-Verläufe:
      kräftige Reichsfarbe oben, dunklere Mitte, gewohntes Nachtblau am Fuß.
-     🎨 v3.35: Nutzer-Meldung „Dunkelland-Saison ist lila“ – jede Saison trägt
-     jetzt EXAKT die Farbe ihres Reichs (REALM_COLORS, dieselbe Farbe wie die
-     Landpunkte und Reichs-Lampen): Wald grün, Tiefsee blau, Wolken gold-gelb,
-     Höhlen braun, Dunkel grau-blau, Traum violett, Gefahr rot.
-     Kein Layout ändert sich, nur die Stimmung nimmt die aktuelle Saison mit. */
-  .phone.saison-wald    { background: linear-gradient(205deg, #3f9d43 0%, #1f5c22 55%, #0f172a 100%); }
-  .phone.saison-tiefsee { background: linear-gradient(205deg, #3f9ac2 0%, #1f5f7c 55%, #0f172a 100%); }
-  .phone.saison-wolken  { background: linear-gradient(205deg, #f0d660 0%, #7a6224 55%, #0f172a 100%); }
-  .phone.saison-hoehlen { background: linear-gradient(205deg, #97642c 0%, #4a3016 55%, #0f172a 100%); }
-  .phone.saison-dunkel  { background: linear-gradient(205deg, #94a3b8 0%, #4a5568 55%, #0f172a 100%); }
-  .phone.saison-traum   { background: linear-gradient(205deg, #7c5fb8 0%, #3d2e62 55%, #0f172a 100%); }
-  .phone.saison-gefahr  { background: linear-gradient(205deg, #dc2626 0%, #6e1414 55%, #0f172a 100%); }
+     🎨 v3.36: EIGENE HINTERGRUNDBILDER je Saison (Nutzer-Wunsch, ruhige
+     Landschaften ohne Wesen). Das Bild liegt als unterste Ebene, darüber ein
+     Verlauf, der oben mit der Reichsfarbe tönt ( REALM_COLORS-Oberton wie in
+     v3.35) und nach unten fast deckend abdunkelt – Karten und Text bleiben
+     garantiert lesbar. Fällt ein Bild aus, bleibt der Nachtblaue Grund.
+     Die Bilder liefert der Server aus bg-b64/ aus (?v=1 für Cache-Frische). */
+  .phone.saison-wald {
+    background-image:
+      linear-gradient(205deg, rgba(63,157,67,.28) 0%, rgba(15,23,42,.42) 55%, rgba(15,23,42,.94) 100%),
+      url("/bg-wald.jpg?v=1");
+    background-size: cover; background-position: center; background-repeat: no-repeat; }
+  .phone.saison-tiefsee {
+    background-image:
+      linear-gradient(205deg, rgba(63,154,194,.28) 0%, rgba(15,23,42,.42) 55%, rgba(15,23,42,.94) 100%),
+      url("/bg-tiefsee.jpg?v=1");
+    background-size: cover; background-position: center; background-repeat: no-repeat; }
+  .phone.saison-wolken {
+    background-image:
+      linear-gradient(205deg, rgba(240,214,96,.26) 0%, rgba(15,23,42,.42) 55%, rgba(15,23,42,.94) 100%),
+      url("/bg-wolken.jpg?v=1");
+    background-size: cover; background-position: center; background-repeat: no-repeat; }
+  .phone.saison-hoehlen {
+    background-image:
+      linear-gradient(205deg, rgba(151,100,44,.28) 0%, rgba(15,23,42,.42) 55%, rgba(15,23,42,.94) 100%),
+      url("/bg-hoehlen.jpg?v=1");
+    background-size: cover; background-position: center; background-repeat: no-repeat; }
+  .phone.saison-dunkel {
+    background-image:
+      linear-gradient(205deg, rgba(148,163,184,.24) 0%, rgba(15,23,42,.42) 55%, rgba(15,23,42,.94) 100%),
+      url("/bg-dunkel.jpg?v=1");
+    background-size: cover; background-position: center; background-repeat: no-repeat; }
+  .phone.saison-traum {
+    background-image:
+      linear-gradient(205deg, rgba(124,95,184,.28) 0%, rgba(15,23,42,.42) 55%, rgba(15,23,42,.94) 100%),
+      url("/bg-traum.jpg?v=1");
+    background-size: cover; background-position: center; background-repeat: no-repeat; }
+  .phone.saison-gefahr {
+    background-image:
+      linear-gradient(205deg, rgba(220,38,38,.28) 0%, rgba(15,23,42,.42) 55%, rgba(15,23,42,.94) 100%),
+      url("/bg-gefahr.jpg?v=1");
+    background-size: cover; background-position: center; background-repeat: no-repeat; }
 
   /* ---- Kopf: Saison-Symbol mit Richtungspfeil-Ring + Reichs-Lampen ---- */
   .top { display:flex; align-items:center; gap:10px; padding:10px 12px 4px; }

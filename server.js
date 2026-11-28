@@ -1471,6 +1471,20 @@ const ICONS = {
   "/icon-maskable-512.png": require("./icons-b64/icon-maskable-512"),
 };
 
+// 🖼️ v3.36: Saison-Hintergrundbilder (ruhige Landschaften ohne Wesen, Nutzer-
+// Auswahl Wald A / Tiefsee A-Stil) liegen als Base64 in bg-b64/ und werden wie
+// die Icons vom Server ausgeliefert. Die requires sind absichtlich HART: Fehlt
+// eine Datei, startet der Server nicht – statt stiller, leerer Hintergründe.
+const BGS = {
+  "/bg-wald.jpg":    require("./bg-b64/bg-wald"),
+  "/bg-tiefsee.jpg": require("./bg-b64/bg-tiefsee"),
+  "/bg-wolken.jpg":  require("./bg-b64/bg-wolken"),
+  "/bg-hoehlen.jpg": require("./bg-b64/bg-hoehlen"),
+  "/bg-dunkel.jpg":  require("./bg-b64/bg-dunkel"),
+  "/bg-traum.jpg":   require("./bg-b64/bg-traum"),
+  "/bg-gefahr.jpg":  require("./bg-b64/bg-gefahr"),
+};
+
 // ------------------------------ HTTP-Server ---------------------------------
 
 const server = http.createServer((req, res) => {
@@ -1495,6 +1509,13 @@ const server = http.createServer((req, res) => {
     if (icon) {
       res.writeHead(200, { "Content-Type": "image/png", "Cache-Control": "public, max-age=300" });
       res.end(Buffer.from(icon, "base64"));
+      return;
+    }
+    // 🖼️ v3.36: Saison-Hintergrundbilder aus bg-b64/ (Query ?v=1 wird ignoriert)
+    const bg = BGS[req.url.split("?")[0]];
+    if (bg) {
+      res.writeHead(200, { "Content-Type": "image/jpeg", "Cache-Control": "public, max-age=300" });
+      res.end(Buffer.from(bg, "base64"));
       return;
     }
     const pwa = PWA_FILES[req.url.split("?")[0]];
