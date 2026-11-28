@@ -533,8 +533,8 @@ function connect() {
       if (state.gameId !== (window._fanGame || 0)) { window._fanGame = state.gameId; window._fanSeen = (state.fanfare && state.fanfare.id) || null; }
       else if (state.fanfare && state.fanfare.id !== window._fanSeen) { window._fanSeen = state.fanfare.id; showFanfare(state.fanfare); }
       // 🎪 v3.21: Saison-Enthüllung beim Saisonwechsel & Wertungszeremonie am Ende.
-      // Saisons enthüllen sich beim Wechsel UND beim Spielstart (Saison 1, ab v3.22) –
-      // nur die erste State-Nachricht nach dem App-Öffnen bleibt still (Reconnect-Schutz).
+      // Saisons enthüllen sich beim Wechsel UND beim Spielstart (Saison 1, ab v3.22);
+      // nach App-Öffnung bleibt nur die erste Meldung einer Saison > 1 still (v3.34).
       if (state.gameId !== (window._veilGame || 0)) {
         // 🎪 v3.22 (Nutzer-Wunsch): Auch SEASON 1 wird enthüllt – aber nur, wenn
         // die Seite das Spiel live anfahren sieht (Lobby → Draft oder Revanche).
@@ -545,7 +545,16 @@ function connect() {
         window._veilGame = state.gameId;
         window._veilSeason = (state.season != null && state.phase === "draft") ? state.season : null;
         window._zeremonieGame = null;
-        if (!ersteMeldung && state.phase === "draft" && state.season != null) showSaisonEnthuellung(state);
+        // 🎪 v3.34 (Nutzer-Meldung „manchmal klappt die Saison-1-Ansage nicht"):
+        // Die Stille für die ALLERSTE Meldung traf auch den häufigsten Realfall:
+        // Das Handy tötet die Seite zwischen Lobby und Spielstart, die App lädt neu,
+        // das Resume-Token (localStorage com-token) stellt die Verbindung direkt im
+        // Draft wieder her – und genau diese erste Meldung war stumm. Seit v3.34
+        // gilt die Stille nur noch für SAISON > 0 (echter Reconnect mitten in einer
+        // länger laufenden Saison); bei Saison 1 wird auch bei der allerersten
+        // Meldung enthüllt: Die Karte zeigt wahre Infos („Saison 1 läuft gerade"),
+        // ein Neuladen mitten im Saison-1-Draft zeigt sie bewusst noch einmal.
+        if (state.phase === "draft" && state.season != null && (!ersteMeldung || state.season === 0)) showSaisonEnthuellung(state);
       } else if (state.phase === "draft" && state.season != null && (window._veilSeason === null || state.season !== window._veilSeason)) {
         // 🎪 v3.32 (Fehlermeldung des Nutzers): SAISON 1 erschien nie. Grund: Wer aus
         // der LOBBY startet, hat vorher eine Lobby-Nachricht gesehen, die _veilSeason
